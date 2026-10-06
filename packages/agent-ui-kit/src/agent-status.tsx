@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import type { AgentState } from './lib/ai';
 import { formatDuration } from './lib/format';
-import { useNow } from './lib/hooks';
+import { useHydrated, useNow } from './lib/hooks';
 import { AlertIcon, CheckIcon, SparkIcon, SpinnerIcon } from './lib/icons';
 import { LiveRegion, useDebouncedValue } from './lib/primitives';
 import { cn } from './lib/utils';
@@ -78,7 +78,8 @@ export function AgentStatus({
 }: AgentStatusProps) {
   const active = ACTIVE.includes(state);
   const now = useNow(active && startedAt !== undefined && elapsedMs === undefined, 100);
-  const elapsed = elapsedMs ?? (startedAt !== undefined ? Math.max(0, now - startedAt) : undefined);
+  const hydrated = useHydrated();
+  const elapsed = elapsedMs ?? (startedAt !== undefined && hydrated ? Math.max(0, now - startedAt) : undefined);
   const text = label ?? AGENT_STATE_LABEL[state];
   const spoken = detail ? `${text}: ${detail}` : text;
   const urgent = state === 'error' || state === 'awaiting-approval';

@@ -19,7 +19,7 @@ import {
   type ToolPhase,
 } from './lib/ai';
 import { formatDuration, formatDurationLong, humanizeToolName, summarizeValue } from './lib/format';
-import { useNow, useToolTimings, type ToolTiming, type ToolTimings } from './lib/hooks';
+import { useHydrated, useNow, useToolTimings, type ToolTiming, type ToolTimings } from './lib/hooks';
 import { BanIcon, CheckIcon, ChevronIcon, SpinnerIcon, XIcon } from './lib/icons';
 import { JsonView, LiveRegion } from './lib/primitives';
 import { cn } from './lib/utils';
@@ -49,7 +49,10 @@ export interface ToolCallTimelineProps extends Omit<ComponentPropsWithoutRef<'di
   expanded?: readonly string[] | undefined;
   defaultExpanded?: readonly string[] | undefined;
   onExpandedChange?: ((expanded: string[]) => void) | undefined;
-  /** Expand calls automatically when they fail. Default `true`. */
+  /**
+   * Expand calls automatically when they fail. Default `false`: the error
+   * message is always shown inline under a failed call, with details on demand.
+   */
   expandErrors?: boolean;
   /** Show a per-call waterfall bar relative to the whole timeline. Default `true`. */
   waterfall?: boolean;
@@ -131,7 +134,7 @@ export function ToolCallTimeline({
   expanded: expandedProp,
   defaultExpanded,
   onExpandedChange,
-  expandErrors = true,
+  expandErrors = false,
   waterfall = true,
   announce = true,
   renderExtra,
@@ -144,6 +147,7 @@ export function ToolCallTimeline({
   const timings = timingsProp ?? measured;
   const anyActive = toolParts.some((p) => !isSettledPhase(getToolPhase(p)) && getToolPhase(p) !== 'awaiting-approval');
   const now = useNow(anyActive, 100);
+  const hydrated = useHydrated();
 
   const [uncontrolled, setUncontrolled] = useState<readonly string[]>(defaultExpanded ?? []);
   const userExpanded = expandedProp ?? uncontrolled;
@@ -224,7 +228,8 @@ export function ToolCallTimeline({
             meta={tools?.[getToolPartName(part)]}
             timing={timings[part.toolCallId]}
             now={now}
-            bounds={waterfall ? bounds : undefined}
+            bounds={waterfall && hydrated ? bounds : undefined}
+            hydrated={hydrated}
             isLast={index === toolParts.length - 1}
             open={isOpen(part)}
             onOpenChange={(open) => setOpen(part, open)}
@@ -244,18 +249,31 @@ interface TimelineItemProps {
   now: number;
   bounds: { min: number; span: number } | undefined;
   isLast: boolean;
+  hydrated: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   extra: ReactNode;
 }
 
-function TimelineItem({ part, meta, timing, now, bounds, isLast, open, onOpenChange, extra }: TimelineItemProps) {
+function TimelineItem({
+  part,
+  meta,
+  timing,
+  now,
+  bounds,
+  isLast,
+  hydrated,
+  open,
+  onOpenChange,
+  extra,
+}: TimelineItemProps) {
   const name = getToolPartName(part);
   const phase = getToolPhase(part);
   const label = meta?.label ?? part.title ?? humanizeToolName(name);
   const summary = meta?.summary ? meta.summary(part.input, part) : summarizeValue(part.input);
-  const duration = getDuration(timing, now);
   const settled = isSettledPhase(phase);
+  // Live durations depend on the clock: render them only after hydration.
+  const duration = settled || hydrated ? getDuration(timing, now) : undefined;
 
   let bar: { left: number; width: number } | undefined;
   if (bounds && timing?.startedAt) {
@@ -309,7 +327,11 @@ function TimelineItem({ part, meta, timing, now, bounds, isLast, open, onOpenCha
                 <span
                   className={cn(
                     'absolute inset-y-0 rounded-full',
-                    phase === 'error' ? 'bg-aui-hot' : settled ? 'bg-aui-fg-subtle/70' : 'bg-aui-accent',
+                    phase === 'error' || phase === 'awaiting-approval'
+                      ? 'bg-aui-hot'
+                      : settled
+                        ? 'bg-aui-fg-subtle/70'
+                        : 'bg-aui-accent',
                   )}
                   style={{ left: `${bar.left}%`, width: `${Math.min(bar.width, 100 - bar.left)}%` }}
                 />
@@ -324,6 +346,11 @@ function TimelineItem({ part, meta, timing, now, bounds, isLast, open, onOpenCha
             />
           </span>
         </Collapsible.Trigger>
+        {part.state === 'output-error' && !open && (
+          <p className="font-aui-mono text-aui-hot-fg mt-0.5 mb-1 line-clamp-2 px-2 text-xs leading-5 break-words">
+            {part.errorText}
+          </p>
+        )}
         <Collapsible.Content className="data-[state=closed]:motion-safe:animate-aui-collapse data-[state=open]:motion-safe:animate-aui-expand overflow-hidden">
           <ToolCallDetails part={part} meta={meta} />
         </Collapsible.Content>

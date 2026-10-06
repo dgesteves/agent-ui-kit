@@ -221,3 +221,14 @@ const detectMac = () =>
 export function useIsMac(): boolean {
   return useSyncExternalStore(noopSubscribe, detectMac, () => false);
 }
+
+const hydratedSnapshot = () => true;
+const serverSnapshot = () => false;
+
+/**
+ * False during SSR and hydration, true afterwards. Clock-derived values (live
+ * durations, waterfall widths) render only once hydrated so server and client markup match.
+ */
+export function useHydrated(): boolean {
+  return useSyncExternalStore(noopSubscribe, hydratedSnapshot, serverSnapshot);
+}

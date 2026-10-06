@@ -65,9 +65,14 @@ describe('ToolCallTimeline', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('auto-expands failures and shows the error text', () => {
-    render(<ToolCallTimeline parts={[toolPart('output-error')]} />);
+  it('shows the error inline under a failed call, and can auto-expand it', () => {
+    const { unmount } = render(<ToolCallTimeline parts={[toolPart('output-error')]} />);
+    expect(screen.getByRole('button', { name: /search docs/i })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('ENOENT: no such file or directory')).toBeInTheDocument();
+    unmount();
+    render(<ToolCallTimeline parts={[toolPart('output-error')]} expandErrors />);
     expect(screen.getByRole('button', { name: /search docs/i })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('group', { name: 'Input' })).toBeInTheDocument();
     expect(screen.getByText('ENOENT: no such file or directory')).toBeInTheDocument();
   });
 

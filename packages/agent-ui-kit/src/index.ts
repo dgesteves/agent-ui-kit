@@ -62,6 +62,7 @@ export {
 export {
   observeToolTimings,
   useActivityWindow,
+  useHydrated,
   usePrefersReducedMotion,
   useRunTiming,
   useToolTimings,

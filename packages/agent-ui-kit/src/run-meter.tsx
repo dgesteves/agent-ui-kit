@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import type { RunUsage } from './lib/ai';
-import { formatCost, formatDuration, formatRate, formatTokens } from './lib/format';
+import { formatCost, formatDuration, formatTokens } from './lib/format';
 import { useAnimatedNumber } from './lib/hooks';
 import { ArrowDownIcon, ArrowUpIcon } from './lib/icons';
 import { cn } from './lib/utils';
@@ -63,7 +63,7 @@ function Num({ value, format }: { value: number | undefined; format: (n: number)
 /**
  * Token usage, estimated cost and latency for an agent run.
  * `compact` is a single inline strip for headers; `expanded` is a card with a
- * token breakdown bar and derived throughput.
+ * token breakdown bar and the prompt-cache hit rate.
  */
 export function RunMeter({
   usage,
@@ -84,8 +84,8 @@ export function RunMeter({
   const output = usage?.outputTokens;
   const cached = usage?.inputTokenDetails?.cacheReadTokens;
   const reasoning = usage?.outputTokenDetails?.reasoningTokens;
-  const generationMs = durationMs !== undefined && ttftMs !== undefined ? durationMs - ttftMs : undefined;
-  const throughput = output && generationMs && generationMs > 250 ? output / (generationMs / 1000) : undefined;
+  // Share of input tokens served from the provider's prompt cache: the main cost lever for agents.
+  const cacheHit = input && cached !== undefined ? cached / input : undefined;
 
   const summary = [
     `${formatTokens(input)} input tokens`,
@@ -149,7 +149,9 @@ export function RunMeter({
   }
 
   const tokenTotal = (input ?? 0) + (output ?? 0);
-  const inputShare = tokenTotal > 0 ? ((input ?? 0) / tokenTotal) * 100 : 0;
+  // Keep a non-zero segment visible even when it is a tiny share.
+  const inputShare =
+    tokenTotal > 0 ? Math.min(97, Math.max((input ?? 0) > 0 ? 3 : 0, ((input ?? 0) / tokenTotal) * 100)) : 0;
   const label = 'text-xs text-aui-fg-subtle';
   const value = 'text-xl font-semibold tracking-tight text-aui-fg tabular-nums';
 
@@ -225,8 +227,10 @@ export function RunMeter({
           <dd className="font-aui-mono text-aui-fg text-sm tabular-nums">{formatDuration(durationMs)}</dd>
         </div>
         <div>
-          <dt className={label}>Output tok/s</dt>
-          <dd className="font-aui-mono text-aui-fg text-sm tabular-nums">{formatRate(throughput)}</dd>
+          <dt className={label}>Cache hit</dt>
+          <dd className="font-aui-mono text-aui-fg text-sm tabular-nums">
+            {cacheHit !== undefined ? `${Math.round(cacheHit * 100)}%` : '–'}
+          </dd>
         </div>
       </dl>
       {breakdown && (

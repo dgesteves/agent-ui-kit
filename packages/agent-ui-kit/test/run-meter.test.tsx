@@ -49,7 +49,7 @@ describe('RunMeter', () => {
     expect(screen.getByRole('group', { name: 'Run metrics (live)' })).toBeInTheDocument();
   });
 
-  it('expanded: shows totals, breakdown and derived throughput', () => {
+  it('expanded: shows totals, breakdown and cache hit rate', () => {
     render(
       <RunMeter
         variant="expanded"
@@ -67,8 +67,8 @@ describe('RunMeter', () => {
     expect(screen.getByText('18.4k')).toBeInTheDocument();
     expect(screen.getByText('(9.00k cached)')).toBeInTheDocument();
     expect(screen.getByText('(640 reasoning)')).toBeInTheDocument();
-    // 2150 output tokens over (4700 - 400) ms of generation.
-    expect(screen.getByText('500')).toBeInTheDocument();
+    // 9,000 of 16,200 input tokens came from the prompt cache.
+    expect(screen.getByText('56%')).toBeInTheDocument();
   });
 
   it('prefers an explicit cost over the estimate', () => {

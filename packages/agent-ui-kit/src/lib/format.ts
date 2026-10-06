@@ -38,11 +38,6 @@ export function formatCost(usd: number | undefined | null): string {
   return `$${usd.toFixed(2)}`;
 }
 
-export function formatRate(perSecond: number | undefined | null): string {
-  if (perSecond == null || !Number.isFinite(perSecond) || perSecond <= 0) return '–';
-  return perSecond >= 100 ? `${Math.round(perSecond)}` : perSecond.toFixed(1);
-}
-
 /** `read_file` / `readFile` / `read-file` → "Read file". */
 export function humanizeToolName(name: string): string {
   const spaced = name
