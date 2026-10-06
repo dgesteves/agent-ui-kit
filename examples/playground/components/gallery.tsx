@@ -1,0 +1,260 @@
+'use client';
+
+import {
+  AgentMessage,
+  AgentStatus,
+  ApprovalCard,
+  DiffReview,
+  RunMeter,
+  Sources,
+  ToolCallTimeline,
+  type ToolPart,
+} from '@dgesteves/agent-ui-kit';
+import type { UIMessage } from 'ai';
+import { useState, type ReactNode } from 'react';
+import { PRICING, RATELIMIT_UPSTASH, ROUTE_NEW, ROUTE_OLD, WEB_RESULTS } from '@/lib/scenario';
+import { toolMeta } from '@/lib/tools';
+
+const now = Date.now();
+
+const timelineParts = [
+  {
+    type: 'tool-search_code',
+    toolCallId: 'g1',
+    state: 'output-available',
+    input: { query: 'api/chat route handler' },
+    output: { matches: [{ path: 'app/api/chat/route.ts', line: 14 }] },
+  },
+  {
+    type: 'tool-read_file',
+    toolCallId: 'g2',
+    state: 'output-error',
+    input: { path: 'middleware.ts' },
+    errorText: "ENOENT: no such file or directory, open 'middleware.ts'",
+  },
+  {
+    type: 'tool-read_file',
+    toolCallId: 'g3',
+    state: 'output-available',
+    input: { path: 'lib/redis.ts' },
+    output: {
+      path: 'lib/redis.ts',
+      content: "import { Redis } from '@upstash/redis';\n\nexport const redis = Redis.fromEnv();\n",
+    },
+  },
+  {
+    type: 'tool-web_search',
+    toolCallId: 'g4',
+    state: 'input-available',
+    input: { query: 'upstash ratelimit sliding window' },
+  },
+  {
+    type: 'tool-run_command',
+    toolCallId: 'g5',
+    state: 'approval-requested',
+    input: { command: 'pnpm add @upstash/ratelimit' },
+    approval: { id: 'a5' },
+  },
+] as unknown as ToolPart[];
+
+const timelineTimings = {
+  g1: { startedAt: now - 4_200, runningAt: now - 4_000, endedAt: now - 3_280 },
+  g2: { startedAt: now - 3_100, runningAt: now - 3_000, endedAt: now - 2_760 },
+  g3: { startedAt: now - 3_050, runningAt: now - 2_950, endedAt: now - 2_500 },
+  g4: { startedAt: now - 2_300, runningAt: now - 2_100 },
+  g5: { startedAt: now - 600 },
+};
+
+const sources = WEB_RESULTS.map((r, i) => ({
+  type: 'source-url' as const,
+  sourceId: `s${i}`,
+  url: r.url,
+  title: r.title,
+}));
+
+const message: UIMessage = {
+  id: 'gallery-msg',
+  role: 'assistant',
+  parts: [
+    {
+      type: 'reasoning',
+      text: 'The limit has to be checked before `streamText` starts, otherwise a 429 cannot be returned once the stream is open.',
+      state: 'done',
+    },
+    { type: 'text', text: 'I’ll check the route handler and confirm the limiter API first.', state: 'done' },
+    {
+      type: 'tool-read_file',
+      toolCallId: 'm1',
+      state: 'output-available',
+      input: { path: 'app/api/chat/route.ts' },
+      output: { path: 'app/api/chat/route.ts', content: ROUTE_OLD },
+    },
+    {
+      type: 'tool-web_search',
+      toolCallId: 'm2',
+      state: 'output-available',
+      input: { query: 'upstash ratelimit sliding window' },
+      output: { results: WEB_RESULTS.slice(0, 2) },
+    },
+    {
+      type: 'text',
+      text: 'A **sliding window** smooths bursts better than a fixed window [1], and the check belongs at the top of the handler [3].',
+      state: 'done',
+    },
+    ...sources,
+  ],
+};
+
+function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20">
+      <div className="mb-3">
+        <h2 id={`${id}-title`} className="font-mono text-sm font-semibold text-[#e8eaed]">
+          {`<${title} />`}
+        </h2>
+        <p className="mt-1 max-w-2xl text-[13px] text-[#a1a9b4]">{description}</p>
+      </div>
+      <div data-shot={id} className="border-line bg-ink rounded-2xl border p-5 sm:p-6">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+export function Gallery() {
+  const [approval, setApproval] = useState<'pending' | 'approved' | 'denied'>('pending');
+  return (
+    <main className="mx-auto flex w-full max-w-[1000px] flex-col gap-14 px-4 pt-10 pb-24 sm:px-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
+        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
+          Each component in isolation, rendered from AI SDK v7 message parts. Everything here is interactive and
+          keyboard accessible.
+        </p>
+      </div>
+
+      <Section
+        id="agent-status"
+        title="AgentStatus"
+        description="Run state in one pill, announced through a live region."
+      >
+        <div className="flex flex-wrap gap-3">
+          <AgentStatus state="thinking" announce={false} />
+          <AgentStatus state="working" detail="read_file" elapsedMs={3_420} announce={false} />
+          <AgentStatus state="awaiting-approval" detail="run_command" announce={false} />
+          <AgentStatus state="done" elapsedMs={21_800} announce={false} />
+          <AgentStatus state="error" label="Rate limited by provider" announce={false} />
+        </div>
+      </Section>
+
+      <Section
+        id="tool-call-timeline"
+        title="ToolCallTimeline"
+        description="Every tool state with durations, a waterfall, and expandable input and output."
+      >
+        <ToolCallTimeline parts={timelineParts} tools={toolMeta} timings={timelineTimings} />
+      </Section>
+
+      <Section
+        id="approval-card"
+        title="ApprovalCard"
+        description="Human-in-the-loop approval with risk, preview and Y / N shortcuts."
+      >
+        <div className="max-w-2xl">
+          <ApprovalCard
+            toolName="run_command"
+            title="Run command"
+            description="Installs a package from the npm registry and updates package.json and pnpm-lock.yaml."
+            input={{ command: 'pnpm add @upstash/ratelimit', cwd: '~/acme/chat-app' }}
+            risk="high"
+            status={approval}
+            onApprove={() => setApproval('approved')}
+            onDeny={() => setApproval('denied')}
+          />
+          {approval !== 'pending' && (
+            <button
+              type="button"
+              onClick={() => setApproval('pending')}
+              className="mt-3 cursor-pointer text-xs text-[#a1a9b4] underline underline-offset-2 hover:text-[#e8eaed]"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </Section>
+
+      <Section
+        id="diff-review"
+        title="DiffReview"
+        description="Accept or reject agent edits hunk by hunk, unified or split."
+      >
+        <DiffReview
+          files={[
+            { path: 'lib/ratelimit.ts', oldContent: '', newContent: RATELIMIT_UPSTASH },
+            { path: 'app/api/chat/route.ts', oldContent: ROUTE_OLD, newContent: ROUTE_NEW },
+          ]}
+          defaultDecisions={{ 'lib/ratelimit.ts:0': 'accepted', 'app/api/chat/route.ts:2': 'rejected' }}
+          onSubmit={() => {}}
+        />
+      </Section>
+
+      <Section
+        id="run-meter"
+        title="RunMeter"
+        description="Tokens, estimated cost and latency; compact for headers, expanded for panels."
+      >
+        <div className="flex flex-col gap-5">
+          <RunMeter
+            usage={{ inputTokens: 38_660, outputTokens: 2_412, inputTokenDetails: { cacheReadTokens: 28_800 } }}
+            pricing={PRICING}
+            ttftMs={684}
+            durationMs={21_800}
+          />
+          <RunMeter
+            variant="expanded"
+            className="max-w-sm"
+            usage={{
+              inputTokens: 38_660,
+              outputTokens: 2_412,
+              inputTokenDetails: { cacheReadTokens: 28_800 },
+              outputTokenDetails: { reasoningTokens: 96 },
+            }}
+            pricing={PRICING}
+            ttftMs={684}
+            durationMs={21_800}
+            model="mock-agent-1"
+          />
+        </div>
+      </Section>
+
+      <Section
+        id="sources"
+        title="Sources"
+        description="Citations as compact chips or cards; inline [n] markers link to them."
+      >
+        <div className="flex flex-col gap-6">
+          <Sources sources={sources} idPrefix="chips" />
+          <Sources sources={sources} variant="cards" idPrefix="cards" />
+        </div>
+      </Section>
+
+      <Section
+        id="agent-message"
+        title="AgentMessage"
+        description="A whole assistant UIMessage: reasoning, streaming markdown, grouped tool calls and sources."
+      >
+        <AgentMessage message={message} tools={toolMeta} />
+      </Section>
+    </main>
+  );
+}

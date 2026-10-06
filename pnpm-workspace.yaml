@@ -68,3 +68,6 @@ minimumReleaseAgeExclude:
   - radix-ui@1.7.0
   - shadcn@4.21.3
   - typescript-eslint@8.71.1
+  - '@ai-sdk/mcp@2.0.67'
+  - '@ai-sdk/openai@4.0.84'
+  - '@ai-sdk/react@4.0.131'
