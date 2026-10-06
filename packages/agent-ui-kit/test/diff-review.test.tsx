@@ -109,6 +109,17 @@ describe('DiffReview', () => {
     expect(onSubmit).toHaveBeenCalledTimes(2);
   });
 
+  it('submits the new contents when every hunk is accepted, even without context lines', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<(r: DiffReviewResult) => void>();
+    const oldContent = "import a from 'a';\nexport const x = 1;\n";
+    const newContent = "'use server';\nimport a from 'a';\nexport const x = 1;\nexport const y = 2;\n";
+    render(<DiffReview files={[{ path: 'x.ts', oldContent, newContent }]} context={0} onSubmit={onSubmit} />);
+    await user.click(screen.getByRole('button', { name: 'Accept all' }));
+    await user.click(screen.getByRole('button', { name: /^apply/i }));
+    expect(onSubmit.mock.calls[0]![0].files[0]!.content).toBe(newContent);
+  });
+
   it('switches between unified and split layouts', async () => {
     const user = userEvent.setup();
     const { container } = render(<DiffReview files={files} />);

@@ -1,3 +1,4 @@
+import { applyPatch, structuredPatch } from 'diff';
 import { describe, expect, it } from 'vitest';
 import { applyHunks, inferLanguage, parseFileChange } from '../src/lib/diff';
 import { ROUTE_NEW, ROUTE_OLD } from './fixtures';
@@ -93,6 +94,19 @@ describe('applyHunks', () => {
     expect(applyHunks(file, [])).toBe(oldContent);
   });
 
+  it.each([0, 1, 3])('places pure insertions correctly with %i lines of context', (context) => {
+    const oldContent = 'a\nb\nc\n';
+    const newContent = 'a\nb\nX\nc\n';
+    const file = parseFileChange({ path: 'f.ts', oldContent, newContent }, { context });
+    expect(
+      applyHunks(
+        file,
+        file.hunks.map((h) => h.id),
+      ),
+    ).toBe(newContent);
+    expect(applyHunks(file, [])).toBe(oldContent);
+  });
+
   it('applies a subset of hunks', () => {
     const oldContent = Array.from({ length: 40 }, (_, i) => `line ${i}`).join('\n') + '\n';
     const lines = oldContent.split('\n');
@@ -103,5 +117,96 @@ describe('applyHunks', () => {
     const onlySecond = applyHunks(file, [file.hunks[1]!.id]);
     expect(onlySecond).toContain('line 2\n');
     expect(onlySecond).toContain('LINE 35\n');
+  });
+});
+
+/** Deterministic PRNG (LCG), so failures reproduce. */
+function rng(seed: number) {
+  return () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 2 ** 32;
+  };
+}
+
+const VOCAB = ['a', 'b', 'c', 'd', 'e', '', 'f g', 'const x = 1;'];
+
+function randomFile(r: () => number, eol: string): string {
+  const n = Math.floor(r() * 9);
+  if (n === 0) return '';
+  const lines = Array.from({ length: n }, () => VOCAB[Math.floor(r() * VOCAB.length)]!);
+  return lines.join(eol) + (r() < 0.7 ? eol : '');
+}
+
+/** Delete, replace and insert random lines; sometimes flip the trailing newline. */
+function mutate(r: () => number, text: string, eol: string): string {
+  const pick = () => VOCAB[Math.floor(r() * VOCAB.length)]!;
+  const hasEol = text.endsWith(eol);
+  const lines = text === '' ? [] : (hasEol ? text.slice(0, -eol.length) : text).split(eol);
+  const out: string[] = [];
+  for (const line of lines) {
+    const x = r();
+    if (x < 0.15) continue;
+    out.push(x < 0.3 ? pick() : line);
+    if (r() < 0.15) out.push(pick());
+  }
+  if (r() < 0.2) out.unshift(pick());
+  if (out.length === 0) return '';
+  return out.join(eol) + ((r() < 0.5 ? hasEol : !hasEol) ? eol : '');
+}
+
+describe('applyHunks matches jsdiff applyPatch (property test)', () => {
+  for (const context of [0, 1, 3]) {
+    for (const eol of ['\n', '\r\n']) {
+      it(`context ${context}, ${JSON.stringify(eol)} line endings, every subset of hunks`, () => {
+        const r = rng(42 + context * 7 + eol.length);
+        let checked = 0;
+        for (let iter = 0; iter < 2000; iter++) {
+          const oldContent = randomFile(r, eol);
+          const newContent = mutate(r, oldContent, eol);
+          const file = parseFileChange({ path: 'f.ts', oldContent, newContent }, { context });
+          const patch = structuredPatch('f.ts', 'f.ts', oldContent, newContent, undefined, undefined, { context });
+          const raw = patch.hunks;
+          expect(file.hunks).toHaveLength(raw.length);
+          const n = file.hunks.length;
+          const subsets =
+            n <= 4
+              ? Array.from({ length: 1 << n }, (_, m) => [...Array(n).keys()].filter((k) => m & (1 << k)))
+              : Array.from({ length: 8 }, () => [...Array(n).keys()].filter(() => r() < 0.5));
+          for (const subset of subsets) {
+            // The oracle: jsdiff applying the same subset of its own hunks to the original.
+            const expected = applyPatch(oldContent, { ...patch, hunks: subset.map((k) => raw[k]!) });
+            const actual = applyHunks(
+              file,
+              subset.map((k) => file.hunks[k]!.id),
+            );
+            expect({ oldContent, newContent, subset, result: actual }).toEqual({
+              oldContent,
+              newContent,
+              subset,
+              result: expected,
+            });
+            checked++;
+          }
+        }
+        expect(checked).toBeGreaterThan(2000);
+      });
+    }
+  }
+
+  it('numbers every line after the source line it shows', () => {
+    const r = rng(7);
+    for (let iter = 0; iter < 2000; iter++) {
+      for (const context of [0, 1, 3]) {
+        const oldContent = randomFile(r, '\n');
+        const newContent = mutate(r, oldContent, '\n');
+        const file = parseFileChange({ path: 'f.txt', oldContent, newContent }, { context });
+        const oldLines = oldContent.replace(/\n$/, '').split('\n');
+        const newLines = newContent.replace(/\n$/, '').split('\n');
+        for (const line of file.hunks.flatMap((h) => h.lines)) {
+          if (line.oldNumber !== undefined) expect(oldLines[line.oldNumber - 1]).toBe(line.content);
+          if (line.newNumber !== undefined) expect(newLines[line.newNumber - 1]).toBe(line.content);
+        }
+      }
+    }
   });
 });

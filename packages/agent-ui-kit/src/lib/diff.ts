@@ -221,7 +221,9 @@ export function applyHunks(
   let eol = old.eol;
   const hunks = [...file.hunks].sort((a, b) => a.oldStart - b.oldStart);
   for (const hunk of hunks) {
-    const start = hunk.oldLines === 0 ? hunk.oldStart : hunk.oldStart - 1;
+    // jsdiff (structuredPatch and parsePatch alike) reports a pure insertion's `oldStart` as the
+    // 1-based line it goes before, so every hunk starts at index `oldStart - 1`.
+    const start = Math.max(0, hunk.oldStart - 1);
     out.push(...old.lines.slice(cursor, start));
     const take = acceptedSet.has(hunk.id);
     for (const line of hunk.lines) {
