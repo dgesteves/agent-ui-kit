@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatDurationLong, formatTokens } from '../src/lib/format';
+import { formatCost, formatDuration, formatDurationLong, formatTokens } from '../src/lib/format';
 
 describe('formatDuration', () => {
   it.each([
@@ -53,6 +53,34 @@ describe('formatTokens', () => {
       for (let n = base - 60; n < base + 60; n += 0.25) {
         expect(formatTokens(n)).not.toMatch(/^1000$|^10\.00k$|^1000\.0k$/);
       }
+    }
+  });
+});
+
+describe('formatCost', () => {
+  it.each([
+    [0, '$0.00'],
+    [0.0099, '$0.0099'],
+    [0.009996, '$0.010'],
+    [0.0123, '$0.012'],
+    [0.9994, '$0.999'],
+    [0.9996, '$1.00'],
+    [12.5, '$12.50'],
+  ])('%d -> %s', (usd, text) => {
+    expect(formatCost(usd)).toBe(text);
+  });
+
+  it('prints 4 decimals below $0.01, 3 below $1 and 2 above, judged by the printed value', () => {
+    const values: number[] = [];
+    for (const edge of [0.01, 1]) for (let k = -200; k <= 200; k++) values.push(edge + k * edge * 1e-5);
+    for (let usd = 0.0001; usd < 3; usd *= 1.003) values.push(usd);
+    for (const usd of values) {
+      const text = formatCost(usd);
+      const [, digits = ''] = /^\$\d+\.(\d+)$/.exec(text) ?? [];
+      const printed = Number(text.slice(1));
+      const expected = printed < 0.01 ? 4 : printed < 1 ? 3 : 2;
+      expect({ usd, text, decimals: digits.length }).toEqual({ usd, text, decimals: expected });
+      expect(Math.abs(printed - usd)).toBeLessThanOrEqual(0.5 * 10 ** -expected + 1e-12);
     }
   });
 });

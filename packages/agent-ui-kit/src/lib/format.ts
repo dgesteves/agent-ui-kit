@@ -41,8 +41,10 @@ export function formatTokens(n: number | undefined | null): string {
 export function formatCost(usd: number | undefined | null): string {
   if (usd == null || !Number.isFinite(usd)) return '–';
   if (usd === 0) return '$0.00';
-  if (usd < 0.01) return `$${usd.toFixed(4)}`;
-  if (usd < 1) return `$${usd.toFixed(3)}`;
+  const four = usd.toFixed(4);
+  if (Math.abs(Number(four)) < 0.01) return `$${four}`;
+  const three = usd.toFixed(3);
+  if (Math.abs(Number(three)) < 1) return `$${three}`;
   return `$${usd.toFixed(2)}`;
 }
 
