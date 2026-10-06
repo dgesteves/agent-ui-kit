@@ -21,7 +21,7 @@ import {
   type ToolPhase,
 } from './lib/ai';
 import { formatDuration, formatDurationLong, humanizeToolName, summarizeValue } from './lib/format';
-import { useHydrated, useNow, useToolTimings, type ToolTiming, type ToolTimings } from './lib/hooks';
+import { useActivityWindow, useHydrated, useNow, useToolTimings, type ToolTiming, type ToolTimings } from './lib/hooks';
 import { BanIcon, CheckIcon, ChevronIcon, SpinnerIcon, XIcon } from './lib/icons';
 import { JsonView, LiveRegion } from './lib/primitives';
 import { cn } from './lib/utils';
@@ -67,6 +67,12 @@ export interface ToolCallTimelineProps extends Omit<ComponentPropsWithoutRef<'di
   renderExtra?: ((part: ToolPart) => ReactNode) | undefined;
   /** Accessible name for the list. Default "Tool calls". */
   label?: string;
+  /**
+   * Whether the run can still make progress. Default `true`. Pass `false` once it has ended
+   * (stopped, failed, or restored from history): calls still streaming their input or running
+   * then read "Stopped" and their clocks stop, instead of counting up forever.
+   */
+  active?: boolean;
 }
 
 const PHASE_TEXT: Record<ToolPhase, string> = {
@@ -78,8 +84,15 @@ const PHASE_TEXT: Record<ToolPhase, string> = {
   denied: 'text-aui-fg-subtle',
 };
 
-function StatusNode({ phase }: { phase: ToolPhase }) {
+function StatusNode({ phase, interrupted }: { phase: ToolPhase; interrupted: boolean }) {
   const base = 'relative z-10 flex size-6 items-center justify-center rounded-full border';
+  if (interrupted) {
+    return (
+      <span className={cn(base, 'border-aui-border-strong bg-aui-surface-2')}>
+        <span className="bg-aui-fg-subtle size-2 rounded-[2px]" />
+      </span>
+    );
+  }
   switch (phase) {
     case 'streaming':
       return (
@@ -121,6 +134,18 @@ function StatusNode({ phase }: { phase: ToolPhase }) {
   }
 }
 
+/**
+ * Calls that only the model or a tool can still finish. An approved call waiting for the app to send
+ * the continuation (`approval-responded`) is excluded: `useChat` sends it after a render.
+ */
+function isInterruptible(part: ToolPart): boolean {
+  return (
+    part.state === 'input-streaming' ||
+    part.state === 'input-available' ||
+    (part.state === 'output-available' && part.preliminary === true)
+  );
+}
+
 function getDuration(t: ToolTiming | undefined, now: number): number | undefined {
   if (!t?.startedAt) return undefined;
   const from = t.runningAt ?? t.startedAt;
@@ -144,15 +169,20 @@ export function ToolCallTimeline({
   announce = true,
   renderExtra,
   label = 'Tool calls',
+  active = true,
   className,
   ...props
 }: ToolCallTimelineProps) {
   const toolParts = useMemo(() => parts.filter(isToolPart), [parts]);
   const measured = useToolTimings(toolParts);
   const timings = timingsProp ?? measured;
-  const anyActive = toolParts.some((p) => !isSettledPhase(getToolPhase(p)) && getToolPhase(p) !== 'awaiting-approval');
+  const anyActive =
+    active && toolParts.some((p) => !isSettledPhase(getToolPhase(p)) && getToolPhase(p) !== 'awaiting-approval');
   const now = useNow(anyActive, 100);
   const hydrated = useHydrated();
+  // Unsettled calls freeze when the run stops; restored history (never active here) has no end time.
+  const stoppedAt = useActivityWindow(active).endedAt;
+  const clock = active ? now : stoppedAt;
 
   const [uncontrolled, setUncontrolled] = useState<readonly string[]>(defaultExpanded ?? []);
   const userExpanded = expandedProp ?? uncontrolled;
@@ -178,12 +208,13 @@ export function ToolCallTimeline({
     let max = -Infinity;
     for (const part of toolParts) {
       const t = timings[part.toolCallId];
-      if (!t?.startedAt) continue;
+      const end = t?.endedAt ?? clock;
+      if (!t?.startedAt || end === undefined) continue;
       min = Math.min(min, t.startedAt);
-      max = Math.max(max, t.endedAt ?? now);
+      max = Math.max(max, end);
     }
     return Number.isFinite(min) && max > min ? { min, span: max - min } : undefined;
-  }, [toolParts, timings, now]);
+  }, [toolParts, timings, clock]);
 
   // The most recently settled call drives the live announcement.
   const announcement = useMemo(() => {
@@ -237,7 +268,8 @@ export function ToolCallTimeline({
             part={part}
             meta={tools?.[getToolPartName(part)]}
             timing={timings[part.toolCallId]}
-            now={now}
+            clock={clock}
+            interrupted={!active && isInterruptible(part)}
             bounds={waterfall && hydrated ? bounds : undefined}
             hydrated={hydrated}
             isLast={index === toolParts.length - 1}
@@ -256,7 +288,10 @@ interface TimelineItemProps {
   part: ToolPart;
   meta: ToolMeta | undefined;
   timing: ToolTiming | undefined;
-  now: number;
+  /** Current time while the run is active, when it stopped once inactive (undefined if unknown). */
+  clock: number | undefined;
+  /** The run ended while this call was still preparing or running. */
+  interrupted: boolean;
   bounds: { min: number; span: number } | undefined;
   isLast: boolean;
   hydrated: boolean;
@@ -269,7 +304,8 @@ function TimelineItem({
   part,
   meta,
   timing,
-  now,
+  clock,
+  interrupted,
   bounds,
   isLast,
   hydrated,
@@ -283,14 +319,14 @@ function TimelineItem({
   // The SDK sets `input: undefined` until the first input delta arrives.
   const summary =
     part.input === undefined ? undefined : meta?.summary ? meta.summary(part.input, part) : summarizeValue(part.input);
-  const settled = isSettledPhase(phase);
+  const settled = isSettledPhase(phase) || interrupted;
   // Live durations depend on the clock: render them only after hydration.
-  const duration = settled || hydrated ? getDuration(timing, now) : undefined;
+  const end = timing?.endedAt ?? clock;
+  const duration = (settled || hydrated) && end !== undefined ? getDuration(timing, end) : undefined;
 
   let bar: { left: number; width: number } | undefined;
-  if (bounds && timing?.startedAt) {
+  if (bounds && timing?.startedAt && end !== undefined) {
     const left = ((timing.startedAt - bounds.min) / bounds.span) * 100;
-    const end = timing.endedAt ?? now;
     bar = { left, width: Math.max(2, ((end - timing.startedAt) / bounds.span) * 100) };
   }
 
@@ -299,6 +335,7 @@ function TimelineItem({
       data-slot="tool-call"
       data-phase={phase}
       data-state={part.state}
+      data-interrupted={interrupted || undefined}
       className="group/item motion-safe:animate-aui-enter relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3"
     >
       {!isLast && (
@@ -311,7 +348,7 @@ function TimelineItem({
         />
       )}
       <div className="pt-1.5">
-        <StatusNode phase={phase} />
+        <StatusNode phase={phase} interrupted={interrupted} />
       </div>
       <Collapsible.Root open={open} onOpenChange={onOpenChange} className={cn('min-w-0', isLast ? 'pb-0' : 'pb-2')}>
         <Collapsible.Trigger
@@ -331,8 +368,14 @@ function TimelineItem({
             </span>
           )}
           <span className="ml-auto flex shrink-0 items-center gap-2.5 pl-2">
-            <span className={cn('text-xs font-medium', PHASE_TEXT[phase], phase === 'success' && 'sr-only')}>
-              {TOOL_PHASE_LABEL[phase]}
+            <span
+              className={cn(
+                'text-xs font-medium',
+                interrupted ? 'text-aui-fg-subtle' : PHASE_TEXT[phase],
+                phase === 'success' && 'sr-only',
+              )}
+            >
+              {interrupted ? 'Stopped' : TOOL_PHASE_LABEL[phase]}
             </span>
             {bar && (
               <span

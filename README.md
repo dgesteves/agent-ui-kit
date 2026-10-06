@@ -72,7 +72,13 @@ export function AgentRun() {
     <div className="dark flex flex-col gap-4">
       <AgentStatus state={state} detail={detail} elapsedMs={timing.activeMs} />
       {last && (
-        <AgentMessage message={last} streaming={status === 'streaming'} onToolApproval={addToolApprovalResponse} />
+        <AgentMessage
+          message={last}
+          streaming={status === 'streaming'}
+          // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
+          active={state !== 'done' && state !== 'error'}
+          onToolApproval={addToolApprovalResponse}
+        />
       )}
       <RunMeter
         usage={last?.metadata?.usage}
@@ -147,7 +153,7 @@ Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `r
 
 <img src="docs/media/components/tool-call-timeline.png" width="100%" alt="A tool call timeline: Search code done in 720ms; Read file middleware.ts failed in 240ms with an ENOENT error shown inline; Read file lib/redis.ts done in 450ms; Web search running for 3.53s with a cyan waterfall bar; Run command waiting for approval with a magenta bar.">
 
-Every AI SDK v7 tool state (`input-streaming`, `input-available`, `approval-requested`, `approval-responded`, `output-available` including `preliminary`, `output-error`, `output-denied`) with live durations, a waterfall that makes parallel calls visible, and expandable input and output. Failures show their error inline. Calls are disclosure buttons: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd> move between them, and settled calls are announced.
+Every AI SDK v7 tool state (`input-streaming`, `input-available`, `approval-requested`, `approval-responded`, `output-available` including `preliminary`, `output-error`, `output-denied`) with live durations, a waterfall that makes parallel calls visible, and expandable input and output. Failures show their error inline. Calls are disclosure buttons: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd> move between them, and settled calls are announced. Pass `active={false}` once the run has ended (stopped, failed, or restored from history), so calls that never settled read "Stopped" instead of counting up forever.
 
 ```tsx
 <ToolCallTimeline
@@ -253,7 +259,7 @@ Images in text and reasoning do not load unless their host is allowed: a URL in 
 | `text` (`state: 'streaming' \| 'done'`)                        | `Markdown`, repaired while streaming, with a caret and `[n]` citation links                 |
 | `reasoning`                                                    | `Reasoning`: open while streaming, then "Thought for 1.7s"                                  |
 | `tool-*` / `dynamic-tool`, `input-streaming`                   | Timeline row "Preparing", partial input visible                                             |
-| `input-available`                                              | "Running", live duration                                                                    |
+| `input-available`                                              | "Running", live duration ("Stopped" once the run is no longer `active`)                     |
 | `approval-requested` (`approval.id`, `approval.requestReason`) | "Needs approval" + `ToolApprovalCard` → `addToolApprovalResponse({ id, approved, reason })` |
 | `approval-responded`                                           | "Running" if approved, "Denied" if not                                                      |
 | `output-available` (`preliminary: true`)                       | "Running", partial output                                                                   |

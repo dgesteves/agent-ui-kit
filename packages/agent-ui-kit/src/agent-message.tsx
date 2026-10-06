@@ -18,6 +18,12 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   message: Pick<UIMessage, 'id' | 'role' | 'parts'>;
   /** The message is still being generated. Text parts with an explicit `state` take precedence. */
   streaming?: boolean;
+  /**
+   * Whether the run can still make progress, including while it waits on the user. Default `true`.
+   * Pass `false` once it has ended (stopped, failed, or an older message): tool calls that never
+   * settled read "Stopped" instead of running forever. See `ToolCallTimeline`'s `active`.
+   */
+  active?: boolean;
   tools?: Record<string, ToolMeta> | undefined;
   /**
    * Render a tool part yourself. Return `undefined` to use the default timeline,
@@ -56,6 +62,7 @@ type Segment =
 export function AgentMessage({
   message,
   streaming = false,
+  active = true,
   tools,
   renderTool,
   onToolApproval,
@@ -153,6 +160,7 @@ export function AgentMessage({
                 parts={segment.parts}
                 tools={tools}
                 timings={timings}
+                active={active}
                 renderExtra={
                   onToolApproval
                     ? (part) =>
