@@ -294,7 +294,7 @@ The playground does not fake any of this. Its scripted agent is a `ChatTransport
 - **Announcements.** Tool completions and failures, approval decisions, review progress ("Hunk 2 of 4 accepted. 2 remaining.") and agent state changes go through live regions. State announcements are debounced, and only approvals and errors are assertive.
 - **Not color alone.** Every state has an icon and text, diff lines keep their +/− glyphs plus "Added:"/"Removed:" for screen readers, and risk levels are spelled out.
 - **Motion.** All animation is behind `motion-safe`, and the number tweening in `RunMeter` honours `prefers-reduced-motion`.
-- **Contrast.** A unit test parses the theme and enforces 4.5:1 for every text token pair and 3:1 for UI and chart marks, in both themes. The chart colors were run through a color-vision-deficiency check.
+- **Contrast.** A unit test parses the theme and enforces 4.5:1 for text in both themes: every text token on the surfaces it sits on, syntax colors on diff lines and word highlights (composited the way the diff paints its translucent backgrounds), and every text-on-tint class in the components, such as the accepted and rejected badges. UI and chart marks get 3:1. The chart colors were run through a color-vision-deficiency check.
 - **Document outline.** Titles take a `headingLevel`; source lists are labelled lists rather than landmarks, so a long conversation does not flood landmark navigation.
 - **Tested.** Every component has axe checks in Vitest (jsdom). `pnpm a11y` also runs axe in Chrome against the playground at each stage of a run, the gallery and a phone viewport, which covers color contrast with real layout. Both currently report no violations.
 

@@ -18,11 +18,11 @@
   --aui-fg-subtle: #5f6875;
 
   --aui-accent: #0e7490;
-  --aui-accent-fg: #0e7490;
+  --aui-accent-fg: #155e75;
   --aui-on-accent: #ffffff;
 
   --aui-hot: #be185d;
-  --aui-hot-fg: #be185d;
+  --aui-hot-fg: #9d174d;
   --aui-on-hot: #ffffff;
 
   --aui-warn: #b45309;
@@ -31,19 +31,19 @@
   --aui-ring: #0e7490;
 
   --aui-add-bg: rgb(8 145 178 / 0.08);
-  --aui-add-strong: rgb(8 145 178 / 0.22);
+  --aui-add-strong: rgb(8 145 178 / 0.16);
   --aui-del-bg: rgb(190 24 93 / 0.07);
-  --aui-del-strong: rgb(190 24 93 / 0.2);
+  --aui-del-strong: rgb(190 24 93 / 0.14);
 
   /* Data marks (validated: in-band lightness, CVD ΔE ≥ 8 against --aui-surface). */
   --aui-chart-input: #0891b2;
   --aui-chart-output: #db2777;
 
-  --aui-code-keyword: #0e7490;
+  --aui-code-keyword: #155e75;
   --aui-code-string: #9a3412;
-  --aui-code-number: #be185d;
-  --aui-code-comment: #6b7280;
-  --aui-code-punctuation: #5f6875;
+  --aui-code-number: #9d174d;
+  --aui-code-comment: #525b67;
+  --aui-code-punctuation: #4b5563;
 
   --aui-radius: 0.75rem;
   --aui-font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
@@ -76,7 +76,7 @@
   --aui-ring: #67e8f9;
 
   --aui-add-bg: rgb(34 211 238 / 0.08);
-  --aui-add-strong: rgb(34 211 238 / 0.24);
+  --aui-add-strong: rgb(34 211 238 / 0.14);
   --aui-del-bg: rgb(240 70 138 / 0.08);
   --aui-del-strong: rgb(240 70 138 / 0.26);
 
@@ -86,6 +86,6 @@
   --aui-code-keyword: #67e8f9;
   --aui-code-string: #f5c27a;
   --aui-code-number: #f9a8d4;
-  --aui-code-comment: #8b94a0;
-  --aui-code-punctuation: #8b94a0;
+  --aui-code-comment: #a1a9b4;
+  --aui-code-punctuation: #a1a9b4;
 }
