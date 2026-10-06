@@ -97,3 +97,22 @@ describe('server/client module boundaries', () => {
     }
   });
 });
+
+describe('ai peer range', () => {
+  const pkg = JSON.parse(readFileSync(join(src, '../package.json'), 'utf8')) as {
+    peerDependencies: Record<string, string>;
+  };
+  const range = pkg.peerDependencies.ai!;
+
+  it('requires a release that settles automatically denied tool calls (7.0.102)', () => {
+    // Before 7.0.102 a call that a toolApproval policy denied could stay unsettled and read "Running".
+    const [, minor, patch] = /^\^7\.(\d+)\.(\d+)$/.exec(range) ?? [];
+    expect({ range, ok: Number(minor) > 0 || Number(patch) >= 102 }).toEqual({ range, ok: true });
+  });
+
+  it('is the range the READMEs state', () => {
+    for (const readme of ['../README.md', '../../../README.md']) {
+      expect(readFileSync(join(src, readme), 'utf8')).toContain(`ai@${range}`);
+    }
+  });
+});
