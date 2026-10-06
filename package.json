@@ -1,0 +1,41 @@
+{
+  "name": "agent-ui-kit-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "pnpm build:lib && pnpm registry:build && pnpm build:playground",
+    "build:lib": "pnpm --filter @dgesteves/agent-ui-kit build",
+    "build:playground": "pnpm --filter playground build",
+    "dev": "pnpm --filter @dgesteves/agent-ui-kit build && pnpm --parallel --filter @dgesteves/agent-ui-kit --filter playground dev",
+    "registry:build": "shadcn build registry.json --output examples/playground/public/r",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @dgesteves/agent-ui-kit test",
+    "media": "node scripts/capture-media.mjs",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build:lib && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "playwright-core": "^1.63.0",
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "shadcn": "^4.21.3",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}

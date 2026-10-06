@@ -1,0 +1,8 @@
+dist
+.next
+node_modules
+pnpm-lock.yaml
+pnpm-workspace.yaml
+examples/playground/public/r
+docs/media
+.changeset/*.md

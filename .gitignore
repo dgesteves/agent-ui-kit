@@ -1,0 +1,13 @@
+node_modules
+dist
+.next
+out
+coverage
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+.turbo
+next-env.d.ts
+/examples/playground/public/r
+/.media-tmp
