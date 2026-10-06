@@ -33,7 +33,7 @@ Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCa
 
 Components and hooks carry their own `'use client'` directive. The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
 
-Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^7` (the kit imports its types only).
+Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^7.0.82` (the kit imports its types only; 7.0.82 added `approval.requestReason`).
 
 Documentation, the playground, the shadcn registry and design notes: [github.com/dgesteves/agent-ui-kit](https://github.com/dgesteves/agent-ui-kit).
 
