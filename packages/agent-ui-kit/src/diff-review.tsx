@@ -20,7 +20,7 @@ import { mergeTokensWithSegments, TOKEN_CLASS, tokenizeLine } from './lib/highli
 import { useIsMac } from './lib/hooks';
 import { CheckIcon, UndoIcon, XIcon } from './lib/icons';
 import { Kbd, LiveRegion } from './lib/primitives';
-import { cn, hasModifier, isTypingTarget } from './lib/utils';
+import { cn, hasModifier, isTypingTarget, type HeadingLevel } from './lib/utils';
 
 export type { FileChange };
 export type HunkDecision = 'pending' | 'accepted' | 'rejected';
@@ -61,6 +61,8 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
   context?: number;
   /** After accepting or rejecting with the keyboard, move to the next pending hunk. Default `true`. */
   autoAdvance?: boolean;
+  /** Heading level for the title, to fit your document outline. Default 3. */
+  headingLevel?: HeadingLevel;
 }
 
 interface FlatHunk {
@@ -120,9 +122,11 @@ export function DiffReview({
   readOnly = false,
   context = 3,
   autoAdvance = true,
+  headingLevel = 3,
   className,
   ...props
 }: DiffReviewProps) {
+  const Heading = `h${headingLevel}` as const;
   const parsed = useMemo(() => files.map((f) => parseFileChange(f, { context })), [files, context]);
   const flat = useMemo<FlatHunk[]>(() => {
     const list: FlatHunk[] = [];
@@ -253,7 +257,7 @@ export function DiffReview({
     >
       <div className="border-aui-border flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-aui-fg text-sm font-semibold">{title}</h3>
+          <Heading className="text-aui-fg text-sm font-semibold">{title}</Heading>
           <p className="font-aui-mono text-aui-fg-subtle mt-0.5 text-xs">
             {parsed.length} {parsed.length === 1 ? 'file' : 'files'} · {flat.length}{' '}
             {flat.length === 1 ? 'hunk' : 'hunks'} · <span className="text-aui-accent-fg">+{additions}</span>{' '}
@@ -580,10 +584,10 @@ function UnifiedRow({ line, language, rejected }: { line: DiffLine; language: st
   const sign = SIGN[line.type];
   return (
     <div data-line={line.type} className={cn('flex', ROW_BG[line.type])}>
-      <span aria-hidden="true" className="text-aui-fg-subtle/70 w-11 shrink-0 pr-2 text-right select-none">
+      <span aria-hidden="true" className="text-aui-fg-subtle w-11 shrink-0 pr-2 text-right select-none">
         {line.oldNumber ?? ''}
       </span>
-      <span aria-hidden="true" className="text-aui-fg-subtle/70 w-11 shrink-0 pr-2 text-right select-none">
+      <span aria-hidden="true" className="text-aui-fg-subtle w-11 shrink-0 pr-2 text-right select-none">
         {line.newNumber ?? ''}
       </span>
       <span aria-hidden="true" className={cn('w-5 shrink-0 text-center select-none', sign.className)}>
@@ -634,7 +638,7 @@ function SplitCell({
   const sign = SIGN[line.type];
   return (
     <div data-line={line.type} aria-hidden={hidden || undefined} className={cn('flex min-w-0', ROW_BG[line.type])}>
-      <span aria-hidden="true" className="text-aui-fg-subtle/70 w-10 shrink-0 pr-2 text-right select-none">
+      <span aria-hidden="true" className="text-aui-fg-subtle w-10 shrink-0 pr-2 text-right select-none">
         {number ?? ''}
       </span>
       <span aria-hidden="true" className={cn('w-4 shrink-0 text-center select-none', sign.className)}>

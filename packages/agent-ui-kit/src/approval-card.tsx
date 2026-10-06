@@ -12,7 +12,7 @@ import { humanizeToolName } from './lib/format';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
 import { useIsMac } from './lib/hooks';
-import { cn, hasModifier, isTypingTarget } from './lib/utils';
+import { cn, hasModifier, isTypingTarget, type HeadingLevel } from './lib/utils';
 import type { RiskLevel, ToolMeta } from './tool-call-timeline';
 
 export type { RiskLevel };
@@ -45,6 +45,8 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   allowReason?: boolean;
   approveLabel?: string;
   denyLabel?: string;
+  /** Heading level for the title, to fit your document outline. Default 3. */
+  headingLevel?: HeadingLevel;
 }
 
 const RISK: Record<RiskLevel, { label: string; badge: string; card: string; icon: string }> = {
@@ -115,9 +117,11 @@ export function ApprovalCard({
   allowReason = true,
   approveLabel = 'Approve',
   denyLabel = 'Deny',
+  headingLevel = 3,
   className,
   ...props
 }: ApprovalCardProps) {
+  const Heading = `h${headingLevel}` as const;
   const ids = useId();
   const titleId = `${ids}-title`;
   const descId = `${ids}-desc`;
@@ -253,26 +257,28 @@ export function ApprovalCard({
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-aui-mono text-aui-hot-fg text-[10.5px] font-medium tracking-[0.08em] uppercase">
-                  Approval required
-                </p>
-                <h3 id={titleId} className="text-aui-fg mt-0.5 text-[15px] leading-snug font-semibold">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-aui-mono text-aui-hot-fg pt-0.5 text-[10.5px] font-medium tracking-[0.08em] uppercase">
+                    Approval required
+                  </p>
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
+                      r.badge,
+                    )}
+                  >
+                    {r.label}
+                  </span>
+                </div>
+                <Heading id={titleId} className="text-aui-fg -mt-0.5 text-[15px] leading-snug font-semibold">
                   {heading}
-                </h3>
+                </Heading>
                 {description && (
                   <p id={descId} className="text-aui-fg-muted mt-1 text-[13px] leading-relaxed">
                     {description}
                   </p>
                 )}
               </div>
-              <span
-                className={cn(
-                  'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
-                  r.badge,
-                )}
-              >
-                {r.label}
-              </span>
             </div>
 
             {preview ?? <DefaultPreview input={input} />}
@@ -315,44 +321,48 @@ export function ApprovalCard({
                   </span>
                 </p>
               )}
-              {allowReason && !reasonOpen && (
-                <button
-                  type="button"
-                  onClick={openReason}
-                  className="text-aui-fg-muted hover:text-aui-fg focus-visible:outline-aui-ring cursor-pointer rounded-md px-2 py-1.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
-                >
-                  Deny with feedback
-                </button>
-              )}
-              <button
-                type="button"
-                data-slot="approval-deny"
-                aria-keyshortcuts={shortcuts ? 'N' : undefined}
-                onClick={() => deny(reasonOpen ? reasonText : undefined)}
-                className="border-aui-border-strong bg-aui-surface-2 text-aui-fg hover:border-aui-fg-subtle hover:bg-aui-bg focus-visible:outline-aui-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                {reasonOpen ? 'Send denial' : denyLabel}
-                {shortcuts && !reasonOpen && <Kbd aria-hidden="true">N</Kbd>}
-              </button>
-              <button
-                type="button"
-                data-slot="approval-approve"
-                aria-keyshortcuts={shortcuts ? `Y ${mac ? 'Meta' : 'Control'}+Enter` : undefined}
-                onClick={approve}
-                className={cn(
-                  'focus-visible:outline-aui-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-semibold transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2',
-                  confirming
-                    ? 'bg-aui-hot text-aui-on-hot hover:bg-aui-hot/90'
-                    : 'bg-aui-accent text-aui-on-accent hover:bg-aui-accent/90 shadow-[0_0_0_1px_color-mix(in_oklab,var(--aui-accent)_40%,transparent),0_6px_20px_-8px_var(--aui-accent)]',
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                {allowReason && !reasonOpen && (
+                  <button
+                    type="button"
+                    onClick={openReason}
+                    className="text-aui-fg-muted hover:text-aui-fg focus-visible:outline-aui-ring cursor-pointer rounded-md px-2 py-1.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
+                  >
+                    Deny with feedback
+                  </button>
                 )}
-              >
-                {confirming ? 'Confirm approval' : approveLabel}
-                {shortcuts && (
-                  <Kbd aria-hidden="true" className="border-current/25 bg-transparent text-current/80">
-                    Y
-                  </Kbd>
-                )}
-              </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-slot="approval-deny"
+                    aria-keyshortcuts={shortcuts ? 'N' : undefined}
+                    onClick={() => deny(reasonOpen ? reasonText : undefined)}
+                    className="border-aui-border-strong bg-aui-surface-2 text-aui-fg hover:border-aui-fg-subtle hover:bg-aui-bg focus-visible:outline-aui-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+                  >
+                    {reasonOpen ? 'Send denial' : denyLabel}
+                    {shortcuts && !reasonOpen && <Kbd aria-hidden="true">N</Kbd>}
+                  </button>
+                  <button
+                    type="button"
+                    data-slot="approval-approve"
+                    aria-keyshortcuts={shortcuts ? `Y ${mac ? 'Meta' : 'Control'}+Enter` : undefined}
+                    onClick={approve}
+                    className={cn(
+                      'focus-visible:outline-aui-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-semibold transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2',
+                      confirming
+                        ? 'bg-aui-hot text-aui-on-hot hover:bg-aui-hot/90'
+                        : 'bg-aui-accent text-aui-on-accent hover:bg-aui-accent/90 shadow-[0_0_0_1px_color-mix(in_oklab,var(--aui-accent)_40%,transparent),0_6px_20px_-8px_var(--aui-accent)]',
+                    )}
+                  >
+                    {confirming ? 'Confirm approval' : approveLabel}
+                    {shortcuts && (
+                      <Kbd aria-hidden="true" className="border-current/25 bg-transparent text-current/80">
+                        Y
+                      </Kbd>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </>
@@ -364,9 +374,9 @@ export function ApprovalCard({
             <BanIcon size={15} className="text-aui-hot-fg shrink-0" />
           )}
           <span className="text-aui-fg font-semibold">{status === 'approved' ? 'Approved' : 'Denied'}</span>
-          <h3 id={titleId} className="text-aui-fg-muted min-w-0 truncate">
+          <Heading id={titleId} className="text-aui-fg-muted min-w-0 truncate">
             {heading}
-          </h3>
+          </Heading>
           {reason && <span className="text-aui-fg-subtle min-w-0 truncate">· {reason}</span>}
         </div>
       )}

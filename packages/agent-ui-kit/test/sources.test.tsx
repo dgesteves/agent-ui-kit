@@ -23,7 +23,7 @@ const sources = [
 describe('Sources', () => {
   it('renders numbered chips that open in a new tab', () => {
     render(<Sources sources={sources} />);
-    expect(screen.getByRole('navigation', { name: 'Sources' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Sources' })).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /Ratelimit overview/ });
     expect(link).toHaveAttribute('href', sources[0]!.url);
     expect(link).toHaveAttribute('target', '_blank');
@@ -56,7 +56,7 @@ describe('Sources', () => {
 
   it('can hide the visible heading while keeping the accessible name', () => {
     render(<Sources sources={sources} label={null} />);
-    expect(screen.getByRole('navigation', { name: 'Sources' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Sources' })).toBeInTheDocument();
     expect(screen.queryByText(/^Sources/)).not.toBeInTheDocument();
   });
 

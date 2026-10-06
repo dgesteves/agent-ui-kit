@@ -71,4 +71,4 @@ export {
   type ToolTimings,
 } from './lib/hooks';
 export { formatCost, formatDuration, formatTokens, humanizeToolName } from './lib/format';
-export { cn } from './lib/utils';
+export { cn, type HeadingLevel } from './lib/utils';

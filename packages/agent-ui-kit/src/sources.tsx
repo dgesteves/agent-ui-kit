@@ -26,7 +26,7 @@ export function toSourceItem(source: SourcePart | SourceItem): SourceItem {
   return source as SourceItem;
 }
 
-export interface SourcesProps extends Omit<ComponentPropsWithoutRef<'nav'>, 'children'> {
+export interface SourcesProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   sources: ReadonlyArray<SourcePart | SourceItem>;
   variant?: 'chips' | 'cards';
   /** Visible heading. Default "Sources"; pass `null` to hide it (it stays as the accessible name). */
@@ -70,20 +70,23 @@ export function Sources({
   if (items.length === 0) return null;
   const name = label ?? 'Sources';
   return (
-    <nav
+    <div
       data-aui
       data-slot="sources"
       data-variant={variant}
-      aria-label={name}
       className={cn('font-aui-sans text-aui-fg', className)}
       {...props}
     >
       {label !== null && (
         <p className="font-aui-mono text-aui-fg-subtle mb-2 text-[10.5px] font-medium tracking-[0.08em] uppercase">
-          {label} <span className="text-aui-fg-subtle/80">· {items.length}</span>
+          {label} <span className="text-aui-fg-subtle">· {items.length}</span>
         </p>
       )}
-      <ol className={cn(variant === 'chips' ? 'flex flex-wrap gap-1.5' : 'grid grid-cols-1 gap-2 sm:grid-cols-2')}>
+      {/* A labelled list rather than a nav landmark: a conversation can hold many source lists. */}
+      <ol
+        aria-label={name}
+        className={cn(variant === 'chips' ? 'flex flex-wrap gap-1.5' : 'grid grid-cols-1 gap-2 sm:grid-cols-2')}
+      >
         {items.map((item, i) => {
           const n = i + 1;
           const host = item.url ? getHostname(item.url) : (item.filename ?? item.mediaType ?? 'Document');
@@ -138,6 +141,6 @@ export function Sources({
           );
         })}
       </ol>
-    </nav>
+    </div>
   );
 }

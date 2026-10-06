@@ -3,7 +3,7 @@ import type { RunUsage } from './lib/ai';
 import { formatCost, formatDuration, formatTokens } from './lib/format';
 import { useAnimatedNumber } from './lib/hooks';
 import { ArrowDownIcon, ArrowUpIcon } from './lib/icons';
-import { cn } from './lib/utils';
+import { cn, type HeadingLevel } from './lib/utils';
 
 export type { RunUsage };
 
@@ -52,6 +52,8 @@ export interface RunMeterProps extends Omit<ComponentPropsWithoutRef<'div'>, 'ch
   variant?: 'compact' | 'expanded';
   /** Heading for the expanded variant. Default "Run". */
   title?: ReactNode;
+  /** Heading level for the expanded variant's title. Default 3. */
+  headingLevel?: HeadingLevel;
 }
 
 function Num({ value, format }: { value: number | undefined; format: (n: number) => string }) {
@@ -75,9 +77,11 @@ export function RunMeter({
   model,
   variant = 'compact',
   title = 'Run',
+  headingLevel = 3,
   className,
   ...props
 }: RunMeterProps) {
+  const Heading = `h${headingLevel}` as const;
   const breakdown = pricing ? estimateCost(usage, pricing) : undefined;
   const totalCost = cost ?? breakdown?.total;
   const input = usage?.inputTokens;
@@ -164,7 +168,7 @@ export function RunMeter({
       {...props}
     >
       <div className="mb-4 flex items-center gap-2">
-        <h3 className="text-aui-fg text-[13px] font-semibold">{title}</h3>
+        <Heading className="text-aui-fg text-[13px] font-semibold">{title}</Heading>
         {live && (
           <span className="bg-aui-accent/10 text-aui-accent-fg inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">
             <span className="bg-aui-accent size-1.5 rounded-full motion-safe:animate-pulse" />

@@ -23,3 +23,6 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 export function hasModifier(event: { altKey: boolean; ctrlKey: boolean; metaKey: boolean }) {
   return event.altKey || event.ctrlKey || event.metaKey;
 }
+
+/** Heading levels a component title can render as. */
+export type HeadingLevel = 2 | 3 | 4 | 5 | 6;

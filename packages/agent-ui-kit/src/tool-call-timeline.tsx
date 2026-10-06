@@ -217,7 +217,12 @@ export function ToolCallTimeline({
   if (toolParts.length === 0) return null;
 
   return (
-    <div data-aui data-slot="tool-call-timeline" className={cn('font-aui-sans text-aui-fg', className)} {...props}>
+    <div
+      data-aui
+      data-slot="tool-call-timeline"
+      className={cn('font-aui-sans text-aui-fg @container', className)}
+      {...props}
+    >
       {/* Arrow-key navigation between the disclosure buttons, as in the WAI-ARIA accordion pattern. */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <ol ref={listRef} aria-label={label} onKeyDown={onKeyDown} className="relative flex flex-col">
@@ -313,7 +318,10 @@ function TimelineItem({
           )}
           <span className="text-aui-fg shrink-0 text-[13px] font-medium">{label}</span>
           {summary !== undefined && summary !== null && summary !== '' && (
-            <span className="font-aui-mono text-aui-fg-muted min-w-0 truncate text-xs">{summary}</span>
+            // In narrow containers the summary is visually hidden but stays in the button's accessible name.
+            <span className="font-aui-mono text-aui-fg-muted sr-only min-w-0 text-xs @md:not-sr-only @md:truncate">
+              {summary}
+            </span>
           )}
           <span className="ml-auto flex shrink-0 items-center gap-2.5 pl-2">
             <span className={cn('text-xs font-medium', PHASE_TEXT[phase], phase === 'success' && 'sr-only')}>

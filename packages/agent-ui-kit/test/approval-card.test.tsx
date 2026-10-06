@@ -113,6 +113,11 @@ describe('ApprovalCard', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('renders its title at the requested heading level', () => {
+    setup({ headingLevel: 2 });
+    expect(screen.getByRole('heading', { level: 2, name: 'Run command' })).toBeInTheDocument();
+  });
+
   it('exposes shortcuts to assistive tech', () => {
     setup();
     expect(screen.getByRole('button', { name: /^approve/i })).toHaveAttribute('aria-keyshortcuts', 'Y Control+Enter');

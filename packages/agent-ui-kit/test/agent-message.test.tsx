@@ -32,7 +32,7 @@ describe('AgentMessage', () => {
         .getAllByRole('listitem')
         .filter((li) => li.dataset.slot === 'tool-call'),
     ).toHaveLength(3);
-    expect(within(article).getByRole('navigation', { name: 'Sources' })).toBeInTheDocument();
+    expect(within(article).getByRole('list', { name: 'Sources' })).toBeInTheDocument();
   });
 
   it('links inline citations to the message sources', () => {
