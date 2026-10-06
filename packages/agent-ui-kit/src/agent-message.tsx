@@ -39,8 +39,9 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   showSources?: boolean;
   sourcesVariant?: 'chips' | 'cards';
   /**
-   * Hosts that images in text and reasoning may load from, e.g. `['images.example.com']`;
-   * `'*'` allows every image. Default: none, so other images render as links.
+   * Where images in text and reasoning may load from: host names, `'self'` for relative URLs, or
+   * `'*'` for every image. Default: none, so other images render as links. See
+   * `MarkdownProps.allowedImageHosts`.
    */
   allowedImageHosts?: readonly string[] | undefined;
   /** Externally measured tool timings. Measured client-side when omitted. */

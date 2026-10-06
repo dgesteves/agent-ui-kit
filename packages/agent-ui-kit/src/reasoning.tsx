@@ -17,7 +17,7 @@ export interface ReasoningProps extends Omit<ComponentPropsWithoutRef<'div'>, 'c
   defaultOpen?: boolean;
   open?: boolean | undefined;
   onOpenChange?: ((open: boolean) => void) | undefined;
-  /** Hosts that images in the reasoning may load from. See `MarkdownProps.allowedImageHosts`. */
+  /** Where images in the reasoning may load from: host names, `'self'` or `'*'`. See `MarkdownProps.allowedImageHosts`. */
   allowedImageHosts?: readonly string[] | undefined;
 }
 

