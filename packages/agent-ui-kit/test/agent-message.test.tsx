@@ -100,8 +100,9 @@ describe('AgentMessage', () => {
     const { container } = render(
       <AgentMessage
         streaming
+        allowedImageHosts={['img.test']}
         message={assistant([
-          { type: 'reasoning', text: 'look ![a](/a.png)', state: 'streaming' },
+          { type: 'reasoning', text: 'look ![a](https://img.test/a.png)', state: 'streaming' },
           { type: 'text', text: '## Summary\n\nDone.\n\n---\n', state: 'streaming' },
         ])}
       />,
@@ -110,6 +111,22 @@ describe('AgentMessage', () => {
     errors.mockRestore();
     expect(container.querySelector('hr')?.childNodes).toHaveLength(0);
     expect(container.querySelector('img')?.childNodes).toHaveLength(0);
+  });
+
+  it('loads images in text and reasoning only from allowed hosts', async () => {
+    const parts: UIMessage['parts'] = [
+      { type: 'reasoning', text: '![r](https://img.test/r.png) ![x](https://attacker.example/r.png)', state: 'done' },
+      { type: 'text', text: '![t](https://img.test/t.png) ![y](https://attacker.example/t.png)', state: 'done' },
+    ];
+    const { container, rerender } = render(<AgentMessage message={assistant(parts)} />);
+    await userEvent.click(screen.getByRole('button', { name: /reasoning/i }));
+    expect(container.querySelectorAll('a[href^="https://"]')).toHaveLength(4);
+    expect(container.querySelector('img')).toBeNull();
+    rerender(<AgentMessage message={assistant(parts)} allowedImageHosts={['img.test']} />);
+    expect([...container.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual([
+      'https://img.test/r.png',
+      'https://img.test/t.png',
+    ]);
   });
 
   it('has no axe violations', async () => {

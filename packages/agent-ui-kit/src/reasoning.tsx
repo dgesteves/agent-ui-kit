@@ -17,6 +17,8 @@ export interface ReasoningProps extends Omit<ComponentPropsWithoutRef<'div'>, 'c
   defaultOpen?: boolean;
   open?: boolean | undefined;
   onOpenChange?: ((open: boolean) => void) | undefined;
+  /** Hosts that images in the reasoning may load from. See `MarkdownProps.allowedImageHosts`. */
+  allowedImageHosts?: readonly string[] | undefined;
 }
 
 /**
@@ -31,6 +33,7 @@ export function Reasoning({
   defaultOpen,
   open: openProp,
   onOpenChange,
+  allowedImageHosts,
   className,
   ...props
 }: ReasoningProps) {
@@ -87,7 +90,11 @@ export function Reasoning({
       </Collapsible.Trigger>
       <Collapsible.Content className="data-[state=closed]:motion-safe:animate-aui-collapse data-[state=open]:motion-safe:animate-aui-expand overflow-hidden">
         <div className="border-aui-border-strong mt-1.5 mb-1 border-l-2 py-0.5 pl-3.5">
-          <Markdown streaming={streaming} className="text-aui-fg-muted text-[13px] leading-relaxed">
+          <Markdown
+            streaming={streaming}
+            allowedImageHosts={allowedImageHosts}
+            className="text-aui-fg-muted text-[13px] leading-relaxed"
+          >
             {text}
           </Markdown>
         </div>

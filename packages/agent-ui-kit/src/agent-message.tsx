@@ -32,6 +32,11 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   renderData?: ((part: DataPart) => ReactNode) | undefined;
   showSources?: boolean;
   sourcesVariant?: 'chips' | 'cards';
+  /**
+   * Hosts that images in text and reasoning may load from, e.g. `['images.example.com']`;
+   * `'*'` allows every image. Default: none, so other images render as links.
+   */
+  allowedImageHosts?: readonly string[] | undefined;
   /** Externally measured tool timings. Measured client-side when omitted. */
   timings?: ToolTimings | undefined;
 }
@@ -58,6 +63,7 @@ export function AgentMessage({
   renderData,
   showSources = true,
   sourcesVariant = 'chips',
+  allowedImageHosts,
   timings: timingsProp,
   className,
   ...props
@@ -126,12 +132,20 @@ export function AgentMessage({
                 streaming={segment.streaming}
                 citations={sources.length}
                 citationPrefix={sourcePrefix}
+                allowedImageHosts={allowedImageHosts}
               >
                 {segment.text}
               </Markdown>
             );
           case 'reasoning':
-            return <Reasoning key={segment.key} text={segment.text} streaming={segment.streaming} />;
+            return (
+              <Reasoning
+                key={segment.key}
+                text={segment.text}
+                streaming={segment.streaming}
+                allowedImageHosts={allowedImageHosts}
+              />
+            );
           case 'tools':
             return (
               <ToolCallTimeline

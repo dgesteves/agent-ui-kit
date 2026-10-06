@@ -78,6 +78,13 @@ export const FileIcon = (p: IconProps) => (
     <path d="M14 3.5V8h4.5" />
   </Svg>
 );
+export const ImageIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <circle cx="9" cy="9" r="2" />
+    <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+  </Svg>
+);
 export const ToolIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M13 3 5.5 13.5h6L10.5 21 18.5 10.5h-6L13 3Z" />

