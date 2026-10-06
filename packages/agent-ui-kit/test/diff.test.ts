@@ -45,6 +45,50 @@ describe('parseFileChange', () => {
     expect(del.segments?.map((s) => s.text).join('')).toBe(del.content);
   });
 
+  describe('word-level highlights on long lines', () => {
+    /** A long single-line JSON object, as in a minified data file. */
+    const json = (n: number, seed: number) => {
+      let s = seed;
+      const out: string[] = [];
+      for (let i = 0; i < n; i++) {
+        s = (s * 1103515245 + 12345) >>> 0;
+        out.push(`"k${s % 5000}":${s % 97}`);
+      }
+      return `{${out.join(',')}}\n`;
+    };
+    const segmentsOf = (file: ReturnType<typeof parseFileChange>) =>
+      file.hunks.flatMap((h) => h.lines).filter((l) => l.segments);
+
+    it('skips them for rewritten long lines instead of freezing the page', () => {
+      const start = performance.now();
+      const file = parseFileChange({ path: 'data.json', oldContent: json(10_000, 1), newContent: json(10_000, 2) });
+      expect(performance.now() - start).toBeLessThan(500);
+      expect(file.hunks[0]!.lines.map((l) => l.type)).toEqual(['del', 'add']);
+      expect(segmentsOf(file)).toEqual([]);
+    });
+
+    it('bounds the work on rewritten lines below the length cap too', () => {
+      const lines = (seed: number) => [1, 2, 3, 4, 5].map((i) => json(900, seed * 10 + i)).join('');
+      expect(lines(1).split('\n')[0]!.length).toBeLessThan(10_000);
+      const start = performance.now();
+      const file = parseFileChange({ path: 'data.json', oldContent: lines(1), newContent: lines(2) });
+      expect(performance.now() - start).toBeLessThan(500);
+      expect(file.hunks[0]!.deletions).toBe(5);
+      expect(segmentsOf(file)).toEqual([]);
+    });
+
+    it('keeps them for a small edit in a long line', () => {
+      const oldContent = json(400, 1);
+      const key = /"(k\d+)"/.exec(oldContent)![1]!;
+      const newContent = oldContent.replace(`"${key}"`, `"renamed_${key}"`);
+      expect(oldContent.length).toBeGreaterThan(4_000);
+      const file = parseFileChange({ path: 'data.json', oldContent, newContent });
+      const [del, add] = segmentsOf(file);
+      expect(del!.segments!.filter((s) => s.changed).map((s) => s.text)).toEqual([key]);
+      expect(add!.segments!.filter((s) => s.changed).map((s) => s.text)).toEqual([`renamed_${key}`]);
+    });
+  });
+
   it('detects added and deleted files', () => {
     expect(parseFileChange({ path: 'new.ts', oldContent: '', newContent: 'a\n' }).status).toBe('added');
     expect(parseFileChange({ path: 'old.ts', oldContent: 'a\n', newContent: '' }).status).toBe('deleted');

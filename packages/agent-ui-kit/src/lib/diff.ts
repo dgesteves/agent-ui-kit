@@ -103,6 +103,14 @@ function toDiffLines(hunk: StructuredPatchHunk): DiffLine[] {
   return lines;
 }
 
+/*
+ * Word-level diffing is quadratic in the worst case: two rewritten 46k-character lines took 13 s.
+ * Lines past these limits get no word highlights. Both are deterministic (unlike a timeout), so the
+ * server and the client always agree. A line edited in more than 100 places is mostly new anyway.
+ */
+const WORD_DIFF_MAX_LINE = 10_000;
+const WORD_DIFF_MAX_EDITS = 100;
+
 /**
  * For each run of deletions immediately followed by the same number of additions,
  * compute word-level segments so the UI can highlight what changed inside a line.
@@ -124,7 +132,9 @@ function pairWordSegments(lines: DiffLine[]) {
       for (let k = 0; k < dels; k++) {
         const del = lines[i + k]!;
         const add = lines[delEnd + k]!;
-        const changes = diffWordsWithSpace(del.content, add.content);
+        if (Math.max(del.content.length, add.content.length) > WORD_DIFF_MAX_LINE) continue;
+        const changes = diffWordsWithSpace(del.content, add.content, { maxEditLength: WORD_DIFF_MAX_EDITS });
+        if (!changes) continue;
         const unchanged = changes.filter((c) => !c.added && !c.removed).reduce((n, c) => n + c.value.length, 0);
         // Only highlight when the lines are actually similar; otherwise it is just noise.
         if (unchanged / Math.max(del.content.length, add.content.length, 1) < 0.4) continue;
