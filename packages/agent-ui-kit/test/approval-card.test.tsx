@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -85,6 +85,19 @@ describe('ApprovalCard', () => {
     expect(onDeny).not.toHaveBeenCalled();
     await user.keyboard('{Enter}');
     expect(onDeny).toHaveBeenCalledWith('Use the existing Redis client');
+  });
+
+  it('does not send the denial on the Enter that commits an IME composition', async () => {
+    const { user, onDeny } = setup();
+    await user.click(screen.getByRole('button', { name: 'Deny with feedback' }));
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'にほんご' } });
+    fireEvent.keyDown(textarea, { key: 'Enter', keyCode: 229, isComposing: true });
+    // Safari reports the committing keydown with isComposing false but keyCode 229.
+    fireEvent.keyDown(textarea, { key: 'Enter', keyCode: 229 });
+    expect(onDeny).not.toHaveBeenCalled();
+    fireEvent.keyDown(textarea, { key: 'Enter', keyCode: 13 });
+    expect(onDeny).toHaveBeenCalledWith('にほんご');
   });
 
   describe('decides once', () => {

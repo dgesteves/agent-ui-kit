@@ -324,6 +324,8 @@ export function ApprovalCard({
                   value={reasonText}
                   onChange={(e) => setReasonText(e.target.value)}
                   onKeyDown={(e) => {
+                    // The Enter that commits an IME composition (Japanese, Chinese, Korean…) is not a submit.
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       deny(reasonText);
