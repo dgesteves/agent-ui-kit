@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # npm provenance
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
+
+      # Opens a "Version packages" PR from pending changesets; once merged, publishes to npm.
+      - uses: changesets/action@v2.1.2
+        with:
+          version: pnpm version-packages
+          publish: pnpm release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'

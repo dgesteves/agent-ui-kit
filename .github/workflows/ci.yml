@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build library
+        run: pnpm build:lib
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Package exports (publint, attw)
+        run: pnpm --filter @dgesteves/agent-ui-kit lint:package
+
+      - name: shadcn registry
+        run: pnpm registry:build
+
+      - name: Build playground
+        run: pnpm build:playground
