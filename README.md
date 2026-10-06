@@ -164,7 +164,7 @@ Every AI SDK v7 tool state (`input-streaming`, `input-available`, `approval-requ
 
 <img src="docs/media/components/approval-card.png" width="100%" alt="An approval card titled Run command, marked High risk, explaining that it installs a package from npm, previewing the command 'pnpm add @upstash/ratelimit' in ~/acme/chat-app, with Deny with feedback, Deny (N) and Approve (Y) actions.">
 
-Human-in-the-loop approval with a risk level, a command or argument preview, and deny-with-feedback. <kbd>Y</kbd> and <kbd>N</kbd> work while focus is in the card; <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approves, optionally page-wide. `critical` actions need a second, confirming press. `ToolApprovalCard` binds it to a tool part and to `addToolApprovalResponse`, including the denial reason.
+Human-in-the-loop approval with a risk level, a command or argument preview, and deny-with-feedback. <kbd>Y</kbd> and <kbd>N</kbd> work while focus is in the card; <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approves, optionally page-wide. `critical` actions need a second, confirming press. `ToolApprovalCard` binds it to a tool part and to `addToolApprovalResponse`, including the denial reason. Decisions that a `toolApproval` policy makes on its own (`approval.isAutomatic`) never prompt or take focus, and read "Auto-approved" or "Blocked by policy" rather than as a person's decision.
 
 ```tsx
 <ToolApprovalCard part={part} onRespond={addToolApprovalResponse} risk="high" autoFocus />
@@ -259,7 +259,7 @@ Images in text and reasoning do not load unless their host is allowed: a URL in 
 | `output-available` (`preliminary: true`)                       | "Running", partial output                                                                   |
 | `output-available`                                             | Done, output in a JSON view or your `renderOutput`                                          |
 | `output-error` (`errorText`)                                   | "Failed", error inline, announced                                                           |
-| `output-denied`                                                | "Denied", with the user's reason                                                            |
+| `output-denied`                                                | "Denied", with the user's reason, or "Blocked by policy" when `approval.isAutomatic`        |
 | client-side tool `input-available`                             | Whatever `renderTool` returns, e.g. `DiffReview` → `addToolOutput`                          |
 | `source-url` / `source-document`                               | `Sources`                                                                                   |
 | `file`                                                         | Image preview or file link                                                                  |

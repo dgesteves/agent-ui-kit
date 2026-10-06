@@ -65,7 +65,10 @@ export function getToolPartName(part: ToolPart): string {
 export type ToolPhase = 'streaming' | 'running' | 'awaiting-approval' | 'success' | 'error' | 'denied';
 
 export function getToolPhase(
-  part: Pick<ToolPart, 'state'> & { approval?: { approved?: boolean } | undefined; preliminary?: boolean | undefined },
+  part: Pick<ToolPart, 'state'> & {
+    approval?: { approved?: boolean; isAutomatic?: boolean } | undefined;
+    preliminary?: boolean | undefined;
+  },
 ): ToolPhase {
   switch (part.state) {
     case 'input-streaming':
@@ -73,7 +76,8 @@ export function getToolPhase(
     case 'input-available':
       return 'running';
     case 'approval-requested':
-      return 'awaiting-approval';
+      // A policy decision (`isAutomatic`) streams as a request immediately followed by its response.
+      return part.approval?.isAutomatic ? 'running' : 'awaiting-approval';
     case 'approval-responded':
       return part.approval?.approved ? 'running' : 'denied';
     case 'output-available':
@@ -217,7 +221,7 @@ export function deriveAgentState({
   if (status === 'error') return { state: 'error' };
   const parts = message?.role === 'assistant' ? message.parts : [];
   const tools = getToolParts(parts);
-  const approval = tools.find((t) => t.state === 'approval-requested');
+  const approval = tools.find((t) => t.state === 'approval-requested' && !t.approval.isAutomatic);
   if (approval) return { state: 'awaiting-approval', detail: getToolPartName(approval) };
   const clientWait = tools.find(
     (t) => t.state === 'input-available' && pendingClientTools.includes(getToolPartName(t)),

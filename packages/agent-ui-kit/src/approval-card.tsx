@@ -34,6 +34,11 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   status?: ApprovalStatus;
   /** Reason recorded with the decision, shown once resolved. */
   reason?: string | undefined;
+  /**
+   * A policy, not a person, made the decision (the SDK's `approval.isAutomatic`): once resolved,
+   * the card reads "Auto-approved" or "Blocked by policy" instead of "Approved" or "Denied".
+   */
+  automatic?: boolean;
   onApprove?: () => void;
   onDeny?: (reason?: string) => void;
   /** Y / N shortcuts while focus is inside the card. Default `true`. */
@@ -110,6 +115,7 @@ export function ApprovalCard({
   preview,
   status = 'pending',
   reason,
+  automatic = false,
   onApprove,
   onDeny,
   shortcuts = true,
@@ -374,7 +380,15 @@ export function ApprovalCard({
           ) : (
             <BanIcon size={15} className="text-aui-hot-fg shrink-0" />
           )}
-          <span className="text-aui-fg font-semibold">{status === 'approved' ? 'Approved' : 'Denied'}</span>
+          <span className="text-aui-fg font-semibold">
+            {status === 'approved'
+              ? automatic
+                ? 'Auto-approved'
+                : 'Approved'
+              : automatic
+                ? 'Blocked by policy'
+                : 'Denied'}
+          </span>
           <Heading id={titleId} className="text-aui-fg-muted min-w-0 truncate">
             {heading}
           </Heading>
@@ -393,7 +407,7 @@ export interface ToolApprovalResponse {
 
 export interface ToolApprovalCardProps extends Omit<
   ApprovalCardProps,
-  'toolName' | 'input' | 'status' | 'onApprove' | 'onDeny' | 'reason'
+  'toolName' | 'input' | 'status' | 'onApprove' | 'onDeny' | 'reason' | 'automatic'
 > {
   part: ToolPart;
   /** Matches `useChat().addToolApprovalResponse`, so you can pass it directly. */
@@ -401,10 +415,15 @@ export interface ToolApprovalCardProps extends Omit<
   meta?: ToolMeta | undefined;
 }
 
-/** `ApprovalCard` bound to an AI SDK tool part in the approval flow. Renders nothing for parts without one. */
+/**
+ * `ApprovalCard` bound to an AI SDK tool part in the approval flow. Renders nothing for parts without
+ * one, or while a policy's automatic decision is still arriving: nobody needs to act on it.
+ */
 export function ToolApprovalCard({ part, onRespond, meta, risk, description, title, ...props }: ToolApprovalCardProps) {
   const status = getApprovalStatus(part);
   if (!status || !part.approval) return null;
+  const automatic = part.approval.isAutomatic === true;
+  if (automatic && status === 'pending') return null;
   const approvalId = part.approval.id;
   const resolvedRisk = risk ?? (typeof meta?.risk === 'function' ? meta.risk(part.input) : meta?.risk);
   return (
@@ -416,6 +435,7 @@ export function ToolApprovalCard({ part, onRespond, meta, risk, description, tit
       risk={resolvedRisk}
       status={status}
       reason={part.approval.reason}
+      automatic={automatic}
       onApprove={() => void onRespond({ id: approvalId, approved: true })}
       onDeny={(reason) =>
         void onRespond(reason ? { id: approvalId, approved: false, reason } : { id: approvalId, approved: false })
