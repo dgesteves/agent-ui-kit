@@ -95,6 +95,23 @@ describe('AgentMessage', () => {
     expect(screen.getByText('a.ts')).toBeInTheDocument();
   });
 
+  it('streams text and reasoning that end in a thematic break or an image', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(
+      <AgentMessage
+        streaming
+        message={assistant([
+          { type: 'reasoning', text: 'look ![a](/a.png)', state: 'streaming' },
+          { type: 'text', text: '## Summary\n\nDone.\n\n---\n', state: 'streaming' },
+        ])}
+      />,
+    );
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+    expect(container.querySelector('hr')?.childNodes).toHaveLength(0);
+    expect(container.querySelector('img')?.childNodes).toHaveLength(0);
+  });
+
   it('has no axe violations', async () => {
     const { container } = render(<AgentMessage message={message} onToolApproval={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();

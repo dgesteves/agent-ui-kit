@@ -51,13 +51,38 @@ function remarkCitations(options: { idPrefix: string; count: number }) {
   };
 }
 
+/** HTML void elements: hast gives them an empty `children` array, but React throws if they get any. */
+const VOID_ELEMENTS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+  'track',
+  'wbr',
+]);
+
 /** rehype plugin: append a caret element after the last rendered text while streaming. */
 function rehypeCaret() {
   return (tree: TreeNode) => {
     let node: TreeNode = tree;
     for (;;) {
       const last = node.children?.at(-1);
-      if (last && last.type === 'element' && last.children && last.tagName !== 'pre') node = last;
+      // Never descend into void elements (a trailing `---` or image): the caret goes after them instead.
+      if (
+        last &&
+        last.type === 'element' &&
+        last.children &&
+        last.tagName !== 'pre' &&
+        !VOID_ELEMENTS.has(last.tagName ?? '')
+      )
+        node = last;
       else if (last && last.type === 'text' && last.value?.trim() === '' && node.children!.length > 1) {
         // Skip trailing whitespace text nodes between block elements.
         node.children = node.children!.slice(0, -1);
