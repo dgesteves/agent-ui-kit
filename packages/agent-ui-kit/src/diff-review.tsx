@@ -63,6 +63,37 @@ interface FlatHunk {
   order: number;
 }
 
+const sameChange = (a: FileChange, b: FileChange) =>
+  a.path === b.path &&
+  a.oldPath === b.oldPath &&
+  a.oldContent === b.oldContent &&
+  a.newContent === b.newContent &&
+  a.patch === b.patch &&
+  a.language === b.language;
+
+interface ParsedFiles {
+  files: readonly FileChange[];
+  context: number;
+  parsed: ParsedFileDiff[];
+}
+
+/** Parse each change, reusing `previous` parses of unchanged files (diffing is the expensive part). */
+function parseFiles(files: readonly FileChange[], context: number, previous?: ParsedFiles): ParsedFileDiff[] {
+  // Two changes to the same path must not share hunk ids: later ones become `path#2`, `path#3`…
+  const seen = new Map<string, number>();
+  const parsed = files.map((f, i) => {
+    const n = (seen.get(f.path) ?? 0) + 1;
+    seen.set(f.path, n);
+    const id = n === 1 ? f.path : `${f.path}#${n}`;
+    const before = previous?.files[i];
+    const reused = previous?.context === context && before && sameChange(before, f) ? previous.parsed[i] : undefined;
+    return reused?.id === id ? reused : parseFileChange(f, { context, id });
+  });
+  // Keep the previous array when nothing changed, so memoized work downstream is kept too.
+  const same = previous && parsed.length === previous.parsed.length && parsed.every((p, i) => p === previous.parsed[i]);
+  return same ? previous.parsed : parsed;
+}
+
 const STATUS_BADGE: Record<ParsedFileDiff['status'], { letter: string; label: string; className: string }> = {
   modified: { letter: 'M', label: 'Modified', className: 'border-aui-warn/40 text-aui-warn-fg' },
   added: { letter: 'A', label: 'Added', className: 'border-aui-accent/45 text-aui-accent-fg' },
@@ -94,15 +125,18 @@ export function DiffReview({
   ...props
 }: DiffReviewProps) {
   const Heading = `h${headingLevel}` as const;
-  const parsed = useMemo(() => {
-    // Two changes to the same path must not share hunk ids: later ones become `path#2`, `path#3`…
-    const seen = new Map<string, number>();
-    return files.map((f) => {
-      const n = (seen.get(f.path) ?? 0) + 1;
-      seen.set(f.path, n);
-      return parseFileChange(f, { context, id: n === 1 ? f.path : `${f.path}#${n}` });
-    });
-  }, [files, context]);
+  // Parsed by content rather than by `files` identity, so an inline array (a new one on every
+  // parent render) does not re-diff every file on every decision.
+  const [parsedFiles, setParsedFiles] = useState<ParsedFiles>(() => ({
+    files,
+    context,
+    parsed: parseFiles(files, context),
+  }));
+  let parsed = parsedFiles.parsed;
+  if (parsedFiles.files !== files || parsedFiles.context !== context) {
+    parsed = parseFiles(files, context, parsedFiles);
+    setParsedFiles({ files, context, parsed });
+  }
   const flat = useMemo<FlatHunk[]>(() => {
     const list: FlatHunk[] = [];
     for (const file of parsed) for (const hunk of file.hunks) list.push({ file, hunk, order: list.length });
