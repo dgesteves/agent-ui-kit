@@ -27,6 +27,28 @@ describe('estimateCost', () => {
     ).toBe(1);
     expect(estimateCost(undefined, pricing).total).toBe(0);
   });
+
+  it('prices cache writes at the cacheWrite rate, and at the input rate without one', () => {
+    // Anthropic-style usage: 2k fresh tokens and 8k written to the cache (billed at 1.25x input).
+    const written = {
+      inputTokens: 10_000,
+      outputTokens: 0,
+      inputTokenDetails: { noCacheTokens: 2_000, cacheReadTokens: 0, cacheWriteTokens: 8_000 },
+    };
+    const cost = estimateCost(written, { input: 3, output: 15, cachedInput: 0.3, cacheWrite: 3.75 });
+    expect(cost.input).toBeCloseTo((2_000 * 3) / 1e6);
+    expect(cost.cacheWrite).toBeCloseTo((8_000 * 3.75) / 1e6);
+    expect(cost.total).toBeCloseTo(0.036);
+    expect(estimateCost(written, { input: 3, output: 15 }).total).toBeCloseTo(0.03);
+  });
+
+  it('never prices more cached tokens than the input it was given', () => {
+    const cost = estimateCost(
+      { inputTokens: 100, inputTokenDetails: { cacheReadTokens: 80, cacheWriteTokens: 80 } },
+      { input: 1e6, output: 0, cachedInput: 1e6, cacheWrite: 1e6 },
+    );
+    expect([cost.input, cost.cachedInput, cost.cacheWrite]).toEqual([0, 80, 20]);
+  });
 });
 
 describe('RunMeter', () => {

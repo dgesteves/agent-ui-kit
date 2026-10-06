@@ -214,7 +214,8 @@ export function RunMeter({
       </dl>
       {breakdown && (
         <p className="text-aui-fg-subtle mt-3 text-[11px]">
-          {formatCost(breakdown.input + breakdown.cachedInput)} input · {formatCost(breakdown.output)} output
+          {formatCost(breakdown.input + breakdown.cachedInput + breakdown.cacheWrite)} input ·{' '}
+          {formatCost(breakdown.output)} output
           {pricing && (
             <>
               {' '}

@@ -7,11 +7,15 @@ export interface ModelPricing {
   output: number;
   /** Price for cache-read input tokens. Defaults to `input`. */
   cachedInput?: number | undefined;
+  /** Price for input tokens written to the prompt cache (e.g. 1.25x input on Anthropic). Defaults to `input`. */
+  cacheWrite?: number | undefined;
 }
 
 export interface CostBreakdown {
+  /** Input tokens that were neither read from nor written to the cache. */
   input: number;
   cachedInput: number;
+  cacheWrite: number;
   output: number;
   total: number;
 }
@@ -19,15 +23,18 @@ export interface CostBreakdown {
 /** Estimate the cost of a run from AI SDK usage and per-million-token pricing. */
 export function estimateCost(usage: RunUsage | undefined, pricing: ModelPricing): CostBreakdown {
   const inputTokens = usage?.inputTokens ?? 0;
+  // `inputTokens` includes cache reads and writes; never count more of either than it holds.
   const cached = Math.min(usage?.inputTokenDetails?.cacheReadTokens ?? 0, inputTokens);
-  const fresh = inputTokens - cached;
+  const written = Math.min(usage?.inputTokenDetails?.cacheWriteTokens ?? 0, inputTokens - cached);
+  const fresh = inputTokens - cached - written;
   const output = usage?.outputTokens ?? 0;
   const c = {
     input: (fresh * pricing.input) / 1e6,
     cachedInput: (cached * (pricing.cachedInput ?? pricing.input)) / 1e6,
+    cacheWrite: (written * (pricing.cacheWrite ?? pricing.input)) / 1e6,
     output: (output * pricing.output) / 1e6,
   };
-  return { ...c, total: c.input + c.cachedInput + c.output };
+  return { ...c, total: c.input + c.cachedInput + c.cacheWrite + c.output };
 }
 
 const sum = (a: number | undefined, b: number | undefined) =>

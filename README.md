@@ -193,7 +193,7 @@ Unified or split review of agent edits with word-level highlights and per-hunk a
 
 <img src="docs/media/components/run-meter.png" width="100%" alt="The run meter in two variants. Expanded: 41.1k tokens, $0.056 estimated cost, an input/output token bar, 38.7k input of which 28.8k cached, 2.41k output, TTFT 684ms, total 21.8s, cache hit 74%. Compact: a single line with the same numbers.">
 
-Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly; to cover a whole run across approval round trips, sum it on the server with `addUsage` as in the [server recipe](#npm). `useRunTiming(status)` measures TTFT and active time across approval round-trips, excluding time spent waiting on the user.
+Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly; to cover a whole run across approval round trips, sum it on the server with `addUsage` as in the [server recipe](#npm). `useRunTiming(status)` measures TTFT and active time across approval round-trips, excluding time spent waiting on the user. `pricing` is in USD per million tokens: `input` and `output`, plus optional `cachedInput` for cache reads and `cacheWrite` for cache writes (1.25× input on Anthropic, for example), which both default to `input`.
 
 ```tsx
 <RunMeter
