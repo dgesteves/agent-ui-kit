@@ -1,4 +1,5 @@
 import { openai } from '@ai-sdk/openai';
+import { addUsage } from '@dgesteves/agent-ui-kit/core';
 import { convertToModelMessages, stepCountIs, streamText, tool } from 'ai';
 import { z } from 'zod';
 import type { AgentUIMessage } from '@/lib/mock-agent';
@@ -67,12 +68,17 @@ export async function POST(req: Request) {
     stopWhen: stepCountIs(12),
   });
 
+  // After an approval or a review, the run continues the same message in a new request whose
+  // totalUsage starts from zero, and the client replaces metadata.usage: add what came before.
+  const last = messages.at(-1);
+  const previous = last?.role === 'assistant' ? last.metadata?.usage : undefined;
+
   return result.toUIMessageStreamResponse<AgentUIMessage>({
     originalMessages: messages,
     sendSources: true,
     messageMetadata: ({ part }) => {
       if (part.type === 'start') return { model };
-      if (part.type === 'finish') return { model, usage: part.totalUsage };
+      if (part.type === 'finish') return { model, usage: addUsage(previous, part.totalUsage) };
       return undefined;
     },
   });

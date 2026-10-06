@@ -44,5 +44,5 @@ export {
   type ParsedFileDiff,
 } from './lib/diff';
 export { formatCost, formatDuration, formatTokens, humanizeToolName } from './lib/format';
-export { estimateCost, type CostBreakdown, type ModelPricing } from './lib/usage';
+export { addUsage, estimateCost, type CostBreakdown, type ModelPricing } from './lib/usage';
 export { cn, type HeadingLevel } from './lib/utils';

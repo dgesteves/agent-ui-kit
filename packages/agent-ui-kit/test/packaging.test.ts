@@ -71,6 +71,7 @@ describe('server/client module boundaries', () => {
       'parseFileChange',
       'inferLanguage',
       'computeReviewResult',
+      'addUsage',
       'estimateCost',
       'formatCost',
       'formatDuration',

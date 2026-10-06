@@ -88,19 +88,35 @@ export function AgentRun() {
 On the server, request approval for risky tools and send usage as message metadata:
 
 ```ts
-const result = streamText({
-  model,
-  messages: await convertToModelMessages(messages),
-  tools,
-  toolApproval: { run_command: { type: 'user-approval', reason: 'Runs a shell command in the repository.' } },
-});
+import { addUsage } from '@dgesteves/agent-ui-kit/core';
+import { convertToModelMessages, streamText, type LanguageModelUsage, type UIMessage } from 'ai';
 
-return result.toUIMessageStreamResponse({
-  messageMetadata: ({ part }) => (part.type === 'finish' ? { usage: part.totalUsage } : undefined),
-});
+type Message = UIMessage<{ usage?: LanguageModelUsage }>;
+
+export async function POST(req: Request) {
+  const { messages }: { messages: Message[] } = await req.json();
+  const result = streamText({
+    model,
+    messages: await convertToModelMessages(messages, { tools }),
+    tools,
+    toolApproval: { run_command: { type: 'user-approval', reason: 'Runs a shell command in the repository.' } },
+  });
+
+  // Once approved, the run continues the same message in a new request whose totalUsage starts
+  // from zero, and useChat replaces metadata.usage. Add the usage the message already has
+  // (it comes back from the client, so it is fine for display but not for billing).
+  const last = messages.at(-1);
+  const previous = last?.role === 'assistant' ? last.metadata?.usage : undefined;
+
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    messageMetadata: ({ part }) =>
+      part.type === 'finish' ? { usage: addUsage(previous, part.totalUsage) } : undefined,
+  });
+}
 ```
 
-The `reason` shows up on the approval card as `approval.requestReason`.
+The `reason` shows up on the approval card as `approval.requestReason`. Without `addUsage`, the meter would show only the last request of a run that paused for approval.
 
 #### Server Components
 
@@ -170,7 +186,7 @@ Unified or split review of agent edits with word-level highlights and per-hunk a
 
 <img src="docs/media/components/run-meter.png" width="100%" alt="The run meter in two variants. Expanded: 41.1k tokens, $0.056 estimated cost, an input/output token bar, 38.7k input of which 28.8k cached, 2.41k output, TTFT 684ms, total 21.8s, cache hit 74%. Compact: a single line with the same numbers.">
 
-Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly. `useRunTiming(status)` measures TTFT and active time across approval round-trips, excluding time spent waiting on the user.
+Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly; to cover a whole run across approval round trips, sum it on the server with `addUsage` as in the [server recipe](#npm). `useRunTiming(status)` measures TTFT and active time across approval round-trips, excluding time spent waiting on the user.
 
 ```tsx
 <RunMeter
