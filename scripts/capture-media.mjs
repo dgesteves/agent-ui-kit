@@ -142,6 +142,8 @@ if (want('mobile')) {
 if (want('components')) {
   const page = await newPage({ width: 1100, height: 900 });
   await page.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
+  // Tall sections scroll under the sticky header; take it out of the way for element shots.
+  await page.addStyleTag({ content: 'header { position: static !important; }' });
   await page.waitForTimeout(800);
   const ids = await page.$$eval('[data-shot]', (els) => els.map((e) => e.getAttribute('data-shot')));
   for (const id of ids) {
@@ -164,6 +166,9 @@ if (want('gif')) {
     await cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
   });
   await page.goto(`${BASE}/?speed=2`, { waitUntil: 'domcontentloaded' });
+  // Start once the agent is responding, so the first frame (shown when GitHub pauses
+  // animations for reduced-motion users) is the run rather than an empty page.
+  await page.waitForSelector('[data-slot="agent-message"]', { timeout: 30_000 });
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 90, everyNthFrame: 1 });
   await page.waitForSelector(approvalPending, { timeout: 90_000 });
   await page.waitForTimeout(1600);

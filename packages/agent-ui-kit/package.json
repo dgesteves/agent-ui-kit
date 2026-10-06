@@ -46,7 +46,7 @@
   },
   "scripts": {
     "build": "tsdown && node scripts/build-css.mjs",
-    "dev": "tsdown --watch",
+    "dev": "tsdown --watch --no-clean",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
