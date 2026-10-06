@@ -29,9 +29,9 @@ import { AgentMessage } from '@dgesteves/agent-ui-kit';
 />;
 ```
 
-Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCard`, `DiffReview`, `RunMeter`, `AgentStatus`, `Sources`, `Markdown`, `Reasoning`. Hooks and helpers: `useRunTiming`, `useToolTimings`, `deriveAgentState`, `applyHunks`, `estimateCost`.
+Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCard`, `DiffReview`, `RunMeter`, `AgentStatus`, `Sources`, `Markdown`, `Reasoning`. Hooks and helpers: `useRunTiming`, `useToolTimings`, `deriveAgentState`, `applyHunks`, `estimateCost`, `addUsage`.
 
-Components and hooks carry their own `'use client'` directive. The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
+Components and hooks carry their own `'use client'` directive (`Sources` needs none). The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
 
 Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^7.0.82` (the kit imports its types only; 7.0.82 added `approval.requestReason`).
 

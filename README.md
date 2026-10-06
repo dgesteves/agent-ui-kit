@@ -126,7 +126,7 @@ The `reason` shows up on the approval card as `approval.requestReason`. Without 
 
 #### Server Components
 
-Components and hooks are client modules: each one carries its own `'use client'` directive, so you can render them from a Server Component. The pure helpers (`applyHunks`, `parseFileChange`, `computeReviewResult`, `estimateCost`, `formatCost`, `deriveAgentState` and the rest) are not, so Server Components and Route Handlers can call them. Import them from the main entry, or from `@dgesteves/agent-ui-kit/core`, which contains only the helpers and their types and no React:
+Components and hooks are client modules with their own `'use client'` directive (except `Sources`, which has no state and renders on the server too), so you can render any of them from a Server Component. The pure helpers (`applyHunks`, `parseFileChange`, `computeReviewResult`, `estimateCost`, `formatCost`, `deriveAgentState` and the rest) are not, so Server Components and Route Handlers can call them. Import them from the main entry, or from `@dgesteves/agent-ui-kit/core`, which contains only the helpers and their types and no React:
 
 ```ts
 // app/api/review/route.ts
@@ -145,7 +145,7 @@ npx shadcn@latest add dgesteves/agent-ui-kit/tool-call-timeline
 npx shadcn@latest add https://<playground-host>/r/tool-call-timeline.json
 ```
 
-Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`. Installing a second item skips the shared files it already added. Component and hook files start with `'use client'`, so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them.
+Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`. Installing a second item skips the shared files it already added. Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them.
 
 ## Components
 
@@ -327,8 +327,8 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 - **Cache hit rate over tokens per second.** Throughput looked precise but mixed tool time into generation speed. For agents, cached input is the bigger cost lever, so that is what the meter shows.
 - **Shortcuts scoped to focus.** Global single-key shortcuts are an accessibility problem and fight with text inputs; scoping them to the component avoids both. Critical approvals require a second press.
 - **Hydration-safe clocks.** Live durations and waterfall widths render after hydration, so server and client markup always match.
-- **Type-only dependency on `ai`.** No SDK runtime in the bundle (about 29 kB gzipped, dependencies external), while props stay typed to SDK parts.
-- **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts.
+- **Type-only dependency on `ai`.** No SDK runtime in the build (about 34 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
+- **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
 
 ## Why not AI Elements or assistant-ui?
 
