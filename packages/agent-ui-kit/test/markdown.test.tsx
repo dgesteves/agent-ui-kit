@@ -1,4 +1,7 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { Markdown, type MarkdownProps } from '../src/markdown';
 import { axe } from './utils';
@@ -144,6 +147,86 @@ describe('Markdown', () => {
     it("loads every image with '*'", () => {
       const { container } = render(<Markdown allowedImageHosts={['*']}>{`![a](${pixel}) ![b](/b.png)`}</Markdown>);
       expect(container.querySelectorAll('img')).toHaveLength(2);
+    });
+
+    describe('inside a link (a badge)', () => {
+      const badge = 'Build: [![CI](https://img.shields.io/badge/ci-green.svg)](https://github.com/acme/app/actions)';
+
+      /** Render while capturing React's console errors (e.g. "<a> cannot be a descendant of <a>"). */
+      function renderQuietly(ui: ReactElement) {
+        const errors: string[] = [];
+        const spy = vi.spyOn(console, 'error').mockImplementation((...args) => errors.push(args.map(String).join(' ')));
+        try {
+          return { ...render(ui), errors };
+        } finally {
+          spy.mockRestore();
+        }
+      }
+
+      it('renders one link to the outer URL when the image is blocked', () => {
+        const { container, errors } = renderQuietly(<Markdown>{badge}</Markdown>);
+        expect(errors).toEqual([]);
+        expect(container.querySelector('a a')).toBeNull();
+        expect(container.querySelector('img')).toBeNull();
+        const links = screen.getAllByRole('link');
+        expect(links).toHaveLength(1);
+        expect(links[0]).toHaveAttribute('href', 'https://github.com/acme/app/actions');
+        expect(links[0]).toHaveAccessibleName('Image: CI');
+      });
+
+      it('keeps the image inside the link when its host is allowed', () => {
+        const { container, errors } = renderQuietly(
+          <Markdown allowedImageHosts={['img.shields.io']}>{badge}</Markdown>,
+        );
+        expect(errors).toEqual([]);
+        expect(screen.getAllByRole('link')).toHaveLength(1);
+        expect(container.querySelector('a > img')).toHaveAttribute('src', 'https://img.shields.io/badge/ci-green.svg');
+      });
+
+      it('does not nest links when you override the link component', () => {
+        const { container, errors } = renderQuietly(
+          <Markdown
+            components={{
+              a: ({ node: _node, children, ...props }) => (
+                <a data-custom="" {...props}>
+                  {children}
+                </a>
+              ),
+            }}
+          >
+            {badge}
+          </Markdown>,
+        );
+        expect(errors).toEqual([]);
+        expect(container.querySelector('a a')).toBeNull();
+        expect(screen.getByRole('link')).toHaveAttribute('data-custom');
+      });
+
+      it('server-renders markup that hydrates without a mismatch', async () => {
+        for (const allowedImageHosts of [undefined, ['img.shields.io']]) {
+          const ui = (
+            <Markdown allowedImageHosts={allowedImageHosts} citations={1}>
+              {`${badge} and [a link with ![an image](/logo.png) inside](https://x.dev) [1]`}
+            </Markdown>
+          );
+          const container = document.createElement('div');
+          container.innerHTML = renderToString(ui);
+          document.body.append(container);
+          expect(container.querySelector('a a')).toBeNull();
+          const serverHtml = container.innerHTML;
+          const recoverable: unknown[] = [];
+          const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+          const root = await act(async () =>
+            hydrateRoot(container, ui, { onRecoverableError: (error) => recoverable.push(error) }),
+          );
+          expect(recoverable).toEqual([]);
+          expect(errors).not.toHaveBeenCalled();
+          expect(container.innerHTML).toBe(serverHtml);
+          errors.mockRestore();
+          act(() => root.unmount());
+          container.remove();
+        }
+      });
     });
 
     it('renders the alt text for images without a usable URL, including half-streamed ones', () => {

