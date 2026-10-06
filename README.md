@@ -170,7 +170,7 @@ Every AI SDK v7 tool state (`input-streaming`, `input-available`, `approval-requ
 
 <img src="docs/media/components/approval-card.png" width="100%" alt="An approval card titled Run command, marked High risk, explaining that it installs a package from npm, previewing the command 'pnpm add @upstash/ratelimit' in ~/acme/chat-app, with Deny with feedback, Deny (N) and Approve (Y) actions.">
 
-Human-in-the-loop approval with a risk level, a command or argument preview, and deny-with-feedback. <kbd>Y</kbd> and <kbd>N</kbd> work while focus is in the card; <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approves, optionally page-wide. `critical` actions need a second, confirming press. `ToolApprovalCard` binds it to a tool part and to `addToolApprovalResponse`, including the denial reason. Decisions that a `toolApproval` policy makes on its own (`approval.isAutomatic`) never prompt or take focus, and read "Auto-approved" or "Blocked by policy" rather than as a person's decision.
+Human-in-the-loop approval with a risk level, a command or argument preview, and deny-with-feedback. <kbd>Y</kbd> and <kbd>N</kbd> work while focus is in the card; <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approves, optionally page-wide. `critical` actions need a second, confirming press. Each pending approval sends one decision: a double click, or <kbd>Y</kbd> then <kbd>N</kbd>, is ignored until `status` changes, the handler's promise settles or the handler throws. `ToolApprovalCard` binds it to a tool part and to `addToolApprovalResponse`, including the denial reason. Decisions that a `toolApproval` policy makes on its own (`approval.isAutomatic`) never prompt or take focus, and read "Auto-approved" or "Blocked by policy" rather than as a person's decision.
 
 ```tsx
 <ToolApprovalCard part={part} onRespond={addToolApprovalResponse} risk="high" autoFocus />
@@ -180,7 +180,7 @@ Human-in-the-loop approval with a risk level, a command or argument preview, and
 
 <img src="docs/media/components/diff-review.png" width="100%" alt="A diff review of two files with four hunks. A new lib/ratelimit.ts is accepted; in app/api/chat/route.ts, the import and the 429 check are pending and the hunk switching the model from gpt-4o to gpt-4.1-mini is rejected, with the changed words highlighted. A footer shows 2 of 4 reviewed, keyboard hints, and Reject all, Accept all and Apply buttons.">
 
-Unified or split review of agent edits with word-level highlights and per-hunk accept/reject. <kbd>J</kbd>/<kbd>K</kbd> move, <kbd>A</kbd>/<kbd>R</kbd> decide (and advance), <kbd>U</kbd> resets, <kbd>⇧A</kbd>/<kbd>⇧R</kbd> decide everything, <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. `onSubmit` receives each file with only the accepted hunks applied, so it works as a client-side tool result.
+Unified or split review of agent edits with word-level highlights and per-hunk accept/reject. <kbd>J</kbd>/<kbd>K</kbd> move, <kbd>A</kbd>/<kbd>R</kbd> decide (and advance), <kbd>U</kbd> resets, <kbd>⇧A</kbd>/<kbd>⇧R</kbd> decide everything, <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. `onSubmit` receives each file with only the accepted hunks applied, so it works as a client-side tool result. It fires once per set of decisions: a double click or a repeated <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> sends one review until a decision or the files change. Files compare by content, so an inline `files` array does not re-arm it.
 
 ```tsx
 <DiffReview

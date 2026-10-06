@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { DiffReview, type DiffReviewResult } from '../src/diff-review';
 import { axe, collectErrors } from './utils';
@@ -137,6 +138,59 @@ describe('DiffReview', () => {
     hunks()[0]!.focus();
     await user.keyboard('{Control>}{Enter}{/Control}');
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('compares files by content and decisions by value when deciding whether a submit repeats', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const change = (newContent: string) => [{ path: 'a.ts', oldContent: 'a\n', newContent }];
+    function Parent() {
+      const [files, setFiles] = useState(() => change('A\n'));
+      const [, rerender] = useState(0);
+      return (
+        <>
+          <button type="button" onClick={() => setFiles(change('A\n'))}>
+            Same files
+          </button>
+          <button type="button" onClick={() => setFiles(change('B\n'))}>
+            Other files
+          </button>
+          <button type="button" onClick={() => rerender((n) => n + 1)}>
+            Re-render
+          </button>
+          {/* Controlled, with a new but equal object on every render. */}
+          <DiffReview files={files} decisions={{ 'a.ts:0': 'accepted' }} onSubmit={onSubmit} />
+        </>
+      );
+    }
+    render(<Parent />);
+    const apply = () => user.click(screen.getByRole('button', { name: /^apply/i }));
+    await apply();
+    await user.click(screen.getByRole('button', { name: 'Re-render' }));
+    await apply();
+    await user.click(screen.getByRole('button', { name: 'Same files' }));
+    await apply();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Other files' }));
+    await apply();
+    expect(onSubmit).toHaveBeenCalledTimes(2);
+    expect(onSubmit.mock.calls[1]![0].files[0].content).toBe('B\n');
+  });
+
+  it('submits again once a decision changes, including back to one already submitted', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<DiffReview files={files} onSubmit={onSubmit} />);
+    const apply = () => user.click(screen.getByRole('button', { name: /^apply/i }));
+    await apply();
+    await user.click(screen.getByRole('button', { name: 'Accept all' }));
+    await apply();
+    await user.click(screen.getByRole('button', { name: 'Accept all' }));
+    await apply();
+    await user.click(screen.getByRole('button', { name: 'Reject all' }));
+    await user.click(screen.getByRole('button', { name: 'Accept all' }));
+    await apply();
+    expect(onSubmit.mock.calls.map(([r]) => r.accepted)).toEqual([0, 4, 4]);
   });
 
   it('can submit again after onSubmit throws or its promise rejects', async () => {

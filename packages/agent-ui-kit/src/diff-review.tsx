@@ -44,9 +44,10 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
   defaultDecisions?: Readonly<Record<string, HunkDecision>> | undefined;
   onDecisionsChange?: ((decisions: Record<string, HunkDecision>) => void) | undefined;
   /**
-   * Called with the reviewed result. Pending hunks are not applied. Fires once per set of decisions:
-   * submitting again needs a changed decision, new `files`, the returned promise to settle, or the
-   * handler to throw.
+   * Called with the reviewed result. Pending hunks are not applied. Fires once per set of decisions,
+   * so a double click or a repeated ⌘/Ctrl+Enter sends one review. Submitting again needs a changed
+   * decision, changed `files`, the returned promise to settle, or the handler to throw. Files compare
+   * by content and decisions by value: an equal new array or object does not count as a change.
    */
   onSubmit?: ((result: DiffReviewResult) => void | PromiseLike<void>) | undefined;
   submitLabel?: string;
@@ -74,6 +75,15 @@ const sameChange = (a: FileChange, b: FileChange) =>
   a.newContent === b.newContent &&
   a.patch === b.patch &&
   a.language === b.language;
+
+/** Equal when every hunk has the same decision, counting a missing one as pending. */
+function sameDecisions(a: Readonly<Record<string, HunkDecision>>, b: Readonly<Record<string, HunkDecision>>) {
+  if (a === b) return true;
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if ((a[id] ?? 'pending') !== (b[id] ?? 'pending')) return false;
+  }
+  return true;
+}
 
 interface ParsedFiles {
   files: readonly FileChange[];
@@ -229,9 +239,14 @@ export function DiffReview({
   };
 
   // One submission per set of decisions, so a double click or a repeated Ctrl+Enter sends it once.
+  // Re-armed when the files change by content or a decision changes by value: an equal `files` array
+  // or controlled `decisions` object passed on every render must not re-arm it.
   const submitted = useRef(false);
+  const reviewed = useRef({ parsed, decisions });
   useEffect(() => {
-    submitted.current = false;
+    const previous = reviewed.current;
+    if (previous.parsed !== parsed || !sameDecisions(previous.decisions, decisions)) submitted.current = false;
+    reviewed.current = { parsed, decisions };
   }, [parsed, decisions]);
   const submit = () => {
     if (!onSubmit || submitted.current) return;
