@@ -78,6 +78,23 @@ describe('AgentMessage', () => {
     expect(screen.getByText('Read file')).toBeInTheDocument();
   });
 
+  it('keys data parts by type and id, so different types can share an id', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <AgentMessage
+        message={assistant([
+          { type: 'data-progress', id: 'step-1', data: { pct: 50 } },
+          { type: 'data-status', id: 'step-1', data: { label: 'Indexing' } },
+        ])}
+        renderData={(part) => <span>{part.type}</span>}
+      />,
+    );
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+    expect(screen.getByText('data-progress')).toBeInTheDocument();
+    expect(screen.getByText('data-status')).toBeInTheDocument();
+  });
+
   it('accepts typed UIMessages', () => {
     type Typed = UIMessage<
       { usage: number },

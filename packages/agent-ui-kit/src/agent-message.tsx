@@ -114,8 +114,14 @@ export function AgentMessage({
       } else if (part.type === 'file') {
         out.push({ kind: 'file', key, part });
       } else if (part.type.startsWith('data-')) {
+        // Data part ids are unique per type only (the SDK reconciles parts by type and id).
+        const id = (part as DataPart).id;
         if (renderData)
-          out.push({ kind: 'node', key: (part as DataPart).id ?? key, node: renderData(part as DataPart) });
+          out.push({
+            kind: 'node',
+            key: id === undefined ? key : `${part.type}:${id}`,
+            node: renderData(part as DataPart),
+          });
       }
     });
     return out;
