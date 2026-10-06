@@ -75,6 +75,22 @@ describe('DiffReview', () => {
     expect(h2).toHaveAttribute('tabindex', '0');
   });
 
+  it('keeps one hunk in the tab order when the files shrink', async () => {
+    const user = userEvent.setup();
+    const two = [
+      { path: 'a.ts', oldContent: 'a\n', newContent: 'A\n' },
+      { path: 'b.ts', oldContent: 'b\n', newContent: 'B\n' },
+    ];
+    const { rerender } = render(<DiffReview files={two} />);
+    hunks()[1]!.focus();
+    rerender(<DiffReview files={[two[0]!]} />);
+    expect(hunks().map((h) => h.tabIndex)).toEqual([0]);
+    await user.keyboard('j');
+    hunks()[0]!.focus();
+    await user.keyboard('a');
+    expect(hunks()[0]).toHaveAttribute('data-decision', 'accepted');
+  });
+
   it('decides every hunk with Shift+A / Shift+R and the bulk buttons', async () => {
     const user = userEvent.setup();
     render(<DiffReview files={files} />);

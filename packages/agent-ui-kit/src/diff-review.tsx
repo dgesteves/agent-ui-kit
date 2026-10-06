@@ -125,7 +125,9 @@ export function DiffReview({
     onDecisionsChange?.(next);
   };
 
-  const [active, setActive] = useState(0);
+  const [activeState, setActive] = useState(0);
+  // Clamped, so a hunk stays in the tab order when `files` shrinks below the active one.
+  const active = Math.min(activeState, Math.max(0, flat.length - 1));
   const [announcement, setAnnouncement] = useState('');
   const hunkEls = useRef(new Map<string, HTMLDivElement>());
   const mac = useIsMac();
