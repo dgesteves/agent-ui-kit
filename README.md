@@ -6,6 +6,8 @@ React components for the hard parts of agentic products: watching an agent work,
 [![npm](https://img.shields.io/npm/v/@dgesteves/agent-ui-kit?labelColor=0d0f12&color=22d3ee)](https://www.npmjs.com/package/@dgesteves/agent-ui-kit)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22d3ee?labelColor=0d0f12)](./LICENSE)
 
+**[Open the live playground →](https://agent-ui-kit-demo.vercel.app)** A scripted agent run with replay, speed and keyboard controls. No API key needed.
+
 <img src="docs/media/hero.png" width="100%" alt="The agent-ui-kit playground mid-run. A tool call timeline shows a code search, two file reads, a failed read of middleware.ts with its error inline, and a web search, each with a duration and a waterfall bar. Below, a high-risk approval card asks to run 'pnpm add @upstash/ratelimit' with Deny and Approve buttons and Y/N shortcuts. A sidebar shows the agent status 'Waiting for approval', playback controls, and a run meter with 20.9k tokens, $0.025 estimated cost, 689ms time to first token and a 63% cache hit rate.">
 
 Typed against AI SDK v7 `UIMessage` parts (`ai@^7.0.102`). Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
@@ -141,8 +143,8 @@ Every component is also a self-contained registry item: the component, the helpe
 # Straight from this repository
 npx shadcn@latest add dgesteves/agent-ui-kit/tool-call-timeline
 
-# Or from wherever the playground is deployed (it serves /r/*.json)
-npx shadcn@latest add https://<playground-host>/r/tool-call-timeline.json
+# Or from the hosted registry (the live playground serves /r/*.json)
+npx shadcn@latest add https://agent-ui-kit-demo.vercel.app/r/tool-call-timeline.json
 ```
 
 Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`. Installing a second item skips the shared files it already added. Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them.
