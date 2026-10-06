@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 /** Parse the hex tokens of one theme block out of theme.css. */
 function tokens(selector: string): Record<string, string> {
-  const css = readFileSync(fileURLToPath(new URL('../src/styles/theme.css', import.meta.url)), 'utf8');
+  const css = readFileSync(fileURLToPath(new URL('../src/styles/theme.css', import.meta.url)), 'utf8').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  );
   const start = css.indexOf(selector);
   const block = css.slice(css.indexOf('{', start) + 1, css.indexOf('}', start));
   return Object.fromEntries([...block.matchAll(/--aui-([\w-]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1]!, m[2]!]));
@@ -53,6 +56,11 @@ const UI_PAIRS: Array<[string, string]> = [
   ['chart-input', 'surface'],
   ['chart-output', 'surface'],
 ];
+
+it('parses distinct light and dark palettes', () => {
+  expect(tokens(':root').bg).toBe('#ffffff');
+  expect(tokens('.dark').bg).toBe('#0d0f12');
+});
 
 describe.each([
   ['light', ':root'],

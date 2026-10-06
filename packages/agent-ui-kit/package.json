@@ -50,7 +50,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint:package": "publint && attw --pack . --profile esm-only"
+    "lint:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./tailwind.css ./theme.css"
   },
   "peerDependencies": {
     "ai": "^7.0.0",

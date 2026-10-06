@@ -11,7 +11,7 @@
     "build:lib": "pnpm --filter @dgesteves/agent-ui-kit build",
     "build:playground": "pnpm --filter playground build",
     "dev": "pnpm --filter @dgesteves/agent-ui-kit build && pnpm --parallel --filter @dgesteves/agent-ui-kit --filter playground dev",
-    "registry:build": "shadcn build registry.json --output examples/playground/public/r",
+    "registry:build": "pnpm registry:check && shadcn build registry.json --output examples/playground/public/r",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -20,7 +20,9 @@
     "media": "node scripts/capture-media.mjs",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build:lib && changeset publish"
+    "release": "pnpm build:lib && changeset publish",
+    "registry:generate": "node scripts/registry.mjs",
+    "registry:check": "node scripts/registry.mjs --check"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",

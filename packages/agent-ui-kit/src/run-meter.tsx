@@ -107,7 +107,7 @@ export function RunMeter({
         role="group"
         aria-label={`Run metrics${live ? ' (live)' : ''}`}
         className={cn(
-          'divide-aui-border font-aui-mono text-aui-fg-muted inline-flex max-w-full items-center divide-x overflow-x-auto text-xs whitespace-nowrap tabular-nums',
+          'divide-aui-border font-aui-mono text-aui-fg-muted inline-flex w-fit max-w-full items-center divide-x overflow-x-auto text-xs whitespace-nowrap tabular-nums',
           className,
         )}
         {...props}

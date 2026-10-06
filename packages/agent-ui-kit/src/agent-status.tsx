@@ -92,7 +92,7 @@ export function AgentStatus({
       data-slot="agent-status"
       data-state={state}
       className={cn(
-        'font-aui-sans inline-flex max-w-full items-center gap-2 rounded-full border font-medium whitespace-nowrap transition-colors',
+        'font-aui-sans inline-flex w-fit max-w-full items-center gap-2 rounded-full border font-medium whitespace-nowrap transition-colors',
         size === 'sm' ? 'h-7 px-2.5 text-xs' : 'h-8 px-3 text-[13px]',
         state === 'awaiting-approval' || state === 'error'
           ? 'border-aui-hot/40 bg-aui-hot/10 text-aui-fg'
