@@ -347,6 +347,13 @@ This kit goes deeper on a narrower slice, the run around the conversation:
 
 They compose: render the thread with either library and drop these components into tool parts and side panels.
 
+## Known limitations
+
+- **Citation numbering.** `[n]` markers are numbered over the message's sources after de-duplication by URL (by source id for documents). If your prompt numbers a list of sources that contains duplicates, markers after the first duplicate point one source early. Number unique sources in the prompt.
+- **Markdown cost while streaming.** The whole text is parsed again on every delta: about 8 ms at 5k characters, 24 ms at 20k and 67 ms at 50k (jsdom), so very long streamed answers can drop frames. Block-level memoization is on the roadmap.
+- **Large rewrites.** `DiffReview` diffs whole files on the main thread. Local edits are fast, but a fully rewritten file costs about 0.4 s at 2,000 lines and 2.5 s at 5,000. Long changed lines skip word-level highlights rather than stall.
+- **Run state comes from you.** Parts carry no signal that a run has ended, so tool calls left behind by `stop()` or an interrupted history read "Stopped" only when you pass `active={false}`.
+
 ## Roadmap
 
 - Nested runs: sub-agent calls rendered as collapsible child timelines
