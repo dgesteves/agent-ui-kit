@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApprovalCard, ToolApprovalCard, type ApprovalStatus } from '../src/approval-card';
-import { axe, toolPart } from './utils';
+import { axe, collectErrors, toolPart } from './utils';
 
 const command = { command: 'pnpm add @upstash/ratelimit', cwd: '~/app' };
 
@@ -145,6 +145,36 @@ describe('ApprovalCard', () => {
       const onApprove = vi.fn(() => Promise.resolve());
       render(<ApprovalCard toolName="deploy" onApprove={onApprove} />);
       await user.click(screen.getByRole('button', { name: /^approve/i }));
+      await user.click(screen.getByRole('button', { name: /^approve/i }));
+      expect(onApprove).toHaveBeenCalledTimes(2);
+    });
+
+    it.each(['approve', 'deny'] as const)(
+      'is not locked when %s throws, and still reports the error',
+      async (action) => {
+        const user = userEvent.setup();
+        const handler = vi.fn().mockImplementationOnce(() => {
+          throw new Error('offline');
+        });
+        render(
+          <ApprovalCard toolName="deploy" {...(action === 'approve' ? { onApprove: handler } : { onDeny: handler })} />,
+        );
+        const button = screen.getByRole('button', { name: action === 'approve' ? /^approve/i : /^deny$/i });
+        const { reported } = await collectErrors(() => user.click(button));
+        expect(reported).toEqual([new Error('offline')]);
+        await user.click(button);
+        expect(handler).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it('can decide again once a promise it returned rejects, and leaves the rejection unhandled', async () => {
+      const user = userEvent.setup();
+      const onApprove = vi.fn().mockRejectedValueOnce(new Error('500'));
+      render(<ApprovalCard toolName="deploy" onApprove={onApprove} />);
+      const { rejected } = await collectErrors(async () => {
+        await user.click(screen.getByRole('button', { name: /^approve/i }));
+      });
+      expect(rejected).toEqual([new Error('500')]);
       await user.click(screen.getByRole('button', { name: /^approve/i }));
       expect(onApprove).toHaveBeenCalledTimes(2);
     });

@@ -33,7 +33,7 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   preview?: ReactNode;
   /**
    * Default "pending". Approve and deny fire once: further presses (a double click, Y then N) are
-   * ignored until `status` changes or the promise the handler returned settles.
+   * ignored until `status` changes, the promise the handler returned settles, or the handler throws.
    */
   status?: ApprovalStatus;
   /** Reason recorded with the decision, shown once resolved. */
@@ -160,8 +160,16 @@ export function ApprovalCard({
   }, [status]);
   const decide = (handler: () => unknown) => {
     decided.current = true;
-    const result = handler();
+    let result: unknown;
+    try {
+      result = handler();
+    } catch (error) {
+      // A failed handler sent nothing: let the user try again.
+      decided.current = false;
+      throw error;
+    }
     if (isPromiseLike(result)) {
+      // Released when it settles either way; a rejection stays unhandled, as it would without the card.
       void Promise.resolve(result).finally(() => {
         decided.current = false;
       });

@@ -45,7 +45,8 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
   onDecisionsChange?: ((decisions: Record<string, HunkDecision>) => void) | undefined;
   /**
    * Called with the reviewed result. Pending hunks are not applied. Fires once per set of decisions:
-   * submitting again needs a changed decision, new `files`, or the returned promise to settle.
+   * submitting again needs a changed decision, new `files`, the returned promise to settle, or the
+   * handler to throw.
    */
   onSubmit?: ((result: DiffReviewResult) => void | PromiseLike<void>) | undefined;
   submitLabel?: string;
@@ -235,7 +236,14 @@ export function DiffReview({
   const submit = () => {
     if (!onSubmit || submitted.current) return;
     submitted.current = true;
-    const result = onSubmit(computeReviewResult(parsed, decisions));
+    let result: void | PromiseLike<void>;
+    try {
+      result = onSubmit(computeReviewResult(parsed, decisions));
+    } catch (error) {
+      // A failed handler sent nothing: let the user try again.
+      submitted.current = false;
+      throw error;
+    }
     if (isPromiseLike(result)) {
       void Promise.resolve(result).finally(() => {
         submitted.current = false;

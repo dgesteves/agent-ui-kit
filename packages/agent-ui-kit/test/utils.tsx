@@ -1,4 +1,5 @@
 import type { DynamicToolUIPart, UIMessage } from 'ai';
+import { vi } from 'vitest';
 import { configureAxe } from 'vitest-axe';
 import type { ToolPart } from '../src/lib/ai';
 
@@ -67,4 +68,34 @@ export function dynamicToolPart(): DynamicToolUIPart {
 
 export function assistant(parts: UIMessage['parts'], id = 'msg_1'): UIMessage {
   return { id, role: 'assistant', parts };
+}
+
+/**
+ * Run `fn` while collecting the errors that event handlers throw (React reports them on `window`)
+ * and unhandled promise rejections, instead of letting them fail the test run.
+ */
+export async function collectErrors(fn: () => Promise<void>) {
+  const reported: unknown[] = [];
+  const rejected: unknown[] = [];
+  const onError = (event: ErrorEvent) => {
+    event.preventDefault();
+    reported.push(event.error);
+  };
+  const onRejection = (reason: unknown) => rejected.push(reason);
+  const listeners = process.listeners('unhandledRejection');
+  process.removeAllListeners('unhandledRejection');
+  process.on('unhandledRejection', onRejection);
+  window.addEventListener('error', onError);
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    await fn();
+    // Node reports unhandled rejections once the microtask queue has drained.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  } finally {
+    consoleError.mockRestore();
+    window.removeEventListener('error', onError);
+    process.off('unhandledRejection', onRejection);
+    for (const listener of listeners) process.on('unhandledRejection', listener);
+  }
+  return { reported, rejected };
 }

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DiffReview, type DiffReviewResult } from '../src/diff-review';
-import { axe } from './utils';
+import { axe, collectErrors } from './utils';
 import { ROUTE_NEW, ROUTE_OLD } from './fixtures';
 
 const files = [
@@ -137,6 +137,26 @@ describe('DiffReview', () => {
     hunks()[0]!.focus();
     await user.keyboard('{Control>}{Enter}{/Control}');
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('can submit again after onSubmit throws or its promise rejects', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('offline');
+      })
+      .mockRejectedValueOnce(new Error('500'));
+    render(<DiffReview files={files} onSubmit={onSubmit} />);
+    const apply = () => user.click(screen.getByRole('button', { name: /^apply/i }));
+    const { reported, rejected } = await collectErrors(async () => {
+      await apply();
+      await apply();
+    });
+    expect(reported).toEqual([new Error('offline')]);
+    expect(rejected).toEqual([new Error('500')]);
+    await apply();
+    expect(onSubmit).toHaveBeenCalledTimes(3);
   });
 
   it('submits the new contents when every hunk is accepted, even without context lines', async () => {
