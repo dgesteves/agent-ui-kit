@@ -104,9 +104,23 @@ describe('DiffReview', () => {
     expect(route.content).toContain("openai('gpt-4o')");
     expect(route.content).not.toContain('gpt-4.1-mini');
     expect(result.files[1]!.content).toBe("export const ratelimit = createLimiter('10 s');\n");
+    // Submitting again needs a change; then Ctrl/Cmd+Enter submits too.
+    await user.click(within(h3!).getByRole('button', { name: 'Reject hunk 3' }));
     h1!.focus();
     await user.keyboard('{Control>}{Enter}{/Control}');
     expect(onSubmit).toHaveBeenCalledTimes(2);
+    expect(onSubmit.mock.calls[1]![0]).toMatchObject({ accepted: 3, rejected: 0, pending: 1 });
+  });
+
+  it('submits once per set of decisions, even on a double click', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<DiffReview files={files} onSubmit={onSubmit} />);
+    await user.click(screen.getByRole('button', { name: 'Accept all' }));
+    await user.dblClick(screen.getByRole('button', { name: /^apply/i }));
+    hunks()[0]!.focus();
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it('submits the new contents when every hunk is accepted, even without context lines', async () => {

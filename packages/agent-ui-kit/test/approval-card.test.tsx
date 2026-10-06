@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { ApprovalCard, ToolApprovalCard } from '../src/approval-card';
+import { ApprovalCard, ToolApprovalCard, type ApprovalStatus } from '../src/approval-card';
 import { axe, toolPart } from './utils';
 
 const command = { command: 'pnpm add @upstash/ratelimit', cwd: '~/app' };
@@ -34,20 +35,25 @@ describe('ApprovalCard', () => {
   });
 
   it('approves and denies with the mouse', async () => {
-    const { user, onApprove, onDeny } = setup();
-    await user.click(screen.getByRole('button', { name: /^approve/i }));
-    expect(onApprove).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', { name: /^deny$/i }));
-    expect(onDeny).toHaveBeenCalledWith(undefined);
+    const approving = setup();
+    await approving.user.click(screen.getByRole('button', { name: /^approve/i }));
+    expect(approving.onApprove).toHaveBeenCalledTimes(1);
+    approving.unmount();
+    const denying = setup();
+    await denying.user.click(screen.getByRole('button', { name: /^deny$/i }));
+    expect(denying.onDeny).toHaveBeenCalledWith(undefined);
   });
 
   it('approves with Y and denies with N while focus is inside the card', async () => {
-    const { user, onApprove, onDeny, card } = setup();
-    card.focus();
-    await user.keyboard('y');
-    expect(onApprove).toHaveBeenCalledTimes(1);
-    await user.keyboard('n');
-    expect(onDeny).toHaveBeenCalledTimes(1);
+    const approving = setup();
+    approving.card.focus();
+    await approving.user.keyboard('y');
+    expect(approving.onApprove).toHaveBeenCalledTimes(1);
+    approving.unmount();
+    const denying = setup();
+    denying.card.focus();
+    await denying.user.keyboard('n');
+    expect(denying.onDeny).toHaveBeenCalledTimes(1);
   });
 
   it('approves with Ctrl/Cmd+Enter inside the card', async () => {
@@ -79,6 +85,67 @@ describe('ApprovalCard', () => {
     expect(onDeny).not.toHaveBeenCalled();
     await user.keyboard('{Enter}');
     expect(onDeny).toHaveBeenCalledWith('Use the existing Redis client');
+  });
+
+  describe('decides once', () => {
+    it('ignores the second click of a double click while an async onApprove runs', async () => {
+      const user = userEvent.setup();
+      const onApprove = vi.fn();
+      function Standalone() {
+        const [status, setStatus] = useState<ApprovalStatus>('pending');
+        return (
+          <ApprovalCard
+            toolName="deploy"
+            status={status}
+            onApprove={async () => {
+              onApprove();
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              setStatus('approved');
+            }}
+          />
+        );
+      }
+      render(<Standalone />);
+      await user.dblClick(screen.getByRole('button', { name: /^approve/i }));
+      await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+      expect(onApprove).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Approved', { selector: 'span' })).toBeInTheDocument();
+    });
+
+    it('does not deny what it just approved, or approve what it just denied', async () => {
+      const approving = setup();
+      approving.card.focus();
+      await approving.user.keyboard('yn');
+      expect(approving.onApprove).toHaveBeenCalledTimes(1);
+      expect(approving.onDeny).not.toHaveBeenCalled();
+      approving.unmount();
+      const denying = setup();
+      await denying.user.click(screen.getByRole('button', { name: /^deny$/i }));
+      await denying.user.click(screen.getByRole('button', { name: /^approve/i }));
+      expect(denying.onDeny).toHaveBeenCalledTimes(1);
+      expect(denying.onApprove).not.toHaveBeenCalled();
+    });
+
+    it('can decide again once the promise it returned settles with the card still pending', async () => {
+      const user = userEvent.setup();
+      // e.g. the request failed and the app kept the approval open.
+      const onApprove = vi.fn(() => Promise.resolve());
+      render(<ApprovalCard toolName="deploy" onApprove={onApprove} />);
+      await user.click(screen.getByRole('button', { name: /^approve/i }));
+      await user.click(screen.getByRole('button', { name: /^approve/i }));
+      expect(onApprove).toHaveBeenCalledTimes(2);
+    });
+
+    it('is re-armed when the status returns to pending', async () => {
+      const user = userEvent.setup();
+      const onApprove = vi.fn();
+      const { rerender } = render(<ApprovalCard toolName="deploy" onApprove={onApprove} />);
+      await user.click(screen.getByRole('button', { name: /^approve/i }));
+      rerender(<ApprovalCard toolName="deploy" status="approved" onApprove={onApprove} />);
+      rerender(<ApprovalCard toolName="deploy" status="pending" onApprove={onApprove} />);
+      await user.click(screen.getByRole('button', { name: /^approve/i }));
+      expect(onApprove).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('closes the feedback field with Escape and returns focus to the card', async () => {
@@ -164,6 +231,14 @@ describe('ToolApprovalCard', () => {
       />,
     );
     expect(screen.getByText('Critical')).toBeInTheDocument();
+  });
+
+  it('responds once to a double click', async () => {
+    const user = userEvent.setup();
+    const onRespond = vi.fn(() => new Promise<void>(() => {}));
+    render(<ToolApprovalCard part={toolPart('approval-requested', { toolCallId: 'c9' })} onRespond={onRespond} />);
+    await user.dblClick(screen.getByRole('button', { name: /^approve/i }));
+    expect(onRespond).toHaveBeenCalledTimes(1);
   });
 
   it('renders nothing for parts outside the approval flow', () => {

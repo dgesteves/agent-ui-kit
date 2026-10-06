@@ -3,6 +3,7 @@
 import { ToggleGroup } from 'radix-ui';
 import {
   Fragment,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -24,7 +25,7 @@ import { mergeTokensWithSegments, TOKEN_CLASS, tokenizeLine } from './lib/highli
 import { useIsMac } from './lib/hooks';
 import { CheckIcon, UndoIcon, XIcon } from './lib/icons';
 import { Kbd, LiveRegion } from './lib/primitives';
-import { cn, hasModifier, isTypingTarget, type HeadingLevel } from './lib/utils';
+import { cn, hasModifier, isPromiseLike, isTypingTarget, type HeadingLevel } from './lib/utils';
 
 export type { DiffReviewFileResult, DiffReviewResult, FileChange, HunkDecision } from './lib/diff';
 export type DiffViewMode = 'unified' | 'split';
@@ -39,8 +40,11 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
   decisions?: Readonly<Record<string, HunkDecision>> | undefined;
   defaultDecisions?: Readonly<Record<string, HunkDecision>> | undefined;
   onDecisionsChange?: ((decisions: Record<string, HunkDecision>) => void) | undefined;
-  /** Called with the reviewed result. Pending hunks are not applied. */
-  onSubmit?: ((result: DiffReviewResult) => void) | undefined;
+  /**
+   * Called with the reviewed result. Pending hunks are not applied. Fires once per set of decisions:
+   * submitting again needs a changed decision, new `files`, or the returned promise to settle.
+   */
+  onSubmit?: ((result: DiffReviewResult) => void | PromiseLike<void>) | undefined;
   submitLabel?: string;
   /** Hide review controls, e.g. once the review has been submitted. */
   readOnly?: boolean;
@@ -166,9 +170,20 @@ export function DiffReview({
     setAnnouncement(`All ${flat.length} hunks ${decision}.`);
   };
 
+  // One submission per set of decisions, so a double click or a repeated Ctrl+Enter sends it once.
+  const submitted = useRef(false);
+  useEffect(() => {
+    submitted.current = false;
+  }, [parsed, decisions]);
   const submit = () => {
-    if (!onSubmit) return;
-    onSubmit(computeReviewResult(parsed, decisions));
+    if (!onSubmit || submitted.current) return;
+    submitted.current = true;
+    const result = onSubmit(computeReviewResult(parsed, decisions));
+    if (isPromiseLike(result)) {
+      void Promise.resolve(result).finally(() => {
+        submitted.current = false;
+      });
+    }
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {

@@ -19,6 +19,15 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   return false;
 }
 
+/** True for a promise or any other thenable, e.g. what an async event handler returns. */
+export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null &&
+    (typeof value === 'object' || typeof value === 'function') &&
+    typeof (value as { then?: unknown }).then === 'function'
+  );
+}
+
 /** True when a key event carries a modifier we should not intercept. */
 export function hasModifier(event: { altKey: boolean; ctrlKey: boolean; metaKey: boolean }) {
   return event.altKey || event.ctrlKey || event.metaKey;

@@ -14,7 +14,7 @@ import { humanizeToolName } from './lib/format';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
 import { useIsMac } from './lib/hooks';
-import { cn, hasModifier, isTypingTarget, type HeadingLevel } from './lib/utils';
+import { cn, hasModifier, isPromiseLike, isTypingTarget, type HeadingLevel } from './lib/utils';
 import type { RiskLevel, ToolMeta } from './tool-call-timeline';
 
 export type { ApprovalStatus, RiskLevel };
@@ -31,6 +31,10 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   risk?: RiskLevel;
   /** Custom arguments preview. Defaults to a command line for `{ command }` inputs, else JSON. */
   preview?: ReactNode;
+  /**
+   * Default "pending". Approve and deny fire once: further presses (a double click, Y then N) are
+   * ignored until `status` changes or the promise the handler returned settles.
+   */
   status?: ApprovalStatus;
   /** Reason recorded with the decision, shown once resolved. */
   reason?: string | undefined;
@@ -39,8 +43,10 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
    * the card reads "Auto-approved" or "Blocked by policy" instead of "Approved" or "Denied".
    */
   automatic?: boolean;
-  onApprove?: () => void;
-  onDeny?: (reason?: string) => void;
+  /** Fires once per decision: see `status`. May return a promise. */
+  onApprove?: () => void | PromiseLike<void>;
+  /** Fires once per decision: see `status`. May return a promise. */
+  onDeny?: (reason?: string) => void | PromiseLike<void>;
   /** Y / N shortcuts while focus is inside the card. Default `true`. */
   shortcuts?: boolean;
   /** Also approve with ⌘/Ctrl+Enter from anywhere on the page while pending. Default `false`. */
@@ -147,8 +153,23 @@ export function ApprovalCard({
   const mac = useIsMac();
   const mod = mac ? '⌘' : 'Ctrl';
 
+  // One decision per pending period, so a double click cannot send two (see `status`).
+  const decided = useRef(false);
+  useEffect(() => {
+    decided.current = false;
+  }, [status]);
+  const decide = (handler: () => unknown) => {
+    decided.current = true;
+    const result = handler();
+    if (isPromiseLike(result)) {
+      void Promise.resolve(result).finally(() => {
+        decided.current = false;
+      });
+    }
+  };
+
   const approve = () => {
-    if (!pending) return;
+    if (!pending || decided.current) return;
     if (risk === 'critical' && !confirming) {
       setConfirming(true);
       setAnnouncement('Critical action. Press approve again to confirm.');
@@ -159,14 +180,15 @@ export function ApprovalCard({
     clearTimeout(confirmTimer.current);
     setAnnouncement('Approved');
     cardRef.current?.focus();
-    onApprove?.();
+    decide(() => onApprove?.());
   };
 
   const deny = (withReason?: string) => {
-    if (!pending) return;
+    if (!pending || decided.current) return;
     setAnnouncement('Denied');
     cardRef.current?.focus();
-    onDeny?.(withReason?.trim() ? withReason.trim() : undefined);
+    const reason = withReason?.trim() ? withReason.trim() : undefined;
+    decide(() => onDeny?.(reason));
   };
 
   const openReason = () => setReasonOpen(true);
@@ -436,9 +458,9 @@ export function ToolApprovalCard({ part, onRespond, meta, risk, description, tit
       status={status}
       reason={part.approval.reason}
       automatic={automatic}
-      onApprove={() => void onRespond({ id: approvalId, approved: true })}
+      onApprove={() => onRespond({ id: approvalId, approved: true })}
       onDeny={(reason) =>
-        void onRespond(reason ? { id: approvalId, approved: false, reason } : { id: approvalId, approved: false })
+        onRespond(reason ? { id: approvalId, approved: false, reason } : { id: approvalId, approved: false })
       }
       {...props}
     />
