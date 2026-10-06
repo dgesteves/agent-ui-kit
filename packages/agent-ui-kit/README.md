@@ -20,13 +20,26 @@ import '@dgesteves/agent-ui-kit/styles.css';
 ```
 
 ```tsx
-import { AgentMessage } from '@dgesteves/agent-ui-kit';
+'use client';
 
-<AgentMessage
-  message={lastAssistantMessage}
-  streaming={status === 'streaming'}
-  onToolApproval={addToolApprovalResponse}
-/>;
+import { useChat } from '@ai-sdk/react';
+import { AgentMessage, deriveAgentState } from '@dgesteves/agent-ui-kit';
+
+export function AgentRun() {
+  const { messages, status, addToolApprovalResponse } = useChat();
+  const last = messages.findLast((m) => m.role === 'assistant');
+  const { state } = deriveAgentState({ status, message: last });
+  if (!last) return null;
+  return (
+    <AgentMessage
+      message={last}
+      streaming={status === 'streaming'}
+      // Once the run has finished, been stopped or failed, tool calls that never settled read "Stopped".
+      active={state !== 'done' && state !== 'error'}
+      onToolApproval={addToolApprovalResponse}
+    />
+  );
+}
 ```
 
 Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCard`, `DiffReview`, `RunMeter`, `AgentStatus`, `Sources`, `Markdown`, `Reasoning`. Hooks and helpers: `useRunTiming`, `useToolTimings`, `deriveAgentState`, `applyHunks`, `estimateCost`, `addUsage`.
