@@ -190,8 +190,9 @@ export function parseFileChange(
     };
   });
 
+  const renamed = !!change.oldPath && change.oldPath !== change.path;
   let status: FileStatus = 'modified';
-  if (change.oldPath && change.oldPath !== change.path) status = 'renamed';
+  if (renamed) status = 'renamed';
   else if (change.oldContent === '' || (change.oldContent === undefined && !change.patch)) status = 'added';
   else if (change.newContent === '' || (change.newContent === undefined && !change.patch)) status = 'deleted';
   if (change.patch && change.oldContent === undefined && change.newContent === undefined) {
@@ -199,7 +200,9 @@ export function parseFileChange(
       ? 'added'
       : /^\+\+\+ \/dev\/null/m.test(change.patch)
         ? 'deleted'
-        : 'modified';
+        : renamed || /^rename from /m.test(change.patch)
+          ? 'renamed'
+          : 'modified';
   }
 
   return {

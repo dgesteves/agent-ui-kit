@@ -105,6 +105,16 @@ describe('parseFileChange', () => {
     expect(file.hunks[0]!.lines.map((l) => l.type)).toEqual(['context', 'del', 'add']);
   });
 
+  it('reports renames given only a patch', () => {
+    const body = ['--- a/old.ts', '+++ b/new.ts', '@@ -1,2 +1,2 @@', ' a', '-b', '+c', ''].join('\n');
+    const git = ['diff --git a/old.ts b/new.ts', 'similarity index 90%', 'rename from old.ts', 'rename to new.ts'];
+    expect(parseFileChange({ path: 'new.ts', oldPath: 'old.ts', patch: body }).status).toBe('renamed');
+    expect(parseFileChange({ path: 'new.ts', patch: [...git, body].join('\n') }).status).toBe('renamed');
+    expect(parseFileChange({ path: 'new.ts', oldPath: 'new.ts', patch: body }).status).toBe('modified');
+    const added = ['--- /dev/null', '+++ b/new.ts', '@@ -0,0 +1 @@', '+a', ''].join('\n');
+    expect(parseFileChange({ path: 'new.ts', oldPath: 'old.ts', patch: added }).status).toBe('added');
+  });
+
   it('infers languages from extensions', () => {
     expect(inferLanguage('a/b.tsx')).toBe('tsx');
     expect(inferLanguage('README.md')).toBe('md');
