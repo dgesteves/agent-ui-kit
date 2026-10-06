@@ -82,7 +82,10 @@ export interface RunTiming {
   firstTokenAt?: number | undefined;
   /** Milliseconds the agent spent working, excluding time waiting on the user. */
   activeMs: number;
-  /** Time to first token of the run. */
+  /**
+   * Time to first token of the run. A request that finishes without a `streaming` status (its
+   * response arrived in one burst, or it was stopped) counts its end as the first token.
+   */
   ttftMs?: number | undefined;
   isRunning: boolean;
 }
@@ -134,7 +137,10 @@ function reduceRunTiming(s: RunTimingState, status: ChatStatus, now: number): Ru
     return { ...s, startedAt, segmentStart, firstTokenAt };
   }
   if (s.segmentStart === undefined) return s;
-  return { ...s, accumulatedMs: s.accumulatedMs + (now - s.segmentStart), segmentStart: undefined };
+  // useChat can go straight from submitted to ready when a response arrives in one burst; then the
+  // response is the first token. Otherwise the next request (after an approval) would set it.
+  const firstTokenAt = s.firstTokenAt ?? (status === 'ready' ? now : undefined);
+  return { ...s, firstTokenAt, accumulatedMs: s.accumulatedMs + (now - s.segmentStart), segmentStart: undefined };
 }
 
 /** Eases a number toward its target; jumps immediately under reduced motion. */
