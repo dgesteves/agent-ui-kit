@@ -345,10 +345,25 @@ export interface MarkdownProps {
    * - `'self'`: relative URLs (`/logo.png`, `./chart.png`), which load from your own origin.
    *   `//host/x` is not relative. An absolute URL to your own site needs its host listed.
    * - `'*'`: every image.
+   *
+   * Compared by value, so an inline array does not re-render the markdown.
    */
   allowedImageHosts?: readonly string[] | undefined;
+  /** Element overrides, merged over the defaults. Keep the object stable: a new one re-renders the markdown. */
   components?: Components;
   className?: string;
+}
+
+const sameList = (a: readonly string[] | undefined, b: readonly string[] | undefined) =>
+  a === b || (!!a && !!b && a.length === b.length && a.every((item, i) => item === b[i]));
+
+/** Shallow, except that `allowedImageHosts` compares by value (it is often written inline). */
+function sameProps(prev: MarkdownProps, next: MarkdownProps) {
+  const keys = new Set([...Object.keys(prev), ...Object.keys(next)]) as Set<keyof MarkdownProps>;
+  for (const key of keys) {
+    if (key === 'allowedImageHosts' ? !sameList(prev[key], next[key]) : !Object.is(prev[key], next[key])) return false;
+  }
+  return true;
 }
 
 /**
@@ -397,4 +412,4 @@ export const Markdown = memo(function Markdown({
       </ImagePolicyContext>
     </div>
   );
-});
+}, sameProps);

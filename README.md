@@ -249,8 +249,14 @@ Images in text and reasoning do not load unless they are allowed: a URL in model
 - `'*'`: every image.
 
 ```tsx
-<AgentMessage message={last} allowedImageHosts={['images.example.com', 'self']} />
+import { AgentMessage } from '@dgesteves/agent-ui-kit';
+
+const IMAGE_HOSTS = ['images.example.com', 'self'];
+
+<AgentMessage message={last} allowedImageHosts={IMAGE_HOSTS} />;
 ```
+
+The list is compared by value, so an inline array works as well: it does not re-render the finished text on every streamed delta.
 
 `Markdown`, `Reasoning` and `JsonView` are exported on their own as well, and `Markdown` and `Reasoning` take the same `allowedImageHosts`.
 
