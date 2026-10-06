@@ -36,7 +36,10 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
   view?: DiffViewMode | undefined;
   defaultView?: DiffViewMode;
   onViewChange?: ((view: DiffViewMode) => void) | undefined;
-  /** Controlled decisions keyed by hunk id: `${path}:${index}`, or `${path}#2:${index}` for a repeated path. */
+  /**
+   * Controlled decisions keyed by hunk id: `${path}:${index}`. A repeated path gets `${path}#2:${index}`,
+   * `#3` and so on, skipping a suffix another file's path already has.
+   */
   decisions?: Readonly<Record<string, HunkDecision>> | undefined;
   defaultDecisions?: Readonly<Record<string, HunkDecision>> | undefined;
   onDecisionsChange?: ((decisions: Record<string, HunkDecision>) => void) | undefined;
@@ -77,14 +80,32 @@ interface ParsedFiles {
   parsed: ParsedFileDiff[];
 }
 
+/**
+ * One id per file: its path, or for a repeated path `path#2`, `path#3`… skipping any id already
+ * taken, since a real path can look like a repeat (`a.ts`, `a.ts`, `a.ts#2`).
+ */
+function fileIds(files: readonly FileChange[]): string[] {
+  const used = new Set<string>();
+  const next = new Map<string, number>();
+  return files.map(({ path }) => {
+    let id = path;
+    if (used.has(id)) {
+      let n = next.get(path) ?? 2;
+      while (used.has(`${path}#${n}`)) n++;
+      next.set(path, n + 1);
+      id = `${path}#${n}`;
+    }
+    used.add(id);
+    return id;
+  });
+}
+
 /** Parse each change, reusing `previous` parses of unchanged files (diffing is the expensive part). */
 function parseFiles(files: readonly FileChange[], context: number, previous?: ParsedFiles): ParsedFileDiff[] {
-  // Two changes to the same path must not share hunk ids: later ones become `path#2`, `path#3`…
-  const seen = new Map<string, number>();
+  // Two changes must not share hunk ids, or deciding one hunk decides the other too.
+  const ids = fileIds(files);
   const parsed = files.map((f, i) => {
-    const n = (seen.get(f.path) ?? 0) + 1;
-    seen.set(f.path, n);
-    const id = n === 1 ? f.path : `${f.path}#${n}`;
+    const id = ids[i]!;
     const before = previous?.files[i];
     const reused = previous?.context === context && before && sameChange(before, f) ? previous.parsed[i] : undefined;
     return reused?.id === id ? reused : parseFileChange(f, { context, id });

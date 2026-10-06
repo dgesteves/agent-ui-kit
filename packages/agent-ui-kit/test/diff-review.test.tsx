@@ -175,6 +175,39 @@ describe('DiffReview', () => {
     errors.mockRestore();
   });
 
+  it.each([
+    [
+      ['a.ts', 'a.ts', 'a.ts#2'],
+      ['a.ts:0', 'a.ts#2:0', 'a.ts#2#2:0'],
+    ],
+    [
+      ['a.ts#2', 'a.ts', 'a.ts'],
+      ['a.ts#2:0', 'a.ts:0', 'a.ts#3:0'],
+    ],
+    [
+      ['a.ts', 'a.ts#2', 'a.ts', 'a.ts', 'a.ts#3'],
+      ['a.ts:0', 'a.ts#2:0', 'a.ts#3:0', 'a.ts#4:0', 'a.ts#3#2:0'],
+    ],
+  ])('gives every file its own hunk ids when a path looks like a repeat: %j', async (paths, ids) => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<(r: DiffReviewResult) => void>();
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <DiffReview
+        files={paths.map((path, i) => ({ path, oldContent: `old ${i}\n`, newContent: `new ${i}\n` }))}
+        onSubmit={onSubmit}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Accept hunk 2' }));
+    expect(hunks().map((h) => h.dataset.decision)).toEqual(paths.map((_, i) => (i === 1 ? 'accepted' : 'pending')));
+    await user.click(screen.getByRole('button', { name: /^apply/i }));
+    const result = onSubmit.mock.calls[0]![0];
+    expect(result.files.map((f) => f.content)).toEqual(paths.map((_, i) => (i === 1 ? `new ${i}\n` : `old ${i}\n`)));
+    expect(result.files.flatMap((f) => [...f.accepted, ...f.pending])).toEqual(ids);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
   it('switches between unified and split layouts', async () => {
     const user = userEvent.setup();
     const { container } = render(<DiffReview files={files} />);
