@@ -337,7 +337,7 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 - **Cache hit rate over tokens per second.** Throughput looked precise but mixed tool time into generation speed. For agents, cached input is the bigger cost lever, so that is what the meter shows.
 - **Shortcuts scoped to focus.** Global single-key shortcuts are an accessibility problem and fight with text inputs; scoping them to the component avoids both. Critical approvals require a second press.
 - **Hydration-safe clocks.** Live durations and waterfall widths render after hydration, so server and client markup always match.
-- **Type-only dependency on `ai`.** No SDK runtime in the build (about 34 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
+- **Type-only dependency on `ai`.** No SDK runtime in the build (about 35 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
 - **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
 
 ## Why not AI Elements or assistant-ui?
