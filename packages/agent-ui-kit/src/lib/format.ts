@@ -1,32 +1,40 @@
 /** Formatting helpers shared by the components. All output is locale-stable. */
 
+/*
+ * Each unit is chosen by the value as it will be printed, not the raw value: otherwise rounding
+ * produces "1000ms", "60.0s" or "1000.0k" instead of moving up to the next unit.
+ */
+
 export function formatDuration(ms: number | undefined | null): string {
   if (ms == null || !Number.isFinite(ms) || ms < 0) return '–';
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  if (ms < 10_000) return `${(ms / 1000).toFixed(2)}s`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
-  const minutes = Math.floor(ms / 60_000);
-  const seconds = Math.floor((ms % 60_000) / 1000);
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  if (Math.round(ms) < 1000) return `${Math.round(ms)}ms`;
+  const centis = (ms / 1000).toFixed(2);
+  if (Number(centis) < 10) return `${centis}s`;
+  const tenths = (ms / 1000).toFixed(1);
+  if (Number(tenths) < 60) return `${tenths}s`;
+  const seconds = Math.round(ms / 1000);
+  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
 }
 
 /** Spoken form for screen readers, e.g. "1.2 seconds". */
 export function formatDurationLong(ms: number | undefined | null): string {
   if (ms == null || !Number.isFinite(ms) || ms < 0) return 'unknown duration';
-  if (ms < 1000) return `${Math.round(ms)} milliseconds`;
-  const seconds = ms / 1000;
-  if (seconds < 60) return `${seconds.toFixed(1)} seconds`;
-  const minutes = Math.floor(seconds / 60);
-  const rest = Math.round(seconds % 60);
+  if (Math.round(ms) < 1000) return `${Math.round(ms)} milliseconds`;
+  const tenths = (ms / 1000).toFixed(1);
+  if (Number(tenths) < 60) return `${tenths} seconds`;
+  const total = Math.round(ms / 1000);
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
   return `${minutes} minute${minutes === 1 ? '' : 's'} ${rest} second${rest === 1 ? '' : 's'}`;
 }
 
 export function formatTokens(n: number | undefined | null): string {
   if (n == null || !Number.isFinite(n)) return '–';
-  const abs = Math.abs(n);
-  if (abs < 1000) return String(Math.round(n));
-  if (abs < 10_000) return `${(n / 1000).toFixed(2)}k`;
-  if (abs < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
+  if (Math.abs(Math.round(n)) < 1000) return String(Math.round(n));
+  const hundredths = (n / 1000).toFixed(2);
+  if (Math.abs(Number(hundredths)) < 10) return `${hundredths}k`;
+  const tenths = (n / 1000).toFixed(1);
+  if (Math.abs(Number(tenths)) < 1000) return `${tenths}k`;
   return `${(n / 1_000_000).toFixed(2)}M`;
 }
 
