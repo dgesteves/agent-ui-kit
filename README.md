@@ -256,7 +256,7 @@ const IMAGE_HOSTS = ['images.example.com', 'self'];
 <AgentMessage message={last} allowedImageHosts={IMAGE_HOSTS} />;
 ```
 
-The list is compared by value, so an inline array works as well: it does not re-render the finished text on every streamed delta.
+The list is compared by value, so an inline array works as well: it does not re-render the finished text on every streamed delta. Image file parts follow the same list, except that `data:` and `blob:` URLs, which need no request, always preview.
 
 `Markdown`, `Reasoning` and `JsonView` are exported on their own as well, and `Markdown` and `Reasoning` take the same `allowedImageHosts`.
 
@@ -278,7 +278,7 @@ The list is compared by value, so an inline array works as well: it does not re-
 | `output-denied`                                                | "Denied", with the user's reason, or "Blocked by policy" when `approval.isAutomatic`        |
 | client-side tool `input-available`                             | Whatever `renderTool` returns, e.g. `DiffReview` → `addToolOutput`                          |
 | `source-url` / `source-document`                               | `Sources`                                                                                   |
-| `file`                                                         | Image preview or file link                                                                  |
+| `file`                                                         | Image preview (`data:` and `blob:` URLs, or as `allowedImageHosts` allows) or file link     |
 | `data-*`                                                       | `renderData`                                                                                |
 | `message.metadata.usage` (`LanguageModelUsage`)                | `RunMeter`                                                                                  |
 | `useChat().status`                                             | `AgentStatus` via `deriveAgentState`, timing via `useRunTiming`                             |

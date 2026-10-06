@@ -4,7 +4,8 @@ import { useMemo, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { ToolApprovalCard, type ApprovalCardProps, type ToolApprovalResponse } from './approval-card';
 import { getSourceParts, getToolPartName, isToolPart, type AnyUIPart, type ToolPart, type UIMessage } from './lib/ai';
 import { useToolTimings, type ToolTimings } from './lib/hooks';
-import { FileIcon } from './lib/icons';
+import { FileIcon, ImageIcon } from './lib/icons';
+import { getImagePolicy, isAllowedImage, type ImagePolicy } from './lib/images';
 import { cn } from './lib/utils';
 import { Markdown } from './markdown';
 import { Reasoning } from './reasoning';
@@ -39,8 +40,9 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   showSources?: boolean;
   sourcesVariant?: 'chips' | 'cards';
   /**
-   * Where images in text and reasoning may load from: host names, `'self'` for relative URLs, or
-   * `'*'` for every image. Default: none, so other images render as links. See
+   * Where images in text, reasoning and image file parts may load from: host names,
+   * `'self'` for relative URLs, or `'*'` for every image. Default: none, so other images render
+   * as links. File parts with `data:` and `blob:` URLs always preview. See
    * `MarkdownProps.allowedImageHosts`.
    */
   allowedImageHosts?: readonly string[] | undefined;
@@ -81,6 +83,7 @@ export function AgentMessage({
   const timings = timingsProp ?? measured;
   const sources = useMemo(() => (showSources ? getSourceParts(parts) : []), [parts, showSources]);
   const sourcePrefix = `${message.id}-source`;
+  const imagePolicy = useMemo(() => getImagePolicy(allowedImageHosts), [allowedImageHosts]);
 
   const segments = useMemo(() => {
     const out: Segment[] = [];
@@ -184,7 +187,7 @@ export function AgentMessage({
               />
             );
           case 'file':
-            return <FileAttachment key={segment.key} part={segment.part} />;
+            return <FileAttachment key={segment.key} part={segment.part} imagePolicy={imagePolicy} />;
           case 'node':
             return <div key={segment.key}>{segment.node}</div>;
         }
@@ -196,9 +199,13 @@ export function AgentMessage({
   );
 }
 
-function FileAttachment({ part }: { part: FilePart }) {
+/** Inline content (`data:`) and local objects (`blob:`) need no request; other URLs follow the policy. */
+const canPreview = (url: string, policy: ImagePolicy) => /^(data|blob):/i.test(url) || isAllowedImage(url, policy);
+
+function FileAttachment({ part, imagePolicy }: { part: FilePart; imagePolicy: ImagePolicy }) {
   const name = part.filename ?? part.mediaType;
-  if (part.mediaType.startsWith('image')) {
+  const image = part.mediaType.startsWith('image');
+  if (image && canPreview(part.url, imagePolicy)) {
     return (
       <a
         href={part.url}
@@ -214,6 +221,7 @@ function FileAttachment({ part }: { part: FilePart }) {
       </a>
     );
   }
+  const Icon = image ? ImageIcon : FileIcon;
   return (
     <a
       href={part.url}
@@ -221,7 +229,7 @@ function FileAttachment({ part }: { part: FilePart }) {
       rel="noopener noreferrer"
       className="border-aui-border bg-aui-surface text-aui-fg hover:bg-aui-surface-2 focus-visible:outline-aui-ring inline-flex w-fit items-center gap-2 rounded-lg border px-3 py-2 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-2"
     >
-      <FileIcon size={14} className="text-aui-fg-subtle" />
+      <Icon size={14} className="text-aui-fg-subtle" />
       {name}
       <span className="sr-only">(opens in a new tab)</span>
     </a>

