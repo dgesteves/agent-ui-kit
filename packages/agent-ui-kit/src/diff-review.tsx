@@ -35,7 +35,7 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
   view?: DiffViewMode | undefined;
   defaultView?: DiffViewMode;
   onViewChange?: ((view: DiffViewMode) => void) | undefined;
-  /** Controlled decisions keyed by hunk id (`${path}:${index}`). */
+  /** Controlled decisions keyed by hunk id: `${path}:${index}`, or `${path}#2:${index}` for a repeated path. */
   decisions?: Readonly<Record<string, HunkDecision>> | undefined;
   defaultDecisions?: Readonly<Record<string, HunkDecision>> | undefined;
   onDecisionsChange?: ((decisions: Record<string, HunkDecision>) => void) | undefined;
@@ -90,7 +90,15 @@ export function DiffReview({
   ...props
 }: DiffReviewProps) {
   const Heading = `h${headingLevel}` as const;
-  const parsed = useMemo(() => files.map((f) => parseFileChange(f, { context })), [files, context]);
+  const parsed = useMemo(() => {
+    // Two changes to the same path must not share hunk ids: later ones become `path#2`, `path#3`…
+    const seen = new Map<string, number>();
+    return files.map((f) => {
+      const n = (seen.get(f.path) ?? 0) + 1;
+      seen.set(f.path, n);
+      return parseFileChange(f, { context, id: n === 1 ? f.path : `${f.path}#${n}` });
+    });
+  }, [files, context]);
   const flat = useMemo<FlatHunk[]>(() => {
     const list: FlatHunk[] = [];
     for (const file of parsed) for (const hunk of file.hunks) list.push({ file, hunk, order: list.length });

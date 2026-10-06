@@ -33,7 +33,7 @@ export interface DiffLine {
 }
 
 export interface DiffHunk {
-  /** Stable id: `${fileId}:${index}`. */
+  /** Stable id: `${fileId}:${index}`, e.g. `app/route.ts:0`. */
   id: string;
   index: number;
   oldStart: number;
@@ -49,6 +49,7 @@ export interface DiffHunk {
 export type FileStatus = 'added' | 'deleted' | 'modified' | 'renamed';
 
 export interface ParsedFileDiff {
+  /** The path, unless another id was given (`DiffReview` suffixes repeated paths: `a.ts#2`). */
   id: string;
   path: string;
   oldPath?: string | undefined;
@@ -151,8 +152,15 @@ function hunkHeader(h: StructuredPatchHunk) {
 }
 
 /** Turn a `FileChange` into hunks with line numbers and word-level segments. */
-export function parseFileChange(change: FileChange, options: { context?: number } = {}): ParsedFileDiff {
-  const id = change.path;
+export function parseFileChange(
+  change: FileChange,
+  options: {
+    context?: number;
+    /** Id for the file and prefix of its hunk ids. Default: the path. */
+    id?: string;
+  } = {},
+): ParsedFileDiff {
+  const id = options.id ?? change.path;
   const oldContent = change.oldContent ?? (change.patch ? undefined : '');
   const newContent = change.newContent ?? (change.patch ? undefined : '');
   let hunks: StructuredPatchHunk[];

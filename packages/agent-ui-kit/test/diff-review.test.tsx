@@ -120,6 +120,31 @@ describe('DiffReview', () => {
     expect(onSubmit.mock.calls[0]![0].files[0]!.content).toBe(newContent);
   });
 
+  it('keeps the hunks of two changes to the same path apart', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<(r: DiffReviewResult) => void>();
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <DiffReview
+        files={[
+          { path: 'a.ts', oldContent: 'one\n', newContent: 'ONE\n' },
+          { path: 'a.ts', oldContent: 'two\n', newContent: 'TWO\n' },
+        ]}
+        onSubmit={onSubmit}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Accept hunk 1' }));
+    expect(hunks().map((h) => h.dataset.decision)).toEqual(['accepted', 'pending']);
+    await user.click(screen.getByRole('button', { name: /^apply/i }));
+    const result = onSubmit.mock.calls[0]![0];
+    expect(result.accepted).toBe(1);
+    expect(result.files.map((f) => f.content)).toEqual(['ONE\n', 'two\n']);
+    expect(result.files.map((f) => f.accepted)).toEqual([['a.ts:0'], []]);
+    expect(result.files[1]!.pending).toEqual(['a.ts#2:0']);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
   it('switches between unified and split layouts', async () => {
     const user = userEvent.setup();
     const { container } = render(<DiffReview files={files} />);
