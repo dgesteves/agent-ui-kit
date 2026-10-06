@@ -226,9 +226,20 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
         data-inspect={inspect || undefined}
         className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-x-10 gap-y-6 px-4 pt-6 pb-24 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:pt-10"
       >
+        <div className="lg:col-span-2">
+          <h1 className="text-[22px] leading-tight font-semibold tracking-tight text-[#e8eaed] sm:text-2xl">
+            Watch it work. Approve what it does. Review what it changed.
+          </h1>
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
+            A scripted coding agent adds rate limiting to a Next.js route. Every panel is a component from{' '}
+            <code className="font-mono text-[13px] text-[#67e8f9]">@dgesteves/agent-ui-kit</code>, rendered from AI SDK
+            v7 message parts streamed through <code className="font-mono text-[13px] text-[#e8eaed]">useChat</code>.
+          </p>
+        </div>
+
         {/* Sidebar first in the DOM on small screens so status and controls stay on top. */}
         <aside
-          className="flex flex-col gap-4 lg:sticky lg:top-20 lg:order-2 lg:self-start"
+          className="flex flex-col gap-4 lg:sticky lg:top-20 lg:order-2 lg:-m-2 lg:max-h-[calc(100dvh-6rem)] lg:[scrollbar-width:thin] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:p-2"
           aria-label="Run status and controls"
         >
           <section
@@ -280,17 +291,6 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
         </aside>
 
         <div className="flex min-w-0 flex-col gap-6 lg:order-1">
-          <div>
-            <h1 className="text-[22px] leading-tight font-semibold tracking-tight text-[#e8eaed] sm:text-2xl">
-              Watch it work. Approve what it does. Review what it changed.
-            </h1>
-            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
-              A scripted coding agent adds rate limiting to a Next.js route. Every panel is a component from{' '}
-              <code className="font-mono text-[13px] text-[#67e8f9]">@dgesteves/agent-ui-kit</code>, rendered from AI
-              SDK v7 message parts streamed through{' '}
-              <code className="font-mono text-[13px] text-[#e8eaed]">useChat</code>.
-            </p>
-          </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="border-line bg-raised/60 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] text-[#a1a9b4]">
               <span className="bg-cyan size-1.5 rounded-full" aria-hidden="true" />
@@ -425,6 +425,7 @@ function AppliedChanges({ files, output }: { files: FileChange[]; output: Review
               {file.path}
               <span
                 className="flex gap-0.5"
+                role="img"
                 aria-label={file.hunks.map((h) => decisions[h.id] ?? 'pending').join(', ')}
               >
                 {file.hunks.map((h) => (

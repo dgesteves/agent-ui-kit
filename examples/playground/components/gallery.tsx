@@ -11,7 +11,7 @@ import {
   type ToolPart,
 } from '@dgesteves/agent-ui-kit';
 import type { UIMessage } from 'ai';
-import { useState, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { PRICING, RATELIMIT_UPSTASH, ROUTE_NEW, ROUTE_OLD, WEB_RESULTS } from '@/lib/scenario';
 import { toolMeta } from '@/lib/tools';
 
@@ -213,27 +213,38 @@ export function Gallery() {
         title="RunMeter"
         description="Tokens, estimated cost and latency; compact for headers, expanded for panels."
       >
-        <div className="flex flex-col gap-5">
-          <RunMeter
-            usage={{ inputTokens: 38_660, outputTokens: 2_412, inputTokenDetails: { cacheReadTokens: 28_800 } }}
-            pricing={PRICING}
-            ttftMs={684}
-            durationMs={21_800}
-          />
-          <RunMeter
-            variant="expanded"
-            className="max-w-sm"
-            usage={{
-              inputTokens: 38_660,
-              outputTokens: 2_412,
-              inputTokenDetails: { cacheReadTokens: 28_800 },
-              outputTokenDetails: { reasoningTokens: 96 },
-            }}
-            pricing={PRICING}
-            ttftMs={684}
-            durationMs={21_800}
-            model="mock-agent-1"
-          />
+        <div className="grid items-start gap-6 md:grid-cols-[minmax(0,22rem)_1fr]">
+          <figure>
+            <figcaption className="mb-2 font-mono text-[11px] text-[#8b94a0]">variant=&quot;expanded&quot;</figcaption>
+            <RunMeter
+              variant="expanded"
+              usage={{
+                inputTokens: 38_660,
+                outputTokens: 2_412,
+                inputTokenDetails: { cacheReadTokens: 28_800 },
+                outputTokenDetails: { reasoningTokens: 96 },
+              }}
+              pricing={PRICING}
+              ttftMs={684}
+              durationMs={21_800}
+              model="mock-agent-1"
+            />
+          </figure>
+          <figure>
+            <figcaption className="mb-2 font-mono text-[11px] text-[#8b94a0]">variant=&quot;compact&quot;</figcaption>
+            <RunMeter
+              usage={{ inputTokens: 38_660, outputTokens: 2_412, inputTokenDetails: { cacheReadTokens: 28_800 } }}
+              pricing={PRICING}
+              ttftMs={684}
+              durationMs={21_800}
+            />
+            <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-[#a1a9b4]">
+              Pass <code className="font-mono text-[12px] text-[#e8eaed]">totalUsage</code> from{' '}
+              <code className="font-mono text-[12px] text-[#e8eaed]">streamText</code> through message metadata, and
+              timing from <code className="font-mono text-[12px] text-[#e8eaed]">useRunTiming(status)</code>. Cost is an
+              estimate from the pricing you supply.
+            </p>
+          </figure>
         </div>
       </Section>
 
@@ -245,6 +256,49 @@ export function Gallery() {
         <div className="flex flex-col gap-6">
           <Sources sources={sources} idPrefix="chips" />
           <Sources sources={sources} variant="cards" idPrefix="cards" />
+        </div>
+      </Section>
+
+      <Section
+        id="theming"
+        title="Theming"
+        description="Every color, radius and font is a CSS variable. Light is the default, .dark switches, and any subtree can override tokens."
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          {(
+            [
+              ['Dark', { className: 'dark bg-[#0d0f12]' }],
+              ['Light', { 'data-theme': 'light', className: 'bg-white' }],
+              [
+                'Custom tokens',
+                {
+                  className: 'dark bg-[#0f1210]',
+                  style: {
+                    '--aui-accent': '#a3e635',
+                    '--aui-accent-fg': '#bef264',
+                    '--aui-ring': '#bef264',
+                    '--aui-hot': '#fb923c',
+                    '--aui-hot-fg': '#fdba74',
+                    '--aui-radius': '4px',
+                  } as CSSProperties,
+                },
+              ],
+            ] as const
+          ).map(([name, props]) => (
+            <figure key={name} {...props} className={`${props.className} rounded-xl border border-[#262b33] p-4`}>
+              <figcaption className="text-aui-fg-subtle mb-3 font-mono text-[11px]">{name}</figcaption>
+              <div className="flex flex-col gap-3">
+                <AgentStatus state="awaiting-approval" detail="run_command" announce={false} size="sm" />
+                <ToolCallTimeline
+                  parts={timelineParts.slice(0, 3)}
+                  tools={toolMeta}
+                  timings={timelineTimings}
+                  waterfall={false}
+                  announce={false}
+                />
+              </div>
+            </figure>
+          ))}
         </div>
       </Section>
 
