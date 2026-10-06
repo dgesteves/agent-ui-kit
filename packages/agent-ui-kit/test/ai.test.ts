@@ -1,7 +1,13 @@
 import { getToolName, isToolUIPart } from 'ai';
 import { describe, expect, it } from 'vitest';
-import { getSourceParts, getToolPartName, getToolPhase, isToolPart, TOOL_STATES } from '../src/lib/ai';
-import { observeToolTimings } from '../src/lib/hooks';
+import {
+  getSourceParts,
+  getToolPartName,
+  getToolPhase,
+  isToolPart,
+  observeToolTimings,
+  TOOL_STATES,
+} from '../src/lib/ai';
 import { dynamicToolPart, toolPart } from './utils';
 
 describe('AI SDK part helpers', () => {

@@ -17,7 +17,7 @@ copyFileSync(join(src, 'theme.css'), join(dist, 'theme.css'));
 const tokens = readFileSync(join(src, 'tokens.css'), 'utf8');
 writeFileSync(
   join(dist, 'tailwind.css'),
-  `/* @dgesteves/agent-ui-kit for Tailwind CSS v4. Import after "tailwindcss". */\n@import './theme.css';\n\n${tokens}\n/* Let Tailwind see the class names used by the components. */\n@source './index.js';\n`,
+  `/* @dgesteves/agent-ui-kit for Tailwind CSS v4. Import after "tailwindcss". */\n@import './theme.css';\n\n${tokens}\n/* Let Tailwind see the class names used by the components. */\n@source './**/*.js';\n`,
 );
 
 execFileSync('tailwindcss', ['-i', join(src, 'standalone.css'), '-o', join(dist, 'styles.css'), '--minify'], {

@@ -1,3 +1,5 @@
+'use client';
+
 import { ToggleGroup } from 'radix-ui';
 import {
   Fragment,
@@ -9,11 +11,13 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  applyHunks,
+  computeReviewResult,
   parseFileChange,
   type DiffHunk,
   type DiffLine,
+  type DiffReviewResult,
   type FileChange,
+  type HunkDecision,
   type ParsedFileDiff,
 } from './lib/diff';
 import { mergeTokensWithSegments, TOKEN_CLASS, tokenizeLine } from './lib/highlight';
@@ -22,25 +26,8 @@ import { CheckIcon, UndoIcon, XIcon } from './lib/icons';
 import { Kbd, LiveRegion } from './lib/primitives';
 import { cn, hasModifier, isTypingTarget, type HeadingLevel } from './lib/utils';
 
-export type { FileChange };
-export type HunkDecision = 'pending' | 'accepted' | 'rejected';
+export type { DiffReviewFileResult, DiffReviewResult, FileChange, HunkDecision } from './lib/diff';
 export type DiffViewMode = 'unified' | 'split';
-
-export interface DiffReviewFileResult {
-  path: string;
-  /** File contents with only accepted hunks applied. `undefined` for patch-only input. */
-  content: string | undefined;
-  accepted: string[];
-  rejected: string[];
-  pending: string[];
-}
-
-export interface DiffReviewResult {
-  files: DiffReviewFileResult[];
-  accepted: number;
-  rejected: number;
-  pending: number;
-}
 
 export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'>, 'title' | 'onSubmit' | 'children'> {
   files: readonly FileChange[];
@@ -70,30 +57,6 @@ interface FlatHunk {
   hunk: DiffHunk;
   /** Position across all files, 0-based. */
   order: number;
-}
-
-/** Compute the review result for a set of parsed files and decisions. */
-export function computeReviewResult(
-  files: readonly ParsedFileDiff[],
-  decisions: Readonly<Record<string, HunkDecision>>,
-): DiffReviewResult {
-  const out: DiffReviewFileResult[] = files.map((file) => {
-    const pick = (d: HunkDecision) => file.hunks.filter((h) => (decisions[h.id] ?? 'pending') === d).map((h) => h.id);
-    const accepted = pick('accepted');
-    return {
-      path: file.path,
-      content: file.oldContent !== undefined && file.newContent !== undefined ? applyHunks(file, accepted) : undefined,
-      accepted,
-      rejected: pick('rejected'),
-      pending: pick('pending'),
-    };
-  });
-  return {
-    files: out,
-    accepted: out.reduce((n, f) => n + f.accepted.length, 0),
-    rejected: out.reduce((n, f) => n + f.rejected.length, 0),
-    pending: out.reduce((n, f) => n + f.pending.length, 0),
-  };
 }
 
 const STATUS_BADGE: Record<ParsedFileDiff['status'], { letter: string; label: string; className: string }> = {

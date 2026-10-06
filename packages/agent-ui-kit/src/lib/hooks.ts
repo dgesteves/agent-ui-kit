@@ -1,6 +1,10 @@
+'use client';
+
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { ChatStatus } from 'ai';
-import { getToolPhase, getToolParts, isSettledPhase, type AnyUIPart, type ToolPart } from './ai';
+import { getToolParts, observeToolTimings, type AnyUIPart, type ToolTimings } from './ai';
+
+export type { ToolTiming, ToolTimings } from './ai';
 
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -59,17 +63,6 @@ function createStore<T>(initial: T) {
   };
 }
 
-export interface ToolTiming {
-  /** First time the call was observed (input started streaming). */
-  startedAt?: number | undefined;
-  /** When execution began: input complete, or approval granted. */
-  runningAt?: number | undefined;
-  /** When the call settled (output, error or denial). */
-  endedAt?: number | undefined;
-}
-
-export type ToolTimings = Readonly<Record<string, ToolTiming>>;
-
 /**
  * Measures tool-call timings client-side by watching AI SDK state transitions.
  * Calls that are already settled when first observed (e.g. restored history)
@@ -82,29 +75,6 @@ export function useToolTimings(parts: readonly AnyUIPart[]): ToolTimings {
     store.set(observeToolTimings(store.get(), getToolParts(parts), Date.now()));
   }, [parts, store]);
   return snapshot;
-}
-
-/** Pure reducer behind `useToolTimings`, exported for tests and custom stores. */
-export function observeToolTimings(prev: ToolTimings, tools: readonly ToolPart[], now: number): ToolTimings {
-  let next: Record<string, ToolTiming> | undefined;
-  const write = (id: string, value: ToolTiming) => {
-    next ??= { ...prev };
-    next[id] = value;
-  };
-  for (const tool of tools) {
-    const phase = getToolPhase(tool);
-    const current = (next ?? prev)[tool.toolCallId];
-    if (!current) {
-      if (isSettledPhase(phase)) write(tool.toolCallId, {});
-      else write(tool.toolCallId, { startedAt: now, runningAt: phase === 'running' ? now : undefined });
-      continue;
-    }
-    if (current.startedAt === undefined || current.endedAt !== undefined) continue;
-    if (phase === 'running' && current.runningAt === undefined) write(tool.toolCallId, { ...current, runningAt: now });
-    else if (isSettledPhase(phase))
-      write(tool.toolCallId, { ...current, runningAt: current.runningAt ?? now, endedAt: now });
-  }
-  return next ?? prev;
 }
 
 export interface RunTiming {

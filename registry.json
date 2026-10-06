@@ -967,6 +967,11 @@
           "target": "components/agent-ui/lib/icons.tsx"
         },
         {
+          "path": "packages/agent-ui-kit/src/lib/usage.ts",
+          "type": "registry:lib",
+          "target": "components/agent-ui/lib/usage.ts"
+        },
+        {
           "path": "packages/agent-ui-kit/src/lib/utils.ts",
           "type": "registry:lib",
           "target": "components/agent-ui/lib/utils.ts"

@@ -1,5 +1,7 @@
+'use client';
+
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
-import type { AgentState } from './lib/ai';
+import { AGENT_STATE_LABEL, type AgentState } from './lib/ai';
 import { formatDuration } from './lib/format';
 import { useHydrated, useNow } from './lib/hooks';
 import { AlertIcon, CheckIcon, SparkIcon, SpinnerIcon } from './lib/icons';
@@ -7,15 +9,6 @@ import { LiveRegion, useDebouncedValue } from './lib/primitives';
 import { cn } from './lib/utils';
 
 export type { AgentState };
-
-export const AGENT_STATE_LABEL: Record<AgentState, string> = {
-  idle: 'Idle',
-  thinking: 'Thinking',
-  working: 'Working',
-  'awaiting-approval': 'Waiting for approval',
-  done: 'Done',
-  error: 'Error',
-};
 
 export interface AgentStatusProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   state: AgentState;

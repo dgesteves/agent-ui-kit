@@ -102,6 +102,15 @@ return result.toUIMessageStreamResponse({
 
 The `reason` shows up on the approval card as `approval.requestReason`.
 
+#### Server Components
+
+Components and hooks are client modules: each one carries its own `'use client'` directive, so you can render them from a Server Component. The pure helpers (`applyHunks`, `parseFileChange`, `computeReviewResult`, `estimateCost`, `formatCost`, `deriveAgentState` and the rest) are not, so Server Components and Route Handlers can call them. Import them from the main entry, or from `@dgesteves/agent-ui-kit/core`, which contains only the helpers and their types and no React:
+
+```ts
+// app/api/review/route.ts
+import { applyHunks, parseFileChange } from '@dgesteves/agent-ui-kit/core';
+```
+
 ### shadcn registry
 
 Every component is also a self-contained registry item: the component, the helpers it imports, its npm dependencies, and the theme tokens as `cssVars`. Files land in `components/agent-ui/` with their relative imports intact.
@@ -114,7 +123,7 @@ npx shadcn@latest add dgesteves/agent-ui-kit/tool-call-timeline
 npx shadcn@latest add https://<playground-host>/r/tool-call-timeline.json
 ```
 
-Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`. Installing a second item skips the shared files it already added.
+Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`. Installing a second item skips the shared files it already added. Component and hook files start with `'use client'`, so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them.
 
 ## Components
 

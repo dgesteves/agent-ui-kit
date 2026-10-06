@@ -1,30 +1,11 @@
 import type { ComponentPropsWithoutRef } from 'react';
-import { isSourcePart, type SourcePart } from './lib/ai';
+import { toSourceItem, type SourceItem, type SourcePart } from './lib/ai';
+
 import { getHostname } from './lib/format';
 import { ExternalIcon, FileIcon } from './lib/icons';
 import { cn } from './lib/utils';
 
-/** A source in app-level shape. AI SDK `source-url` / `source-document` parts are accepted too. */
-export interface SourceItem {
-  id: string;
-  url?: string | undefined;
-  title?: string | undefined;
-  /** Optional snippet shown in the cards variant. */
-  description?: string | undefined;
-  /** For documents. */
-  filename?: string | undefined;
-  mediaType?: string | undefined;
-}
-
-export function toSourceItem(source: SourcePart | SourceItem): SourceItem {
-  if ('type' in source && isSourcePart(source as SourcePart)) {
-    const part = source as SourcePart;
-    return part.type === 'source-url'
-      ? { id: part.sourceId, url: part.url, title: part.title }
-      : { id: part.sourceId, title: part.title, filename: part.filename, mediaType: part.mediaType };
-  }
-  return source as SourceItem;
-}
+export type { SourceItem };
 
 export interface SourcesProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   sources: ReadonlyArray<SourcePart | SourceItem>;

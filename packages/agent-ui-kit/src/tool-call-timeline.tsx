@@ -1,3 +1,5 @@
+'use client';
+
 import { Collapsible } from 'radix-ui';
 import {
   useCallback,

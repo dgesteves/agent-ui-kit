@@ -31,6 +31,8 @@ import { AgentMessage } from '@dgesteves/agent-ui-kit';
 
 Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCard`, `DiffReview`, `RunMeter`, `AgentStatus`, `Sources`, `Markdown`, `Reasoning`. Hooks and helpers: `useRunTiming`, `useToolTimings`, `deriveAgentState`, `applyHunks`, `estimateCost`.
 
+Components and hooks carry their own `'use client'` directive. The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
+
 Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^7` (the kit imports its types only).
 
 Documentation, the playground, the shadcn registry and design notes: [github.com/dgesteves/agent-ui-kit](https://github.com/dgesteves/agent-ui-kit).

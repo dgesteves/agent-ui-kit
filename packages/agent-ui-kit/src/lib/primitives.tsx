@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useMemo, useRef, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { CheckIcon, CopyIcon } from './icons';
 import { safeStringify } from './format';

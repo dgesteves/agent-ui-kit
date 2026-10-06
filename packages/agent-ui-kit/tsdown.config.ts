@@ -1,13 +1,18 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/core.ts'],
   format: 'esm',
   platform: 'neutral',
   target: 'es2022',
   dts: true,
   sourcemap: true,
   clean: true,
-  // Every export is a client component or hook; mark the bundle for RSC frameworks.
-  banner: { js: "'use client';" },
+  // One output module per source module, so each keeps its own 'use client'
+  // directive: components and hooks are client modules, while the entries and
+  // the pure helpers are not and stay callable from Server Components.
+  // scripts/check-directives.mjs verifies the output after every build.
+  unbundle: true,
+  // Rolldown warns that directives may be lost when modules are merged; unbundled, they are kept.
+  suppressWarnings: 'module level directive "use client"',
 });

@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { ToolApprovalCard, type ApprovalCardProps, type ToolApprovalResponse } from './approval-card';
 import { getSourceParts, getToolPartName, isToolPart, type AnyUIPart, type ToolPart, type UIMessage } from './lib/ai';

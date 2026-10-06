@@ -102,6 +102,50 @@ export function getToolParts(parts: readonly AnyUIPart[]): ToolPart[] {
   return parts.filter(isToolPart);
 }
 
+export type ApprovalStatus = 'pending' | 'approved' | 'denied';
+
+/** The approval state of a tool part, or `undefined` for parts outside the approval flow. */
+export function getApprovalStatus(part: ToolPart): ApprovalStatus | undefined {
+  if (!part.approval) return undefined;
+  if (part.state === 'approval-requested') return 'pending';
+  if (part.state === 'output-denied') return 'denied';
+  return part.approval.approved ? 'approved' : part.approval.approved === false ? 'denied' : 'pending';
+}
+
+export interface ToolTiming {
+  /** First time the call was observed (input started streaming). */
+  startedAt?: number | undefined;
+  /** When execution began: input complete, or approval granted. */
+  runningAt?: number | undefined;
+  /** When the call settled (output, error or denial). */
+  endedAt?: number | undefined;
+}
+
+export type ToolTimings = Readonly<Record<string, ToolTiming>>;
+
+/** Pure reducer behind `useToolTimings`, exported for tests and custom stores. */
+export function observeToolTimings(prev: ToolTimings, tools: readonly ToolPart[], now: number): ToolTimings {
+  let next: Record<string, ToolTiming> | undefined;
+  const write = (id: string, value: ToolTiming) => {
+    next ??= { ...prev };
+    next[id] = value;
+  };
+  for (const tool of tools) {
+    const phase = getToolPhase(tool);
+    const current = (next ?? prev)[tool.toolCallId];
+    if (!current) {
+      if (isSettledPhase(phase)) write(tool.toolCallId, {});
+      else write(tool.toolCallId, { startedAt: now, runningAt: phase === 'running' ? now : undefined });
+      continue;
+    }
+    if (current.startedAt === undefined || current.endedAt !== undefined) continue;
+    if (phase === 'running' && current.runningAt === undefined) write(tool.toolCallId, { ...current, runningAt: now });
+    else if (isSettledPhase(phase))
+      write(tool.toolCallId, { ...current, runningAt: current.runningAt ?? now, endedAt: now });
+  }
+  return next ?? prev;
+}
+
 /** Collect sources, de-duplicated by URL (or source id for documents). */
 export function getSourceParts(parts: readonly AnyUIPart[]): SourcePart[] {
   const seen = new Set<string>();
@@ -116,7 +160,38 @@ export function getSourceParts(parts: readonly AnyUIPart[]): SourcePart[] {
   return out;
 }
 
+/** A source in app-level shape. AI SDK `source-url` / `source-document` parts are accepted too. */
+export interface SourceItem {
+  id: string;
+  url?: string | undefined;
+  title?: string | undefined;
+  /** Optional snippet shown in the cards variant. */
+  description?: string | undefined;
+  /** For documents. */
+  filename?: string | undefined;
+  mediaType?: string | undefined;
+}
+
+export function toSourceItem(source: SourcePart | SourceItem): SourceItem {
+  if ('type' in source && isSourcePart(source as SourcePart)) {
+    const part = source as SourcePart;
+    return part.type === 'source-url'
+      ? { id: part.sourceId, url: part.url, title: part.title }
+      : { id: part.sourceId, title: part.title, filename: part.filename, mediaType: part.mediaType };
+  }
+  return source as SourceItem;
+}
+
 export type AgentState = 'idle' | 'thinking' | 'working' | 'awaiting-approval' | 'done' | 'error';
+
+export const AGENT_STATE_LABEL: Record<AgentState, string> = {
+  idle: 'Idle',
+  thinking: 'Thinking',
+  working: 'Working',
+  'awaiting-approval': 'Waiting for approval',
+  done: 'Done',
+  error: 'Error',
+};
 
 export interface DerivedAgentState {
   state: AgentState;

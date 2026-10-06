@@ -234,3 +234,45 @@ export function applyHunks(
   if (out.length === 0) return '';
   return out.join('\n') + (eol ? '\n' : '');
 }
+
+export type HunkDecision = 'pending' | 'accepted' | 'rejected';
+
+export interface DiffReviewFileResult {
+  path: string;
+  /** File contents with only accepted hunks applied. `undefined` for patch-only input. */
+  content: string | undefined;
+  accepted: string[];
+  rejected: string[];
+  pending: string[];
+}
+
+export interface DiffReviewResult {
+  files: DiffReviewFileResult[];
+  accepted: number;
+  rejected: number;
+  pending: number;
+}
+
+/** Compute the review result for a set of parsed files and decisions. */
+export function computeReviewResult(
+  files: readonly ParsedFileDiff[],
+  decisions: Readonly<Record<string, HunkDecision>>,
+): DiffReviewResult {
+  const out: DiffReviewFileResult[] = files.map((file) => {
+    const pick = (d: HunkDecision) => file.hunks.filter((h) => (decisions[h.id] ?? 'pending') === d).map((h) => h.id);
+    const accepted = pick('accepted');
+    return {
+      path: file.path,
+      content: file.oldContent !== undefined && file.newContent !== undefined ? applyHunks(file, accepted) : undefined,
+      accepted,
+      rejected: pick('rejected'),
+      pending: pick('pending'),
+    };
+  });
+  return {
+    files: out,
+    accepted: out.reduce((n, f) => n + f.accepted.length, 0),
+    rejected: out.reduce((n, f) => n + f.rejected.length, 0),
+    pending: out.reduce((n, f) => n + f.pending.length, 0),
+  };
+}

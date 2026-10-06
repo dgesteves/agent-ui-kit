@@ -1,3 +1,5 @@
+'use client';
+
 import {
   useEffect,
   useId,
@@ -7,7 +9,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import { getToolPartName, type ToolPart } from './lib/ai';
+import { getApprovalStatus, getToolPartName, type ApprovalStatus, type ToolPart } from './lib/ai';
 import { humanizeToolName } from './lib/format';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
@@ -15,8 +17,7 @@ import { useIsMac } from './lib/hooks';
 import { cn, hasModifier, isTypingTarget, type HeadingLevel } from './lib/utils';
 import type { RiskLevel, ToolMeta } from './tool-call-timeline';
 
-export type { RiskLevel };
-export type ApprovalStatus = 'pending' | 'approved' | 'denied';
+export type { ApprovalStatus, RiskLevel };
 
 export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'section'>, 'title' | 'children' | 'part'> {
   /** Name of the tool or action that needs approval. */
@@ -398,13 +399,6 @@ export interface ToolApprovalCardProps extends Omit<
   /** Matches `useChat().addToolApprovalResponse`, so you can pass it directly. */
   onRespond: (response: ToolApprovalResponse) => void | PromiseLike<void>;
   meta?: ToolMeta | undefined;
-}
-
-export function getApprovalStatus(part: ToolPart): ApprovalStatus | undefined {
-  if (!part.approval) return undefined;
-  if (part.state === 'approval-requested') return 'pending';
-  if (part.state === 'output-denied') return 'denied';
-  return part.approval.approved ? 'approved' : part.approval.approved === false ? 'denied' : 'pending';
 }
 
 /** `ApprovalCard` bound to an AI SDK tool part in the approval flow. Renders nothing for parts without one. */

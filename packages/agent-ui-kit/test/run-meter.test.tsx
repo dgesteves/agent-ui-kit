@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { estimateCost, RunMeter } from '../src/run-meter';
+import { estimateCost } from '../src/lib/usage';
+import { RunMeter } from '../src/run-meter';
 import { axe } from './utils';
 
 const usage = {
