@@ -11,3 +11,6 @@ coverage
 next-env.d.ts
 /examples/playground/public/r
 /.media-tmp
+# Written by `next dev` (Next.js 16) on every start
+/examples/playground/AGENTS.md
+/examples/playground/CLAUDE.md
