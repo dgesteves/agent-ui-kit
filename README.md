@@ -153,7 +153,8 @@ Every AI SDK v7 tool state (`input-streaming`, `input-available`, `approval-requ
 <ToolCallTimeline
   parts={message.parts}
   tools={{
-    read_file: { label: 'Read file', icon: <FileIcon />, summary: (input) => (input as { path: string }).path },
+    // Input can be partial while it streams.
+    read_file: { label: 'Read file', icon: <FileIcon />, summary: (input) => (input as { path?: string }).path },
     run_command: { risk: 'high' },
   }}
 />

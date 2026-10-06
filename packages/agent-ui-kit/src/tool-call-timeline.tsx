@@ -33,7 +33,10 @@ export interface ToolMeta {
   /** Display label. Defaults to the humanized tool name. */
   label?: string;
   icon?: ReactNode;
-  /** One-line summary shown next to the label. Defaults to the most descriptive input field. */
+  /**
+   * One-line summary shown next to the label. Defaults to the most descriptive input field.
+   * Not called before any input has arrived; while the input streams it can be partial.
+   */
   summary?: (input: unknown, part: ToolPart) => ReactNode;
   /** Replace the default JSON output view. */
   renderOutput?: (output: unknown, part: ToolPart) => ReactNode;
@@ -277,7 +280,9 @@ function TimelineItem({
   const name = getToolPartName(part);
   const phase = getToolPhase(part);
   const label = meta?.label ?? part.title ?? humanizeToolName(name);
-  const summary = meta?.summary ? meta.summary(part.input, part) : summarizeValue(part.input);
+  // The SDK sets `input: undefined` until the first input delta arrives.
+  const summary =
+    part.input === undefined ? undefined : meta?.summary ? meta.summary(part.input, part) : summarizeValue(part.input);
   const settled = isSettledPhase(phase);
   // Live durations depend on the clock: render them only after hydration.
   const duration = settled || hydrated ? getDuration(timing, now) : undefined;

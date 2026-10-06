@@ -138,6 +138,17 @@ describe('ToolCallTimeline', () => {
     expect(screen.getByText('1 result')).toBeInTheDocument();
   });
 
+  it('calls summary only once input exists, so it never sees the empty first streamed part', () => {
+    // The README's example: it reads input.path without guarding against undefined.
+    const tools = { read_file: { label: 'Read file', summary: (input: unknown) => (input as { path: string }).path } };
+    const streamed = (input: unknown) =>
+      toolPart('input-streaming', { toolCallId: 'r1', toolName: 'read_file', input });
+    const { rerender } = render(<ToolCallTimeline parts={[streamed(undefined)]} tools={tools} />);
+    expect(screen.getByRole('button', { name: /Read file/ })).toHaveTextContent('Preparing');
+    rerender(<ToolCallTimeline parts={[streamed({ path: 'lib/re' })]} tools={tools} />);
+    expect(screen.getByRole('button', { name: /Read file/ })).toHaveTextContent('lib/re');
+  });
+
   it('announces completions and failures politely', async () => {
     const { rerender } = render(<ToolCallTimeline parts={[toolPart('input-available', { toolCallId: 'c1' })]} />);
     const status = screen.getByRole('status');
