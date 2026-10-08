@@ -161,7 +161,7 @@ describe('ApprovalCard', () => {
         );
         const button = screen.getByRole('button', { name: action === 'approve' ? /^approve/i : /^deny$/i });
         const { reported } = await collectErrors(() => user.click(button));
-        expect(reported).toEqual([new Error('offline')]);
+        expect(reported).toMatchObject([{ message: 'offline' }]);
         await user.click(button);
         expect(handler).toHaveBeenCalledTimes(2);
       },

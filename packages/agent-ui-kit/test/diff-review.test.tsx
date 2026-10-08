@@ -207,7 +207,7 @@ describe('DiffReview', () => {
       await apply();
       await apply();
     });
-    expect(reported).toEqual([new Error('offline')]);
+    expect(reported).toMatchObject([{ message: 'offline' }]);
     expect(rejected).toEqual([new Error('500')]);
     await apply();
     expect(onSubmit).toHaveBeenCalledTimes(3);

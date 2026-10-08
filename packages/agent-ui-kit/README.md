@@ -52,7 +52,7 @@ AG-UI agents (LangGraph, CrewAI, Mastra, Pydantic AI...) render with the same co
 
 Components and hooks carry their own `'use client'` directive (`Sources` needs none). The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
 
-Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^6.0.0 || ^7.0.102` (the kit imports its types only). On AI SDK 7, 7.0.102 or later settles tool calls that a `toolApproval` policy denies, which earlier releases can leave reading "Running"; policies, and the "Auto-approved" and "Blocked by policy" labels, are AI SDK 7 features.
+Peer dependencies: `react@^18.2.0 || ^19.0.0`, the same for `react-dom`, and `ai@^6.0.0 || ^7.0.102` (the kit imports its types only). On AI SDK 7, 7.0.102 or later settles tool calls that a `toolApproval` policy denies, which earlier releases can leave reading "Running"; policies, and the "Auto-approved" and "Blocked by policy" labels, are AI SDK 7 features.
 
 Documentation, the playground, the shadcn registry and design notes: [github.com/dgesteves/agent-ui-kit](https://github.com/dgesteves/agent-ui-kit).
 

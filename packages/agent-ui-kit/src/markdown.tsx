@@ -400,7 +400,8 @@ export const Markdown = memo(function Markdown({
       data-slot="markdown"
       className={cn('font-aui-sans text-aui-fg text-[14.5px] leading-[1.7] [overflow-wrap:anywhere]', className)}
     >
-      <ImagePolicyContext value={imagePolicy}>
+      {/* .Provider rather than React 19's <Context value>, so that React 18 renders it too. */}
+      <ImagePolicyContext.Provider value={imagePolicy}>
         <ReactMarkdown
           // Plugin tuples are typed loosely by unified; the shapes above are correct.
           remarkPlugins={remarkPlugins as never}
@@ -409,7 +410,7 @@ export const Markdown = memo(function Markdown({
         >
           {text}
         </ReactMarkdown>
-      </ImagePolicyContext>
+      </ImagePolicyContext.Provider>
     </div>
   );
 }, sameProps);
