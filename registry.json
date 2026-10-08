@@ -238,9 +238,9 @@
       "description": "Vertical timeline of AI SDK tool calls with live states, durations, a waterfall and expandable input/output.",
       "author": "Diogo Esteves <https://github.com/dgesteves>",
       "dependencies": [
+        "@radix-ui/react-collapsible",
         "ai",
         "clsx",
-        "radix-ui",
         "tailwind-merge"
       ],
       "files": [
@@ -467,9 +467,9 @@
       "description": "Human-in-the-loop approve/deny for tool calls with risk levels, an args preview and keyboard shortcuts.",
       "author": "Diogo Esteves <https://github.com/dgesteves>",
       "dependencies": [
+        "@radix-ui/react-collapsible",
         "ai",
         "clsx",
-        "radix-ui",
         "tailwind-merge"
       ],
       "files": [
@@ -701,10 +701,10 @@
       "description": "Unified/split review of agent file edits with per-hunk accept/reject and keyboard navigation.",
       "author": "Diogo Esteves <https://github.com/dgesteves>",
       "dependencies": [
+        "@radix-ui/react-toggle-group",
         "ai",
         "clsx",
         "diff",
-        "radix-ui",
         "tailwind-merge"
       ],
       "files": [
@@ -1597,9 +1597,9 @@
       "description": "Collapsible model reasoning that opens while streaming and summarizes its duration.",
       "author": "Diogo Esteves <https://github.com/dgesteves>",
       "dependencies": [
+        "@radix-ui/react-collapsible",
         "ai",
         "clsx",
-        "radix-ui",
         "react-markdown",
         "remark-gfm",
         "remend",
@@ -1839,9 +1839,9 @@
       "description": "Renders an assistant UIMessage: markdown, reasoning, grouped tool calls, inline approvals and sources.",
       "author": "Diogo Esteves <https://github.com/dgesteves>",
       "dependencies": [
+        "@radix-ui/react-collapsible",
         "ai",
         "clsx",
-        "radix-ui",
         "react-markdown",
         "remark-gfm",
         "remend",

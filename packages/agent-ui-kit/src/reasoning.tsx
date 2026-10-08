@@ -1,6 +1,6 @@
 'use client';
 
-import { Collapsible } from 'radix-ui';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import { useState, type ComponentPropsWithoutRef } from 'react';
 import { formatDuration } from './lib/format';
 import { useActivityWindow } from './lib/hooks';

@@ -50,7 +50,7 @@ function closure(entry: string): string[] {
 describe('server/client module boundaries', () => {
   it('marks every module that uses hooks, state or event handlers as a client module', () => {
     const needsDirective = modules().filter((file) =>
-      /\b(use[A-Z]\w*|memo)\(|from 'radix-ui'|\bon[A-Z]\w*=\{/.test(code(file)),
+      /\b(use[A-Z]\w*|memo)\(|from '@radix-ui\/|\bon[A-Z]\w*=\{/.test(code(file)),
     );
     expect(needsDirective.length).toBeGreaterThan(5);
     expect(needsDirective.filter((file) => !isClient(file))).toEqual([]);

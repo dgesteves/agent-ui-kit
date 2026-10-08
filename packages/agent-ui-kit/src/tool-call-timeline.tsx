@@ -1,6 +1,6 @@
 'use client';
 
-import { Collapsible } from 'radix-ui';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import {
   useCallback,
   useMemo,

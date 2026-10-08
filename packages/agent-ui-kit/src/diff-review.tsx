@@ -1,6 +1,6 @@
 'use client';
 
-import { ToggleGroup } from 'radix-ui';
+import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import {
   Fragment,
   useEffect,
