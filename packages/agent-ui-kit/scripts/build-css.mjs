@@ -1,5 +1,6 @@
 // Builds the stylesheets shipped in dist/:
 //   theme.css           plain CSS variables (light on :root, dark on .dark)
+//   theme.auto.css      the dark palette when the OS asks for it, unless .light or [data-theme=light] is set
 //   tailwind.css        for Tailwind v4 apps: tokens + @theme mapping + @source for the bundle
 //   styles.css          precompiled standalone stylesheet for apps without Tailwind v4, with no @layer
 //   styles.layered.css  the same stylesheet in cascade layers, as Tailwind emits it
@@ -15,7 +16,23 @@ const src = join(root, 'src/styles');
 const dist = join(root, 'dist');
 mkdirSync(dist, { recursive: true });
 
+const theme = readFileSync(join(src, 'theme.css'), 'utf8');
 copyFileSync(join(src, 'theme.css'), join(dist, 'theme.css'));
+
+// The dark block of theme.css, applied while the OS is in dark mode. `:root:where(...)` keeps the
+// specificity of `:root`, so overrides on :root that come later still win.
+const dark = /\.dark,\s*\[data-theme='dark'\]\s*\{([^}]*)\}/.exec(theme)?.[1];
+if (!dark) throw new Error('theme.css: no `.dark, [data-theme=dark]` block');
+writeFileSync(
+  join(dist, 'theme.auto.css'),
+  `/* @dgesteves/agent-ui-kit: follow the OS color scheme. Import after styles.css, tailwind.css or theme.css.
+ * .light or [data-theme="light"] on <html> keeps the light palette; .dark and [data-theme="dark"] still work. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not(.light, [data-theme='light'])) {${dark.trimEnd().replace(/\n(?!\n)/g, '\n  ')}
+  }
+}
+`,
+);
 
 const tokens = readFileSync(join(src, 'tokens.css'), 'utf8');
 writeFileSync(
@@ -86,4 +103,4 @@ function unlayer(css) {
 const layered = scope(readFileSync(join(dist, 'styles.layered.css'), 'utf8'));
 writeFileSync(join(dist, 'styles.layered.css'), layered);
 writeFileSync(join(dist, 'styles.css'), unlayer(layered));
-console.log('css: wrote dist/theme.css, tailwind.css, styles.css, styles.layered.css');
+console.log('css: wrote dist/theme.css, theme.auto.css, tailwind.css, styles.css, styles.layered.css');

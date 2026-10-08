@@ -17,6 +17,8 @@ pnpm add @dgesteves/agent-ui-kit ai @ai-sdk/react
 ```ts
 // Tailwind v3 or no Tailwind: precompiled, unlayered, scoped to the components
 import '@dgesteves/agent-ui-kit/styles.css';
+// Optional, after either: follow the OS color scheme (light is the default, `.dark` switches)
+import '@dgesteves/agent-ui-kit/theme.auto.css';
 ```
 
 ```tsx

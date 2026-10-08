@@ -52,6 +52,7 @@
     "./styles.layered.css": "./dist/styles.layered.css",
     "./tailwind.css": "./dist/tailwind.css",
     "./theme.css": "./dist/theme.css",
+    "./theme.auto.css": "./dist/theme.auto.css",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -60,7 +61,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./styles.layered.css ./tailwind.css ./theme.css"
+    "lint:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./styles.layered.css ./tailwind.css ./theme.css ./theme.auto.css"
   },
   "peerDependencies": {
     "ai": "^6.0.0 || ^7.0.102",

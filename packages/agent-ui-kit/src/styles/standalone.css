@@ -13,6 +13,15 @@
 
 @source '../';
 
+/*
+ * theme.css reads the app's --font-sans and --font-mono for --aui-font-*. Unset Tailwind's own
+ * values for them, which would otherwise be emitted on the kit's elements and hide the app's.
+ */
+@theme {
+  --font-sans: initial;
+  --font-mono: initial;
+}
+
 @layer base {
   /* What Tailwind's preflight sets on <html>, so the components read the same with or without it. */
   :where([data-aui]) {

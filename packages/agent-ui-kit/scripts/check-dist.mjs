@@ -2,7 +2,7 @@
 //   - styles.css has no @layer (Tailwind v3 rejects it, and layered rules lose to any host reset);
 //   - styles.css styles only the kit's elements: apart from the --aui-* tokens on :root and the
 //     theme classes, every rule is scoped to [data-aui], so it cannot restyle the host app or
-//     shadow its Tailwind theme.
+//     shadow its Tailwind theme and fonts.
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +23,9 @@ tree.walkRules((rule) => {
   if (rule.selectors.every((selector) => THEME_SELECTORS.has(selector)) && tokensOnly) return;
   problems.push(`styles.css: \`${rule.selector}\` is not scoped to [data-aui]`);
 });
+tree.walkDecls(/^--font-(sans|mono)$/, (decl) =>
+  problems.push(`styles.css: sets ${decl.prop}, which would hide the app's font from --aui-font-*`),
+);
 if (!/:where\(\[data-aui\]\) \*[^{]*\{[^}]*padding:0/.test(css))
   problems.push('styles.css: the zero-specificity :where([data-aui]) reset is missing');
 

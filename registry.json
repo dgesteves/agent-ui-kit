@@ -128,8 +128,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -357,8 +357,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -591,8 +591,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -826,8 +826,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -1049,8 +1049,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -1262,8 +1262,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -1487,8 +1487,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -1729,8 +1729,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -1991,8 +1991,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",
@@ -2197,8 +2197,8 @@
           "aui-code-comment": "#525b67",
           "aui-code-punctuation": "#4b5563",
           "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif)",
-          "aui-font-mono": "var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)"
+          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
           "aui-bg": "#0d0f12",

@@ -54,7 +54,7 @@ import '@dgesteves/agent-ui-kit/styles.css';
 
 `styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` cannot strip the components' spacing. Every rule in it is scoped to the components' own elements, so it does not restyle your app; import it after your global CSS. `styles.layered.css` is the same stylesheet in `@layer theme, base, utilities`, for apps that order their CSS with layers.
 
-Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette.
+Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette. To follow the OS setting instead, import `@dgesteves/agent-ui-kit/theme.auto.css` after the stylesheet; `class="light"` (or `data-theme="light"`) on `<html>` still forces the light palette.
 
 The client renders the last assistant message, its status and its cost, with a minimal composer. The wrapper paints the kit's own background and text colors (`bg-aui-bg text-aui-fg`), so the run reads well whatever the page's colors are. The class names are Tailwind; without it, give the wrapper `background: var(--aui-bg); color: var(--aui-fg)` and style the form your own way.
 
@@ -456,7 +456,7 @@ AG-UI resumes every open interrupt in one run, so the hook waits until each has 
 
 ## Theming
 
-Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree:
+Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree (`.light` and `.dark` switch a subtree's palette, too):
 
 ```css
 :root {
@@ -470,16 +470,20 @@ Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree
 
 <img src="docs/media/components/theming.png" width="100%" alt="The same status pill and tool timeline in three frames: the default dark theme, the light theme, and a custom theme with a lime accent, orange attention color and tighter radius.">
 
-| Token group                                                             | Purpose                                       |
-| ----------------------------------------------------------------------- | --------------------------------------------- |
-| `--aui-bg`, `--aui-surface`, `--aui-surface-2`, `--aui-border(-strong)` | Surfaces and lines                            |
-| `--aui-fg`, `--aui-fg-muted`, `--aui-fg-subtle`                         | Text, all AA on every surface                 |
-| `--aui-accent`, `--aui-accent-fg`, `--aui-on-accent`, `--aui-ring`      | Activity, primary actions, focus              |
-| `--aui-hot`, `--aui-hot-fg`, `--aui-on-hot`, `--aui-warn(-fg)`          | Attention, risk, errors                       |
-| `--aui-add-bg`, `--aui-add-strong`, `--aui-del-bg`, `--aui-del-strong`  | Diff lines and word highlights                |
-| `--aui-chart-input`, `--aui-chart-output`                               | Token bar                                     |
-| `--aui-code-*`                                                          | Syntax tinting                                |
-| `--aui-radius`, `--aui-font-sans`, `--aui-font-mono`                    | Shape and type (Geist when `geist` is loaded) |
+| Token group                                                             | Purpose                          |
+| ----------------------------------------------------------------------- | -------------------------------- |
+| `--aui-bg`, `--aui-surface`, `--aui-surface-2`, `--aui-border(-strong)` | Surfaces and lines               |
+| `--aui-fg`, `--aui-fg-muted`, `--aui-fg-subtle`                         | Text, all AA on every surface    |
+| `--aui-accent`, `--aui-accent-fg`, `--aui-on-accent`, `--aui-ring`      | Activity, primary actions, focus |
+| `--aui-hot`, `--aui-hot-fg`, `--aui-on-hot`, `--aui-warn(-fg)`          | Attention, risk, errors          |
+| `--aui-add-bg`, `--aui-add-strong`, `--aui-del-bg`, `--aui-del-strong`  | Diff lines and word highlights   |
+| `--aui-chart-input`, `--aui-chart-output`                               | Token bar                        |
+| `--aui-code-*`                                                          | Syntax tinting                   |
+| `--aui-radius`, `--aui-font-sans`, `--aui-font-mono`                    | Shape and type (see below)       |
+
+The fonts are your app's `--font-sans` and `--font-mono` when it defines them, as shadcn/ui and Tailwind v4 apps do, then Geist when `geist` is loaded, then the system's.
+
+Messages, timelines and sources have no background of their own: they sit on your page and take their text color from the kit's palette. If the page's background does not match the kit's theme (a dark page with the light palette, say), give their container the kit's background, `bg-aui-bg text-aui-fg` with Tailwind or `background: var(--aui-bg); color: var(--aui-fg)` without, as the quickstart does. Cards, the status pill and the meter paint their own surfaces.
 
 In a shadcn/ui app you can point the kit at your existing tokens, for example `--aui-surface: var(--card)`, `--aui-border: var(--border)`, `--aui-radius: var(--radius)`. Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks.
 

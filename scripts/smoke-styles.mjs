@@ -1,7 +1,8 @@
 // Checks dist/styles.css in Chrome inside the apps it is for: a plain app whose global reset is
 // create-next-app's (`* { padding: 0; margin: 0 }`), and a Tailwind v3 app, whose PostCSS build
 // must accept the stylesheet. Every element of a few rendered components must compute the same
-// spacing, type, borders and colors as with the kit's stylesheet alone.
+// spacing, type, borders and colors as with the kit's stylesheet alone. Then theme.auto.css
+// against the OS color scheme, and the app's font.
 //
 //   pnpm build:lib && pnpm smoke:styles
 import { readFileSync } from 'node:fs';
@@ -93,6 +94,7 @@ const PROPERTIES = [
 
 const browser = await chromium.launch({ channel: 'chrome' });
 const computed = {};
+let failed = false;
 try {
   for (const [name, sheets] of Object.entries(fixtures)) {
     const page = await browser.newPage();
@@ -114,6 +116,34 @@ try {
     );
     await page.close();
   }
+
+  // theme.auto.css follows the OS unless the page picks a palette, and the app's font comes through.
+  const auto = readFileSync(join(lib, 'dist/theme.auto.css'), 'utf8');
+  const themes = [
+    // [check, OS color scheme, class on <html>, stylesheets, expected --aui-bg (minified) and font-family]
+    ['dark OS without theme.auto.css: light', 'dark', '', [styles], '#fff'],
+    ['dark OS with theme.auto.css: dark', 'dark', '', [styles, auto], '#0d0f12'],
+    ['light OS with theme.auto.css: light', 'light', '', [styles, auto], '#fff'],
+    ['dark OS, .light on <html>: light', 'dark', 'light', [styles, auto], '#fff'],
+    ['light OS, .dark on <html>: dark', 'light', 'dark', [styles, auto], '#0d0f12'],
+    ['dark OS, a later :root override wins', 'dark', '', [styles, auto, ':root { --aui-bg: #123456 }'], '#123456'],
+    ["the app's --font-sans", 'light', '', [':root { --font-sans: Georgia, serif }', styles], '#fff', 'Georgia, serif'],
+  ];
+  for (const [check, colorScheme, className, sheets, background, font] of themes) {
+    const page = await browser.newPage({ colorScheme });
+    await page.setContent(
+      `<!doctype html><html class="${className}"><head>${sheets.map((css) => `<style>${css}</style>`).join('')}</head>` +
+        `<body>${markup}</body></html>`,
+    );
+    const actual = await page.$eval('[data-slot=agent-status]', (el) => [
+      getComputedStyle(el).getPropertyValue('--aui-bg').trim(),
+      getComputedStyle(el).fontFamily,
+    ]);
+    const ok = actual[0] === background && (font === undefined || actual[1] === font);
+    failed ||= !ok;
+    console.log(`${ok ? 'pass' : 'FAIL'}  ${check}${ok ? '' : `: --aui-bg ${actual[0]}, font ${actual[1]}`}`);
+    await page.close();
+  }
 } finally {
   await browser.close();
 }
@@ -121,7 +151,6 @@ try {
 const baseline = computed['kit alone'];
 const card = baseline.find((el) => el.element === 'section[data-slot=approval-card]');
 if (!card || card.values['border-top-width'] === '0px') throw new Error('The approval card is not styled at all');
-let failed = false;
 for (const [name, elements] of Object.entries(computed)) {
   const differences = elements.flatMap((el, i) =>
     PROPERTIES.filter((property) => el.values[property] !== baseline[i]?.values[property]).map(
