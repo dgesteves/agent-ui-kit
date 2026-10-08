@@ -485,7 +485,32 @@ The fonts are your app's `--font-sans` and `--font-mono` when it defines them, a
 
 Messages, timelines and sources have no background of their own: they sit on your page and take their text color from the kit's palette. If the page's background does not match the kit's theme (a dark page with the light palette, say), give their container the kit's background, `bg-aui-bg text-aui-fg` with Tailwind or `background: var(--aui-bg); color: var(--aui-fg)` without, as the quickstart does. Cards, the status pill and the meter paint their own surfaces.
 
-In a shadcn/ui app you can point the kit at your existing tokens, for example `--aui-surface: var(--card)`, `--aui-border: var(--border)`, `--aui-radius: var(--radius)`. Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks.
+In a shadcn/ui app, point the kit at your existing tokens so it looks native. Add this after the kit's tokens (the `cssVars` that `shadcn add` writes, or the `tailwind.css` import); one block covers both themes, since your tokens switch with `.dark`:
+
+```css
+:root,
+.dark {
+  --aui-bg: var(--background);
+  --aui-surface: var(--card);
+  --aui-surface-2: var(--muted);
+  --aui-border: var(--border);
+  --aui-border-strong: var(--input);
+  --aui-fg: var(--foreground);
+  --aui-fg-muted: var(--muted-foreground);
+  --aui-fg-subtle: var(--muted-foreground);
+  --aui-accent: var(--primary);
+  --aui-accent-fg: var(--primary);
+  --aui-on-accent: var(--primary-foreground);
+  --aui-ring: var(--ring);
+  --aui-hot: var(--destructive);
+  --aui-hot-fg: var(--destructive);
+  --aui-radius: var(--radius);
+}
+```
+
+The font already follows `--font-sans`. Diff and chart colors keep the kit's cyan and magenta, which your palette may not distinguish as well. The contrast test covers the kit's own palette, so check text contrast with yours.
+
+Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks.
 
 ## Design decisions
 
