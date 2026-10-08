@@ -1,5 +1,5 @@
 // Runs axe-core in real Chrome against the running playground, across the run's
-// states (approval pending, diff review, done), the gallery and a phone viewport.
+// states (approval pending, diff review, done), the gallery, the docs and a phone viewport.
 // Unlike the jsdom tests, this checks color contrast with real layout.
 //
 //   pnpm --filter playground start   # :3100
@@ -53,11 +53,19 @@ await audit(page, 'playground · done');
 await page.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
 await settle(page);
 await audit(page, 'gallery (dark, light and custom themes)');
+for (const path of ['/docs', '/docs/getting-started', '/docs/ag-ui']) {
+  await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+  await settle(page);
+  await audit(page, `docs ${path}`);
+}
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
 await page.waitForSelector(pending, { timeout: 60_000 });
 await settle(page);
 await audit(page, 'playground · 390px viewport');
+await page.goto(`${BASE}/docs/getting-started`, { waitUntil: 'networkidle' });
+await settle(page);
+await audit(page, 'docs /docs/getting-started · 390px viewport');
 await browser.close();
 
 if (failures > 0) {
