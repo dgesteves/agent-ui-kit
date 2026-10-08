@@ -5,8 +5,9 @@
 //
 // Outputs to docs/media/: hero.png, review.png, inspect.png, mobile.png,
 // run.gif + run.mp4 (a full run driven by the keyboard), components/*.png.
+// `og` crops hero.png into the playground's Open Graph image, and needs no playground.
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -115,6 +116,18 @@ if (want('hero') || want('review')) {
     await page.screenshot({ path: join(out, 'review.png') });
     console.log('wrote docs/media/review.png');
   }
+  await page.context().close();
+}
+
+if (want('og')) {
+  // The top of the hero at 1200×630, the size link previews use.
+  const page = await newPage({ width: 1200, height: 630, scale: 1 });
+  const hero = readFileSync(join(out, 'hero.png')).toString('base64');
+  await page.setContent(
+    `<body style="margin:0;background:#0d0f12"><img src="data:image/png;base64,${hero}" style="display:block;width:1200px"></body>`,
+  );
+  await page.screenshot({ path: join(root, 'examples/playground/app/opengraph-image.png') });
+  console.log('wrote examples/playground/app/opengraph-image.png');
   await page.context().close();
 }
 

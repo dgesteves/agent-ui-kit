@@ -1,5 +1,5 @@
-// Checks the built playground in Chrome: what a visitor sees first on a phone, and what the
-// header offers when it was built without a model key (OPENAI_API_KEY), as in CI.
+// Checks the built playground: link preview metadata, then in Chrome what a visitor sees first on
+// a phone, and what the header offers when it was built without a model key (OPENAI_API_KEY), as in CI.
 //
 //   pnpm build:lib && pnpm registry:build && pnpm build:playground
 //   pnpm smoke:playground   # starts the built playground on :3220, or tests BASE_URL if set
@@ -35,6 +35,25 @@ const check = (ok, label, detail = '') => {
 };
 
 try {
+  // Link previews: each page has its title, description and a 1200×630 image that is served.
+  for (const [path, title] of [
+    ['/', 'agent-ui-kit · playground'],
+    ['/gallery', 'agent-ui-kit · components'],
+  ]) {
+    const html = await (await fetch(BASE + path)).text();
+    const meta = (key) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
+    const image = meta('og:image');
+    const served = image ? await fetch(BASE + new URL(image).pathname + new URL(image).search) : undefined;
+    check(
+      meta('og:title') === title &&
+        !!meta('og:description') &&
+        meta('twitter:card') === 'summary_large_image' &&
+        served?.headers.get('content-type') === 'image/png',
+      `${path}: Open Graph and Twitter metadata with an image`,
+      `og:title ${meta('og:title')}, og:image ${image} (${served?.status})`,
+    );
+  }
+
   // On a phone the run starts on load and grows past the screen; the page must not follow it
   // (and scroll the headline away) until the reader scrolls down or starts a run.
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });

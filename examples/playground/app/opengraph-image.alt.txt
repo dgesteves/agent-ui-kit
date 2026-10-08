@@ -1,0 +1,1 @@
+The agent-ui-kit playground mid-run: a tool call timeline with a failed read, the agent's status waiting for approval, and a run meter with tokens and cost.
