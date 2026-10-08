@@ -70,10 +70,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Install the oldest and the latest AI SDK 6 in turn, typecheck the library, run the tests
+      # Latest first: once 6.0.0 is installed, `pnpm add ai@^6` keeps it, since it satisfies ^6.
+      - name: Install the latest and the oldest AI SDK 6 in turn, typecheck the library, run the tests
         working-directory: packages/agent-ui-kit
         run: |
-          for version in 6.0.0 ^6; do
+          for version in ^6 6.0.0; do
             pnpm add --save-dev "ai@$version"
             node -e "console.log('ai', require('ai/package.json').version)"
             pnpm exec tsc --noEmit -p tsconfig.src.json
