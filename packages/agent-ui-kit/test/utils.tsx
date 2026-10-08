@@ -85,7 +85,9 @@ export async function collectErrors(fn: () => Promise<void>) {
   const rejected: unknown[] = [];
   const onError = (event: ErrorEvent) => {
     event.preventDefault();
-    reported.push(event.error);
+    // React 18's development build reports the same error twice (from its guarded callback, then
+    // when it rethrows), marked with a `_suppressLogging` property: compare errors by message.
+    if (!reported.includes(event.error)) reported.push(event.error);
   };
   const onRejection = (reason: unknown) => rejected.push(reason);
   const listeners = process.listeners('unhandledRejection');

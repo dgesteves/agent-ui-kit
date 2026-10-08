@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import remend from 'remend';
 import { ImageIcon } from './lib/icons';
 import { getImagePolicy, isAllowedImage } from './lib/images';
-import { CodeLines, CopyButton } from './lib/primitives';
+import { CodeLines, CopyButton, Img } from './lib/primitives';
 import { cn } from './lib/utils';
 
 /* Minimal structural syntax-tree types, so the plugins need no @types packages. */
@@ -176,7 +176,7 @@ function MarkdownImage({
   // Unsafe protocols, and images that are still streaming, arrive with an empty URL.
   if (!src) return alt ? <>{alt}</> : null;
   if (isAllowedImage(src, policy)) {
-    return <img src={src} alt={alt ?? ''} title={title} className="my-2 inline-block max-w-full rounded-lg" />;
+    return <Img src={src} alt={alt ?? ''} title={title} className="my-2 inline-block max-w-full rounded-lg" />;
   }
   const label = (
     <>
@@ -217,48 +217,62 @@ function normalizeLanguage(lang: string) {
   return map[lang] ?? lang;
 }
 
+/** react-markdown hands every component the element's syntax tree `node`, which must not reach the DOM. */
+function omitNode<P extends { node?: unknown }>(props: P): Omit<P, 'node'> {
+  const rest = { ...props };
+  delete rest.node;
+  return rest;
+}
+
 const components: Components = {
-  p: ({ node: _node, className, ...props }) => (
-    <p className={cn('my-2.5 first:mt-0 last:mb-0', className)} {...props} />
-  ),
-  h1: ({ node: _node, className, children, ...props }) => (
-    <h1 className={cn('text-aui-fg mt-5 mb-2 text-lg font-semibold tracking-tight first:mt-0', className)} {...props}>
+  p: ({ className, ...props }) => <p className={cn('my-2.5 first:mt-0 last:mb-0', className)} {...omitNode(props)} />,
+  h1: ({ className, children, ...props }) => (
+    <h1
+      className={cn('text-aui-fg mt-5 mb-2 text-lg font-semibold tracking-tight first:mt-0', className)}
+      {...omitNode(props)}
+    >
       {children}
     </h1>
   ),
-  h2: ({ node: _node, className, children, ...props }) => (
-    <h2 className={cn('text-aui-fg mt-5 mb-2 text-base font-semibold tracking-tight first:mt-0', className)} {...props}>
+  h2: ({ className, children, ...props }) => (
+    <h2
+      className={cn('text-aui-fg mt-5 mb-2 text-base font-semibold tracking-tight first:mt-0', className)}
+      {...omitNode(props)}
+    >
       {children}
     </h2>
   ),
-  h3: ({ node: _node, className, children, ...props }) => (
-    <h3 className={cn('text-aui-fg mt-4 mb-1.5 text-[15px] font-semibold first:mt-0', className)} {...props}>
+  h3: ({ className, children, ...props }) => (
+    <h3 className={cn('text-aui-fg mt-4 mb-1.5 text-[15px] font-semibold first:mt-0', className)} {...omitNode(props)}>
       {children}
     </h3>
   ),
-  h4: ({ node: _node, className, children, ...props }) => (
-    <h4 className={cn('text-aui-fg mt-3 mb-1 text-sm font-semibold first:mt-0', className)} {...props}>
+  h4: ({ className, children, ...props }) => (
+    <h4 className={cn('text-aui-fg mt-3 mb-1 text-sm font-semibold first:mt-0', className)} {...omitNode(props)}>
       {children}
     </h4>
   ),
-  ul: ({ node: _node, className, ...props }) => (
-    <ul className={cn('marker:text-aui-fg-subtle my-2.5 list-disc space-y-1 pl-5', className)} {...props} />
+  ul: ({ className, ...props }) => (
+    <ul className={cn('marker:text-aui-fg-subtle my-2.5 list-disc space-y-1 pl-5', className)} {...omitNode(props)} />
   ),
-  ol: ({ node: _node, className, ...props }) => (
-    <ol className={cn('marker:text-aui-fg-subtle my-2.5 list-decimal space-y-1 pl-5', className)} {...props} />
-  ),
-  li: ({ node: _node, className, ...props }) => <li className={cn('pl-1', className)} {...props} />,
-  blockquote: ({ node: _node, className, ...props }) => (
-    <blockquote
-      className={cn('border-aui-border-strong text-aui-fg-muted my-3 border-l-2 pl-3', className)}
-      {...props}
+  ol: ({ className, ...props }) => (
+    <ol
+      className={cn('marker:text-aui-fg-subtle my-2.5 list-decimal space-y-1 pl-5', className)}
+      {...omitNode(props)}
     />
   ),
-  hr: ({ node: _node, className, ...props }) => <hr className={cn('border-aui-border my-4', className)} {...props} />,
-  strong: ({ node: _node, className, ...props }) => (
-    <strong className={cn('text-aui-fg font-semibold', className)} {...props} />
+  li: ({ className, ...props }) => <li className={cn('pl-1', className)} {...omitNode(props)} />,
+  blockquote: ({ className, ...props }) => (
+    <blockquote
+      className={cn('border-aui-border-strong text-aui-fg-muted my-3 border-l-2 pl-3', className)}
+      {...omitNode(props)}
+    />
   ),
-  a: ({ node: _node, className, href, children, ...props }) => {
+  hr: ({ className, ...props }) => <hr className={cn('border-aui-border my-4', className)} {...omitNode(props)} />,
+  strong: ({ className, ...props }) => (
+    <strong className={cn('text-aui-fg font-semibold', className)} {...omitNode(props)} />
+  ),
+  a: ({ className, href, children, ...props }) => {
     const citation = (props as Record<string, unknown>)['data-citation'];
     if (citation !== undefined) {
       return (
@@ -277,24 +291,24 @@ const components: Components = {
         href={href}
         className={cn(linkClass, className)}
         {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        {...props}
+        {...omitNode(props)}
       >
         {children}
       </a>
     );
   },
-  code: ({ node: _node, className, ...props }) => (
+  code: ({ className, ...props }) => (
     <code
       className={cn(
         className?.includes('language-')
           ? className
           : 'border-aui-border bg-aui-surface-2 font-aui-mono text-aui-fg rounded-[5px] border px-1 py-px text-[0.86em]',
       )}
-      {...props}
+      {...omitNode(props)}
     />
   ),
   pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
-  img: ({ node: _node, src, alt, title, ...props }) => (
+  img: ({ src, alt, title, ...props }) => (
     <MarkdownImage
       src={typeof src === 'string' ? src : ''}
       alt={alt}
@@ -302,28 +316,28 @@ const components: Components = {
       inLink={(props as Record<string, unknown>)['data-aui-in-link'] !== undefined}
     />
   ),
-  table: ({ node: _node, className, ...props }) => (
+  table: ({ className, ...props }) => (
     <div className="border-aui-border my-3 overflow-x-auto rounded-lg border">
-      <table className={cn('w-full text-left text-[13px]', className)} {...props} />
+      <table className={cn('w-full text-left text-[13px]', className)} {...omitNode(props)} />
     </div>
   ),
-  th: ({ node: _node, className, ...props }) => (
+  th: ({ className, ...props }) => (
     <th
       className={cn('border-aui-border bg-aui-surface-2 text-aui-fg border-b px-3 py-1.5 font-semibold', className)}
-      {...props}
+      {...omitNode(props)}
     />
   ),
-  td: ({ node: _node, className, ...props }) => (
-    <td className={cn('border-aui-border/60 text-aui-fg-muted border-b px-3 py-1.5', className)} {...props} />
+  td: ({ className, ...props }) => (
+    <td className={cn('border-aui-border/60 text-aui-fg-muted border-b px-3 py-1.5', className)} {...omitNode(props)} />
   ),
-  span: ({ node: _node, ...props }) =>
+  span: (props) =>
     (props as Record<string, unknown>)['data-aui-caret'] !== undefined ? (
       <span
         aria-hidden="true"
         className="bg-aui-accent motion-safe:animate-aui-blink ml-0.5 inline-block h-[1.1em] w-[0.5ch] translate-y-[0.2em] rounded-[1px]"
       />
     ) : (
-      <span {...props} />
+      <span {...omitNode(props)} />
     ),
 };
 
@@ -400,7 +414,8 @@ export const Markdown = memo(function Markdown({
       data-slot="markdown"
       className={cn('font-aui-sans text-aui-fg text-[14.5px] leading-[1.7] [overflow-wrap:anywhere]', className)}
     >
-      <ImagePolicyContext value={imagePolicy}>
+      {/* .Provider rather than React 19's <Context value>, so that React 18 renders it too. */}
+      <ImagePolicyContext.Provider value={imagePolicy}>
         <ReactMarkdown
           // Plugin tuples are typed loosely by unified; the shapes above are correct.
           remarkPlugins={remarkPlugins as never}
@@ -409,7 +424,7 @@ export const Markdown = memo(function Markdown({
         >
           {text}
         </ReactMarkdown>
-      </ImagePolicyContext>
+      </ImagePolicyContext.Provider>
     </div>
   );
 }, sameProps);

@@ -1,10 +1,28 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react';
+import {
+  createElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from 'react';
 import { CheckIcon, CopyIcon } from './icons';
 import { safeStringify } from './format';
 import { TOKEN_CLASS, tokenizeLine } from './highlight';
 import { cn } from './utils';
+
+/**
+ * An <img> for images from messages, written without JSX. Next.js' `no-img-element` lint rule
+ * flags the element and suggests next/image, which cannot load these URLs without every host
+ * configured; a comment disabling that rule would itself be an error where ESLint has no Next.js
+ * plugin. The repository's ESLint config checks `Img` for alt text like an <img>.
+ */
+export function Img({ alt, ...props }: ComponentPropsWithoutRef<'img'> & { alt: string }) {
+  return createElement('img', { alt, ...props });
+}
 
 /** Keyboard key hint. Purely visual: shortcuts are also described in text for assistive tech. */
 export function Kbd({ className, ...props }: ComponentPropsWithoutRef<'kbd'>) {

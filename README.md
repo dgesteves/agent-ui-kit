@@ -10,7 +10,7 @@ React components for the hard parts of agentic products: watching an agent work,
 
 <img src="docs/media/hero.png" width="100%" alt="The agent-ui-kit playground mid-run. A tool call timeline shows a code search, two file reads, a failed read of middleware.ts with its error inline, and a web search, each with a duration and a waterfall bar. Below, a high-risk approval card asks to run 'pnpm add @upstash/ratelimit' with Deny and Approve buttons and Y/N shortcuts. A sidebar shows the agent status 'Waiting for approval', playback controls, and a run meter with 20.9k tokens, $0.025 estimated cost, 689ms time to first token and a 63% cache hit rate.">
 
-Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), and tested against both in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
+Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), runs on React 18 and 19 (`react@^18.2.0 || ^19.0.0`), and tested against each in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
 
 <p align="center">
   <img src="docs/media/run.gif" width="100%" alt="A full scripted run, driven from the keyboard: the agent plans, searches and reads files, one read fails, it asks to install a package, Y approves it, the proposed diff is reviewed with A to accept three hunks and R to reject the model change, Ctrl+Enter applies it, and the agent's final answer reflects the review and cites three sources.">
@@ -48,11 +48,13 @@ Styles, either way:
 ```
 
 ```ts
-// No Tailwind: a precompiled stylesheet with only the utilities the kit uses, and no global reset
+// Tailwind v3 or no Tailwind: a precompiled stylesheet with only the utilities the kit uses, and no global reset
 import '@dgesteves/agent-ui-kit/styles.css';
 ```
 
-Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette.
+`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` cannot strip the components' spacing. Every rule in it is scoped to the components' own elements, so it does not restyle your app; import it after your global CSS. `styles.layered.css` is the same stylesheet in `@layer theme, base, utilities`, for apps that order their CSS with layers.
+
+Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette. To follow the OS setting instead, import `@dgesteves/agent-ui-kit/theme.auto.css` after the stylesheet; `class="light"` (or `data-theme="light"`) on `<html>` still forces the light palette.
 
 The client renders the last assistant message, its status and its cost, with a minimal composer. The wrapper paints the kit's own background and text colors (`bg-aui-bg text-aui-fg`), so the run reads well whatever the page's colors are. The class names are Tailwind; without it, give the wrapper `background: var(--aui-bg); color: var(--aui-fg)` and style the form your own way.
 
@@ -454,7 +456,7 @@ AG-UI resumes every open interrupt in one run, so the hook waits until each has 
 
 ## Theming
 
-Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree:
+Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree (`.light` and `.dark` switch a subtree's palette, too):
 
 ```css
 :root {
@@ -468,18 +470,47 @@ Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree
 
 <img src="docs/media/components/theming.png" width="100%" alt="The same status pill and tool timeline in three frames: the default dark theme, the light theme, and a custom theme with a lime accent, orange attention color and tighter radius.">
 
-| Token group                                                             | Purpose                                       |
-| ----------------------------------------------------------------------- | --------------------------------------------- |
-| `--aui-bg`, `--aui-surface`, `--aui-surface-2`, `--aui-border(-strong)` | Surfaces and lines                            |
-| `--aui-fg`, `--aui-fg-muted`, `--aui-fg-subtle`                         | Text, all AA on every surface                 |
-| `--aui-accent`, `--aui-accent-fg`, `--aui-on-accent`, `--aui-ring`      | Activity, primary actions, focus              |
-| `--aui-hot`, `--aui-hot-fg`, `--aui-on-hot`, `--aui-warn(-fg)`          | Attention, risk, errors                       |
-| `--aui-add-bg`, `--aui-add-strong`, `--aui-del-bg`, `--aui-del-strong`  | Diff lines and word highlights                |
-| `--aui-chart-input`, `--aui-chart-output`                               | Token bar                                     |
-| `--aui-code-*`                                                          | Syntax tinting                                |
-| `--aui-radius`, `--aui-font-sans`, `--aui-font-mono`                    | Shape and type (Geist when `geist` is loaded) |
+| Token group                                                             | Purpose                          |
+| ----------------------------------------------------------------------- | -------------------------------- |
+| `--aui-bg`, `--aui-surface`, `--aui-surface-2`, `--aui-border(-strong)` | Surfaces and lines               |
+| `--aui-fg`, `--aui-fg-muted`, `--aui-fg-subtle`                         | Text, all AA on every surface    |
+| `--aui-accent`, `--aui-accent-fg`, `--aui-on-accent`, `--aui-ring`      | Activity, primary actions, focus |
+| `--aui-hot`, `--aui-hot-fg`, `--aui-on-hot`, `--aui-warn(-fg)`          | Attention, risk, errors          |
+| `--aui-add-bg`, `--aui-add-strong`, `--aui-del-bg`, `--aui-del-strong`  | Diff lines and word highlights   |
+| `--aui-chart-input`, `--aui-chart-output`                               | Token bar                        |
+| `--aui-code-*`                                                          | Syntax tinting                   |
+| `--aui-radius`, `--aui-font-sans`, `--aui-font-mono`                    | Shape and type (see below)       |
 
-In a shadcn/ui app you can point the kit at your existing tokens, for example `--aui-surface: var(--card)`, `--aui-border: var(--border)`, `--aui-radius: var(--radius)`. Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks.
+The fonts are your app's `--font-sans` and `--font-mono` when it defines them, as shadcn/ui and Tailwind v4 apps do, then Geist when `geist` is loaded, then the system's.
+
+Messages, timelines and sources have no background of their own: they sit on your page and take their text color from the kit's palette. If the page's background does not match the kit's theme (a dark page with the light palette, say), give their container the kit's background, `bg-aui-bg text-aui-fg` with Tailwind or `background: var(--aui-bg); color: var(--aui-fg)` without, as the quickstart does. Cards, the status pill and the meter paint their own surfaces.
+
+In a shadcn/ui app, point the kit at your existing tokens so it looks native. Add this after the kit's tokens (the `cssVars` that `shadcn add` writes, or the `tailwind.css` import); one block covers both themes, since your tokens switch with `.dark`:
+
+```css
+:root,
+.dark {
+  --aui-bg: var(--background);
+  --aui-surface: var(--card);
+  --aui-surface-2: var(--muted);
+  --aui-border: var(--border);
+  --aui-border-strong: var(--input);
+  --aui-fg: var(--foreground);
+  --aui-fg-muted: var(--muted-foreground);
+  --aui-fg-subtle: var(--muted-foreground);
+  --aui-accent: var(--primary);
+  --aui-accent-fg: var(--primary);
+  --aui-on-accent: var(--primary-foreground);
+  --aui-ring: var(--ring);
+  --aui-hot: var(--destructive);
+  --aui-hot-fg: var(--destructive);
+  --aui-radius: var(--radius);
+}
+```
+
+The font already follows `--font-sans`. Diff and chart colors keep the kit's cyan and magenta, which your palette may not distinguish as well. The contrast test covers the kit's own palette, so check text contrast with yours.
+
+Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks.
 
 ## Design decisions
 
@@ -492,7 +523,7 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 - **Shortcuts scoped to focus.** Global single-key shortcuts are an accessibility problem and fight with text inputs; scoping them to the component avoids both. Critical approvals require a second press.
 - **Hydration-safe clocks.** Live durations and waterfall widths render after hydration, so server and client markup always match. Nothing reads the clock while rendering on the server, so pages that render the components prerender under Next.js `cacheComponents`.
 - **Type-only dependency on `ai`.** No SDK runtime in the build (about 35 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
-- **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
+- **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind v4: unlayered and scoped to the components, and checked in Chrome next to a global reset and inside a Tailwind v3 build. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
 
 ## How it compares
 

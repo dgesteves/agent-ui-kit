@@ -256,7 +256,6 @@ export function ApprovalCard({
 
   return (
     // Shortcuts are scoped to focus within the card (WCAG 2.1.4); the actions themselves are real buttons.
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <section
       ref={cardRef}
       data-aui

@@ -50,7 +50,7 @@ function closure(entry: string): string[] {
 describe('server/client module boundaries', () => {
   it('marks every module that uses hooks, state or event handlers as a client module', () => {
     const needsDirective = modules().filter((file) =>
-      /\b(use[A-Z]\w*|memo)\(|from 'radix-ui'|\bon[A-Z]\w*=\{/.test(code(file)),
+      /\b(use[A-Z]\w*|memo)\(|from '@radix-ui\/|\bon[A-Z]\w*=\{/.test(code(file)),
     );
     expect(needsDirective.length).toBeGreaterThan(5);
     expect(needsDirective.filter((file) => !isClient(file))).toEqual([]);
@@ -102,10 +102,12 @@ describe('server/client module boundaries', () => {
   });
 });
 
+const pkg = JSON.parse(readFileSync(join(src, '../package.json'), 'utf8')) as {
+  peerDependencies: Record<string, string>;
+};
+const readmes = ['../README.md', '../../../README.md'].map((readme) => readFileSync(join(src, readme), 'utf8'));
+
 describe('ai peer range', () => {
-  const pkg = JSON.parse(readFileSync(join(src, '../package.json'), 'utf8')) as {
-    peerDependencies: Record<string, string>;
-  };
   const range = pkg.peerDependencies.ai!;
 
   it('takes AI SDK 6, and AI SDK 7 from the release that settles automatically denied calls', () => {
@@ -118,8 +120,20 @@ describe('ai peer range', () => {
   });
 
   it('is the range the READMEs state', () => {
-    for (const readme of ['../README.md', '../../../README.md']) {
-      expect(readFileSync(join(src, readme), 'utf8')).toContain(`ai@${range}`);
-    }
+    for (const readme of readmes) expect(readme).toContain(`ai@${range}`);
+  });
+});
+
+describe('react peer range', () => {
+  it('takes React 18.2 and 19, which CI both runs the suite against, as the READMEs state', () => {
+    // On React 18, a context renders only through <Context.Provider>, not React 19's <Context value>.
+    const range = '^18.2.0 || ^19.0.0';
+    expect(pkg.peerDependencies.react).toBe(range);
+    expect(pkg.peerDependencies['react-dom']).toBe(range);
+    for (const readme of readmes) expect(readme).toContain(`react@${range}`);
+  });
+
+  it('renders contexts through .Provider', () => {
+    for (const file of modules()) expect(code(file), file).not.toMatch(/<\w+Context\s+value=/);
   });
 });

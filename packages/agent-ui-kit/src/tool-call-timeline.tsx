@@ -1,6 +1,6 @@
 'use client';
 
-import { Collapsible } from 'radix-ui';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import {
   useCallback,
   useMemo,
@@ -262,7 +262,6 @@ export function ToolCallTimeline({
       {...props}
     >
       {/* Arrow-key navigation between the disclosure buttons, as in the WAI-ARIA accordion pattern. */}
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <ol ref={listRef} aria-label={label} onKeyDown={onKeyDown} className="relative flex flex-col">
         {toolParts.map((part, index) => (
           <TimelineItem

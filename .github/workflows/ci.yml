@@ -46,8 +46,14 @@ jobs:
       - name: Package exports (publint, attw)
         run: pnpm --filter @dgesteves/agent-ui-kit lint:package
 
+      - name: styles.css in Chrome, next to a global reset and in a Tailwind v3 build
+        run: pnpm smoke:styles
+
       - name: shadcn registry
         run: pnpm registry:build
+
+      - name: Registry files under a new Next.js app's ESLint config, with no warnings
+        run: pnpm lint:registry
 
       - name: Build playground
         run: pnpm build:playground
@@ -67,15 +73,39 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Install the oldest and the latest AI SDK 6 in turn, typecheck the library, run the tests
+      # Latest first: once 6.0.0 is installed, `pnpm add ai@^6` keeps it, since it satisfies ^6.
+      - name: Install the latest and the oldest AI SDK 6 in turn, typecheck the library, run the tests
         working-directory: packages/agent-ui-kit
         run: |
-          for version in 6.0.0 ^6; do
+          for version in ^6 6.0.0; do
             pnpm add --save-dev "ai@$version"
             node -e "console.log('ai', require('ai/package.json').version)"
             pnpm exec tsc --noEmit -p tsconfig.src.json
             pnpm test
           done
+
+  react-18:
+    name: React 18
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install React 18, typecheck the library, run the tests
+        working-directory: packages/agent-ui-kit
+        run: |
+          pnpm add --save-dev react@^18.2.0 react-dom@^18.2.0 @types/react@^18 @types/react-dom@^18
+          node -e "console.log('react', require('react/package.json').version)"
+          pnpm exec tsc --noEmit -p tsconfig.src.json
+          pnpm test
 
   nextjs-quickstart:
     name: Next.js quickstart

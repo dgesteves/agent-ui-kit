@@ -1,7 +1,8 @@
 /*
  * Build entry for dist/styles.css: a precompiled stylesheet for apps that do
- * not use Tailwind. It contains only the utilities the components use, plus a
- * reset scoped to [data-aui] roots (no global preflight).
+ * not use Tailwind v4. It contains only the utilities the components use, plus
+ * a reset scoped to [data-aui] roots (no global preflight). scripts/build-css.mjs
+ * scopes the rest to the kit's elements and removes the cascade layers.
  */
 @layer theme, base, components, utilities;
 
@@ -12,7 +13,21 @@
 
 @source '../';
 
+/*
+ * theme.css reads the app's --font-sans and --font-mono for --aui-font-*. Unset Tailwind's own
+ * values for them, which would otherwise be emitted on the kit's elements and hide the app's.
+ */
+@theme {
+  --font-sans: initial;
+  --font-mono: initial;
+}
+
 @layer base {
+  /* What Tailwind's preflight sets on <html>, so the components read the same with or without it. */
+  :where([data-aui]) {
+    line-height: 1.5;
+    tab-size: 4;
+  }
   :where([data-aui]),
   :where([data-aui]) *,
   :where([data-aui]) ::before,

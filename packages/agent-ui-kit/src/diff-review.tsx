@@ -1,6 +1,6 @@
 'use client';
 
-import { ToggleGroup } from 'radix-ui';
+import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import {
   Fragment,
   useEffect,
@@ -309,7 +309,6 @@ export function DiffReview({
 
   return (
     // Review shortcuts are scoped to focus within the diff (WCAG 2.1.4); every action is also a button.
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <section
       data-aui
       data-slot="diff-review"
@@ -504,7 +503,6 @@ function Hunk({
   const name = `Hunk ${order + 1} of ${total}, ${file.path}, lines ${hunk.newStart} to ${lastLine}, ${decision === 'pending' ? 'not reviewed' : decision}`;
   return (
     // A roving-tabindex item: focus tracking only, all actions are buttons.
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={registerRef}
       role="group"

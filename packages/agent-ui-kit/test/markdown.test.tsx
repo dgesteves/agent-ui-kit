@@ -22,6 +22,16 @@ describe('Markdown', () => {
     expect(screen.getByRole('button', { name: 'Copy code' })).toBeInTheDocument();
   });
 
+  it("keeps react-markdown's syntax tree nodes off the DOM", () => {
+    const { container } = render(
+      <Markdown streaming citations={1}>
+        {'# A\n\n> **b** [c](https://example.com) [1]\n\n1. d\n\n---\n\n| e |\n|---|\n| f |\n\n`g`'}
+      </Markdown>,
+    );
+    expect(container.querySelectorAll('h1, blockquote, strong, a, ol, li, hr, table, th, td, code').length).toBe(12);
+    expect(container.querySelector('[node]')).toBeNull();
+  });
+
   it('closes unterminated syntax while streaming and shows a caret', () => {
     const { container } = render(<Markdown streaming>{'This is **important'}</Markdown>);
     expect(container.querySelector('strong')).toHaveTextContent('important');
