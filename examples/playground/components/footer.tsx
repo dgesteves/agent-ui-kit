@@ -29,6 +29,11 @@ export function Footer() {
           <h2 className="font-mono text-[11px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase">Project</h2>
           <ul className="mt-3 flex flex-col gap-2">
             <li>
+              <Link href="/docs" className={link}>
+                Docs
+              </Link>
+            </li>
+            <li>
               <Link href="/gallery" className={link}>
                 Components
               </Link>

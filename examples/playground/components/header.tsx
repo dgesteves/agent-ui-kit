@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { GITHUB_URL, NPM_URL } from '@/lib/site';
 import { ArrowUpRightIcon, CloseIcon, GitHubIcon, MenuIcon } from './icons';
@@ -18,28 +19,34 @@ export function Logo() {
   );
 }
 
-type Page = 'playground' | 'components';
+type Page = 'docs' | 'components';
 
+// The logo goes home, to the playground.
 const PAGES: Array<{ page: Page; href: string; label: string }> = [
-  { page: 'playground', href: '/', label: 'Playground' },
+  { page: 'docs', href: '/docs', label: 'Docs' },
   { page: 'components', href: '/gallery', label: 'Components' },
 ];
 
 const MENU_ID = 'site-menu';
 
 export function Header({
-  page = 'playground',
+  page,
   mode,
   liveAvailable = false,
   onModeChange,
 }: {
+  /** The section the page belongs to; none on the home page. */
   page?: Page;
   mode?: 'mock' | 'live';
   liveAvailable?: boolean;
   onModeChange?: (mode: 'mock' | 'live') => void;
 }) {
-  const link = (current: boolean) =>
-    `rounded-md px-2 py-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-cyan-soft ${current ? 'text-[#e8eaed]' : 'text-[#a1a9b4] hover:text-[#e8eaed]'}`;
+  const link = (active: boolean) =>
+    `rounded-md px-2 py-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-cyan-soft ${active ? 'text-[#e8eaed]' : 'text-[#a1a9b4] hover:text-[#e8eaed]'}`;
+  const pathname = usePathname();
+  // The section's link is current on any page in it, and "page" on its own page.
+  const current = (p: (typeof PAGES)[number]) =>
+    page === p.page ? (pathname === p.href ? ('page' as const) : true) : undefined;
   const closeMenu = () => document.getElementById(MENU_ID)?.hidePopover();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
@@ -63,12 +70,7 @@ export function Header({
         </span>
         <nav aria-label="Pages" className="hidden items-center gap-1 sm:flex">
           {PAGES.map((p) => (
-            <Link
-              key={p.page}
-              href={p.href}
-              className={link(page === p.page)}
-              aria-current={page === p.page ? 'page' : undefined}
-            >
+            <Link key={p.page} href={p.href} className={link(page === p.page)} aria-current={current(p)}>
               {p.label}
             </Link>
           ))}
@@ -123,8 +125,8 @@ export function Header({
               <Link
                 href={p.href}
                 onClick={closeMenu}
-                aria-current={page === p.page ? 'page' : undefined}
-                className="focus-visible:outline-cyan-soft flex h-12 items-center rounded-lg px-3 text-[15px] text-[#a1a9b4] hover:bg-[#181c22] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:-outline-offset-2 aria-[current=page]:text-[#e8eaed]"
+                aria-current={current(p)}
+                className="focus-visible:outline-cyan-soft flex h-12 items-center rounded-lg px-3 text-[15px] text-[#a1a9b4] hover:bg-[#181c22] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:-outline-offset-2 aria-[current]:text-[#e8eaed]"
               >
                 {p.label}
                 {page === p.page && <span className="bg-cyan ml-2 size-1.5 rounded-full" aria-hidden="true" />}

@@ -1,4 +1,5 @@
 import kit from '@dgesteves/agent-ui-kit/package.json';
+import Link from 'next/link';
 import { GET_STARTED_URL, GITHUB_URL, INSTALL_COMMAND } from '@/lib/site';
 import { CommandLine } from './copy-button';
 import { ArrowRightIcon, GitHubIcon } from './icons';
@@ -19,10 +20,10 @@ export function CallsToAction() {
         className="w-full shrink-0 sm:w-[21.5rem]"
       />
       <div className="flex flex-auto flex-wrap gap-3 sm:flex-none">
-        <a href={GET_STARTED_URL} className={`${primaryButton} flex-auto sm:flex-none`}>
+        <Link href={GET_STARTED_URL} className={`${primaryButton} flex-auto sm:flex-none`}>
           Get started
           <ArrowRightIcon className="size-4" />
-        </a>
+        </Link>
         <a href={GITHUB_URL} className={`${secondaryButton} flex-auto sm:flex-none`}>
           <GitHubIcon className="size-4" />
           Star on GitHub
