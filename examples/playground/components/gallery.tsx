@@ -14,6 +14,7 @@ import type { UIMessage } from 'ai';
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { PRICING, RATELIMIT_UPSTASH, ROUTE_NEW, ROUTE_OLD, WEB_RESULTS } from '@/lib/scenario';
 import { toolMeta } from '@/lib/tools';
+import { Install } from './install';
 
 const now = Date.now();
 
@@ -109,11 +110,14 @@ function Section({
   id,
   title,
   description,
+  install,
   children,
 }: {
   id: string;
   title: string;
   description: string;
+  /** The registry item, what to import and a minimal usage, for the install panel. */
+  install?: { item: string; name: string; usage: string };
   children: ReactNode;
 }) {
   return (
@@ -127,6 +131,7 @@ function Section({
       <div data-shot={id} className="border-line bg-ink rounded-2xl border p-5 sm:p-6">
         {children}
       </div>
+      {install ? <Install {...install} /> : null}
     </section>
   );
 }
@@ -138,13 +143,19 @@ export function Gallery() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
-          Each component in isolation, rendered from AI SDK v7 message parts. Everything here is interactive and
-          keyboard accessible.
+          Each component in isolation, rendered from AI SDK 6 and 7 message parts, with how to install it from npm or as
+          a shadcn registry item. Everything here is interactive and keyboard accessible.
         </p>
       </div>
 
       <Section
         id="agent-status"
+        install={{
+          item: 'agent-status',
+          name: 'AgentStatus, deriveAgentState',
+          usage:
+            'const { state, detail } = deriveAgentState({ status, message: last });\n\n<AgentStatus state={state} detail={detail} />',
+        }}
         title="AgentStatus"
         description="Run state in one pill, announced through a live region."
       >
@@ -159,6 +170,12 @@ export function Gallery() {
 
       <Section
         id="tool-call-timeline"
+        install={{
+          item: 'tool-call-timeline',
+          name: 'ToolCallTimeline',
+          usage:
+            "<ToolCallTimeline\n  parts={message.parts}\n  tools={{ run_command: { label: 'Run command', risk: 'high' } }}\n/>",
+        }}
         title="ToolCallTimeline"
         description="Every tool state with durations, a waterfall, and expandable input and output."
       >
@@ -167,6 +184,11 @@ export function Gallery() {
 
       <Section
         id="approval-card"
+        install={{
+          item: 'approval-card',
+          name: 'ToolApprovalCard',
+          usage: '<ToolApprovalCard part={part} onRespond={addToolApprovalResponse} risk="high" />',
+        }}
         title="ApprovalCard"
         description="Human-in-the-loop approval with risk, preview and Y / N shortcuts."
       >
@@ -195,6 +217,12 @@ export function Gallery() {
 
       <Section
         id="diff-review"
+        install={{
+          item: 'diff-review',
+          name: 'DiffReview',
+          usage:
+            "<DiffReview\n  files={[{ path: 'app/api/chat/route.ts', oldContent, newContent }]}\n  onSubmit={(result) => addToolOutput({ tool: 'review_changes', toolCallId, output: result })}\n/>",
+        }}
         title="DiffReview"
         description="Accept or reject agent edits hunk by hunk, unified or split."
       >
@@ -210,6 +238,12 @@ export function Gallery() {
 
       <Section
         id="run-meter"
+        install={{
+          item: 'run-meter',
+          name: 'RunMeter',
+          usage:
+            '<RunMeter\n  usage={last?.metadata?.usage}\n  pricing={{ input: 2.5, cachedInput: 0.25, output: 10 }}\n/>',
+        }}
         title="RunMeter"
         description="Tokens, estimated cost and latency; compact for headers, expanded for panels."
       >
@@ -250,6 +284,11 @@ export function Gallery() {
 
       <Section
         id="sources"
+        install={{
+          item: 'sources',
+          name: 'Sources, getSourceParts',
+          usage: '<Sources sources={getSourceParts(message.parts)} variant="cards" />',
+        }}
         title="Sources"
         description="Citations as compact chips or cards; inline [n] markers link to them."
       >
@@ -304,6 +343,12 @@ export function Gallery() {
 
       <Section
         id="agent-message"
+        install={{
+          item: 'agent-message',
+          name: 'AgentMessage',
+          usage:
+            "<AgentMessage\n  message={last}\n  streaming={status === 'streaming'}\n  onToolApproval={addToolApprovalResponse}\n/>",
+        }}
         title="AgentMessage"
         description="A whole assistant UIMessage: reasoning, streaming markdown, grouped tool calls and sources."
       >
