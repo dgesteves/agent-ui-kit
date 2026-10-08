@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+      ai-sdk:
+        patterns: ['ai', '@ai-sdk/*', '@ag-ui/*']
+      react:
+        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom', 'next']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
