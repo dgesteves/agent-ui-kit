@@ -15,6 +15,13 @@
   --color-magenta: #f0468a;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --animate-sheet-in: sheet-in 0.26s cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
 }
 
 html {
@@ -31,6 +38,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'ss01', 'cv11';
+}
+
+/* The page behind a modal sheet stays put. */
+html:has(dialog:modal) {
+  overflow: hidden;
 }
 
 ::selection {

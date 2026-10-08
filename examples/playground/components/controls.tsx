@@ -1,6 +1,7 @@
 'use client';
 
-import { useId } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { CloseIcon, PauseIcon, PlayIcon, ReplayIcon, SlidersIcon } from './icons';
 
 const SPEEDS = [0.5, 1, 2, 4];
 
@@ -43,6 +44,20 @@ function Switch({
   );
 }
 
+export interface RunControlsProps {
+  speed: number;
+  onSpeedChange: (s: number) => void;
+  paused: boolean;
+  onPausedChange: (p: boolean) => void;
+  running: boolean;
+  onReplay: () => void;
+  autopilot: boolean;
+  onAutopilotChange: (v: boolean) => void;
+  inspect: boolean;
+  onInspectChange: (v: boolean) => void;
+  className?: string;
+}
+
 export function RunControls({
   speed,
   onSpeedChange,
@@ -55,37 +70,16 @@ export function RunControls({
   inspect,
   onInspectChange,
   className,
-}: {
-  speed: number;
-  onSpeedChange: (s: number) => void;
-  paused: boolean;
-  onPausedChange: (p: boolean) => void;
-  running: boolean;
-  onReplay: () => void;
-  autopilot: boolean;
-  onAutopilotChange: (v: boolean) => void;
-  inspect: boolean;
-  onInspectChange: (v: boolean) => void;
-  className?: string;
-}) {
+}: RunControlsProps) {
+  // The controls render twice (the desktop sidebar and the phone sheet), so each speed group needs its own name.
+  const speedName = useId();
   const button =
     'inline-flex h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-[#1e232a] px-3 text-[13px] font-medium text-[#e8eaed] transition-colors hover:border-[#353c47] hover:bg-[#262b33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-soft disabled:cursor-not-allowed disabled:opacity-45';
   return (
     <div className={`flex flex-col gap-4 ${className ?? ''}`}>
       <div className="flex gap-2">
         <button type="button" onClick={onReplay} className={button}>
-          <svg
-            viewBox="0 0 24 24"
-            className="size-3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1M3.5 4v4.5H8" />
-          </svg>
+          <ReplayIcon className="size-3.5" />
           Replay
         </button>
         <button
@@ -95,16 +89,7 @@ export function RunControls({
           aria-pressed={paused}
           className={button}
         >
-          {paused ? (
-            <svg viewBox="0 0 24 24" className="size-3.5" fill="currentColor" aria-hidden="true">
-              <path d="M7 4.5v15l12-7.5-12-7.5Z" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" className="size-3.5" fill="currentColor" aria-hidden="true">
-              <rect x="6" y="4.5" width="4" height="15" rx="1" />
-              <rect x="14" y="4.5" width="4" height="15" rx="1" />
-            </svg>
-          )}
+          {paused ? <PlayIcon className="size-3.5" /> : <PauseIcon className="size-3.5" />}
           {paused ? 'Resume' : 'Pause'}
         </button>
       </div>
@@ -118,7 +103,7 @@ export function RunControls({
             >
               <input
                 type="radio"
-                name="speed"
+                name={speedName}
                 value={s}
                 checked={speed === s}
                 onChange={() => onSpeedChange(s)}
@@ -145,7 +130,117 @@ export function RunControls({
   );
 }
 
-export function KeyboardCard() {
+const iconButton =
+  'inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line bg-[#181c22] text-[#e8eaed] transition-colors hover:border-[#353c47] hover:bg-[#262b33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-soft disabled:cursor-not-allowed disabled:opacity-45';
+
+/** Phones: pause, replay and a button for the rest of the controls, next to the status pill. */
+export function CompactRunControls({
+  paused,
+  running,
+  onPausedChange,
+  onReplay,
+  onOpenControls,
+  controlsId,
+  className = '',
+}: {
+  paused: boolean;
+  running: boolean;
+  onPausedChange: (p: boolean) => void;
+  onReplay: () => void;
+  onOpenControls: () => void;
+  controlsId: string;
+  className?: string;
+}) {
+  return (
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <button
+        type="button"
+        onClick={() => onPausedChange(!paused)}
+        disabled={!running && !paused}
+        aria-pressed={paused}
+        aria-label="Pause"
+        className={iconButton}
+      >
+        {paused ? <PlayIcon className="size-3.5" /> : <PauseIcon className="size-3.5" />}
+      </button>
+      <button type="button" onClick={onReplay} aria-label="Replay" className={iconButton}>
+        <ReplayIcon className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onOpenControls}
+        aria-haspopup="dialog"
+        aria-controls={controlsId}
+        aria-label="Run controls and telemetry"
+        className={iconButton}
+      >
+        <SlidersIcon className="size-4" />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * A modal bottom sheet on a native <dialog>: focus moves in and is trapped, Escape closes it, and
+ * focus returns to the button that opened it. Tapping the backdrop closes it too.
+ */
+export function Sheet({
+  id,
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  id: string;
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open]);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    // A click on the dialog itself, not its content, is a click on the backdrop.
+    const onClick = (event: MouseEvent) => {
+      if (event.target === dialog) dialog.close();
+    };
+    dialog.addEventListener('click', onClick);
+    return () => dialog.removeEventListener('click', onClick);
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      id={id}
+      aria-labelledby={`${id}-title`}
+      onClose={onClose}
+      className="border-line motion-safe:open:animate-sheet-in fixed inset-x-0 top-auto bottom-0 m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-[#12151a] p-0 text-[#e8eaed] backdrop:bg-black/60"
+    >
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-[#12151a]/95 px-4 pt-3 pb-2 backdrop-blur">
+        <h2 id={`${id}-title`} className="text-[15px] font-semibold">
+          {title}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="focus-visible:outline-cyan-soft inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-[#a1a9b4] hover:bg-[#262b33] hover:text-[#e8eaed] focus-visible:outline-2"
+        >
+          <CloseIcon className="size-4" />
+        </button>
+      </div>
+      <div className="flex flex-col gap-5 px-4 pt-1 pb-[max(1.25rem,env(safe-area-inset-bottom))]">{children}</div>
+    </dialog>
+  );
+}
+
+export function KeyboardCard({ className = '' }: { className?: string }) {
   const rows: Array<[string[], string]> = [
     [['Y', 'N'], 'Approve or deny'],
     [['J', 'K'], 'Next / previous hunk'],
@@ -154,7 +249,7 @@ export function KeyboardCard() {
     [['↑', '↓'], 'Move between tool calls'],
   ];
   return (
-    <section aria-labelledby="kbd-heading" className="border-line bg-raised/40 rounded-xl border p-4">
+    <section aria-labelledby="kbd-heading" className={`border-line bg-raised/40 rounded-xl border p-4 ${className}`}>
       <h2
         id="kbd-heading"
         className="mb-3 font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"

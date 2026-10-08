@@ -25,7 +25,15 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="font-sans text-[#e8eaed]">{children}</body>
+      <body className="font-sans text-[#e8eaed]">
+        <a
+          href="#main"
+          className="bg-cyan text-ink focus-visible:outline-cyan-soft fixed top-2 left-2 z-50 -translate-y-16 rounded-md px-3 py-2 text-[13px] font-semibold focus:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          Skip to content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

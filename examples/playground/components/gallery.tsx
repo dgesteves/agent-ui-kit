@@ -182,7 +182,7 @@ export function Gallery() {
     return () => clearTimeout(id);
   }, []);
   return (
-    <main className="mx-auto flex w-full max-w-[1000px] flex-col gap-14 px-4 pt-10 pb-24 sm:px-6">
+    <main id="main" className="mx-auto flex w-full max-w-[1000px] flex-col gap-14 px-4 pt-10 pb-24 sm:px-6">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>

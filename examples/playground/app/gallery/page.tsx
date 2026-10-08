@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Gallery } from '@/components/gallery';
+import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 
 const title = 'agent-ui-kit · components';
@@ -21,6 +22,7 @@ export default function GalleryPage() {
     <div className="min-h-dvh">
       <Header page="components" />
       <Gallery />
+      <Footer />
     </div>
   );
 }
