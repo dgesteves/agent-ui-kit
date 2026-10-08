@@ -18,6 +18,10 @@ updates:
       # rxjs stays at the exact version @ag-ui/client pins: two copies of rxjs make their Observable
       # types incompatible. Update it together with @ag-ui/client.
       - dependency-name: rxjs
+      # @types/node follows the Node major the code runs and is tested on (24), not the newest one:
+      # newer types would let code use APIs that Node 24 doesn't have. Move it with .nvmrc and CI.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
