@@ -8,7 +8,7 @@ React components for the hard parts of agentic products: watching an agent work,
 
 **[Open the live playground →](https://agent-ui-kit-demo.vercel.app)** A scripted agent run with replay, speed and keyboard controls. No API key needed. For coding agents, these docs are also at [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt) and [`/llms-full.txt`](https://agent-ui-kit-demo.vercel.app/llms-full.txt).
 
-<img src="docs/media/hero.png" width="100%" alt="The agent-ui-kit playground mid-run. A tool call timeline shows a code search, two file reads, a failed read of middleware.ts with its error inline, and a web search, each with a duration and a waterfall bar. Below, a high-risk approval card asks to run 'pnpm add @upstash/ratelimit' with Deny and Approve buttons and Y/N shortcuts. A sidebar shows the agent status 'Waiting for approval', playback controls, and a run meter with 20.9k tokens, $0.025 estimated cost, 689ms time to first token and a 63% cache hit rate.">
+<img src="docs/media/hero.png" width="100%" alt="The agent-ui-kit playground mid-run. A tool call timeline shows a code search, two file reads, a failed read of middleware.ts with its error inline, and a web search, each with a duration and a waterfall bar. Below, a high-risk approval card asks to run 'pnpm add @upstash/ratelimit' with Deny and Approve buttons and Y/N shortcuts. A sidebar shows the agent status 'Waiting for approval', playback controls, and a run meter with 20.9k tokens, $0.025 estimated cost, 688ms time to first token and a 63% cache hit rate.">
 
 Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), runs on React 18 and 19 (`react@^18.2.0 || ^19.0.0`), and tested against each in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
 
@@ -260,7 +260,10 @@ Then ask for it by name, for example "add the agent-ui-kit approval card to the 
 
 ### `ToolCallTimeline`
 
-<img src="docs/media/components/tool-call-timeline.png" width="100%" alt="A tool call timeline: Search code done in 720ms; Read file middleware.ts failed in 240ms with an ENOENT error shown inline; Read file lib/redis.ts done in 450ms; Web search running for 3.53s with a cyan waterfall bar; Run command waiting for approval with a magenta bar.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/tool-call-timeline-light.png">
+  <img src="docs/media/components/tool-call-timeline.png" width="100%" alt="A tool call timeline: Search code done in 720ms; Read file middleware.ts failed in 240ms with an ENOENT error shown inline; Read file lib/redis.ts done in 450ms; Web search running for 3.53s with a cyan waterfall bar; Run command waiting for approval with a magenta bar.">
+</picture>
 
 Every AI SDK tool state (`input-streaming`, `input-available`, `approval-requested`, `approval-responded`, `output-available` including `preliminary`, `output-error`, `output-denied`) with live durations, a waterfall that makes parallel calls visible, and expandable input and output. Failures show their error inline. Calls are disclosure buttons: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd> move between them, and settled calls are announced. Pass `active={false}` once the run has ended (stopped, failed, or restored from history), so calls that never settled read "Stopped" instead of counting up forever.
 
@@ -284,7 +287,10 @@ import { FileText } from 'lucide-react'; // or any icon: `icon` takes a ReactNod
 
 ### `ApprovalCard`
 
-<img src="docs/media/components/approval-card.png" width="100%" alt="An approval card titled Run command, marked High risk, explaining that it installs a package from npm, previewing the command 'pnpm add @upstash/ratelimit' in ~/acme/chat-app, with Deny with feedback, Deny (N) and Approve (Y) actions.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/approval-card-light.png">
+  <img src="docs/media/components/approval-card.png" width="100%" alt="An approval card titled Run command, marked High risk, explaining that it installs a package from npm, previewing the command 'pnpm add @upstash/ratelimit' in ~/acme/chat-app, with Deny with feedback, Deny (N) and Approve (Y) actions.">
+</picture>
 
 Human-in-the-loop approval with a risk level, a command or argument preview, and deny-with-feedback. <kbd>Y</kbd> and <kbd>N</kbd> work while focus is in the card; <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approves, optionally page-wide. `critical` actions need a second, confirming press. Each pending approval sends one decision: a double click, or <kbd>Y</kbd> then <kbd>N</kbd>, is ignored until `status` changes, the handler's promise settles or the handler throws. `ToolApprovalCard` binds it to a tool part and to `addToolApprovalResponse`, including the denial reason. Decisions that a `toolApproval` policy makes on its own (`approval.isAutomatic`) never prompt or take focus, and read "Auto-approved" or "Blocked by policy" rather than as a person's decision.
 
@@ -294,7 +300,10 @@ Human-in-the-loop approval with a risk level, a command or argument preview, and
 
 ### `DiffReview`
 
-<img src="docs/media/components/diff-review.png" width="100%" alt="A diff review of two files with four hunks. A new lib/ratelimit.ts is accepted; in app/api/chat/route.ts, the import and the 429 check are pending and the hunk switching the model from gpt-4o to gpt-4.1-mini is rejected, with the changed words highlighted. A footer shows 2 of 4 reviewed, keyboard hints, and Reject all, Accept all and Apply buttons.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/diff-review-light.png">
+  <img src="docs/media/components/diff-review.png" width="100%" alt="A diff review of two files with four hunks. A new lib/ratelimit.ts is accepted; in app/api/chat/route.ts, the import and the 429 check are pending and the hunk switching the model from gpt-4o to gpt-4.1-mini is rejected, with the changed words highlighted. A footer shows 2 of 4 reviewed, keyboard hints, and Reject all, Accept all and Apply buttons.">
+</picture>
 
 Unified or split review of agent edits with word-level highlights and per-hunk accept/reject. <kbd>J</kbd>/<kbd>K</kbd> move, <kbd>A</kbd>/<kbd>R</kbd> decide (and advance), <kbd>U</kbd> resets, <kbd>⇧A</kbd>/<kbd>⇧R</kbd> decide everything, <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. `onSubmit` receives each file with only the accepted hunks applied, so it works as a client-side tool result. It fires once per set of decisions: a double click or a repeated <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> sends one review until a decision or the files change. Files compare by content, so an inline `files` array does not re-arm it.
 
@@ -307,7 +316,10 @@ Unified or split review of agent edits with word-level highlights and per-hunk a
 
 ### `RunMeter`
 
-<img src="docs/media/components/run-meter.png" width="100%" alt="The run meter in two variants. Expanded: 41.1k tokens, $0.056 estimated cost, an input/output token bar, 38.7k input of which 28.8k cached, 2.41k output, TTFT 684ms, total 21.8s, cache hit 74%. Compact: a single line with the same numbers.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/run-meter-light.png">
+  <img src="docs/media/components/run-meter.png" width="100%" alt="The run meter in two variants. Expanded: 41.1k tokens, $0.056 estimated cost, an input/output token bar, 38.7k input of which 28.8k cached, 2.41k output, TTFT 684ms, total 21.8s, cache hit 74%. Compact: a single line with the same numbers.">
+</picture>
 
 Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly; to cover a whole run across approval round trips, sum it on the server with `addUsage` as in the [server recipe](#npm). `useRunTiming(status)` measures TTFT and active time across approval round-trips, excluding time spent waiting on the user. `pricing` is in USD per million tokens: `input` and `output`, plus optional `cachedInput` for cache reads and `cacheWrite` for cache writes (1.25× input on Anthropic, for example), which both default to `input`.
 
@@ -324,7 +336,10 @@ Tokens in and out, estimated cost, time to first token, active run time and prom
 
 ### `AgentStatus`
 
-<img src="docs/media/components/agent-status.png" width="100%" alt="Status pills: Thinking, Working read_file 3.42s, Waiting for approval run_command, Done 21.8s, and an error pill reading Rate limited by provider.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/agent-status-light.png">
+  <img src="docs/media/components/agent-status.png" width="100%" alt="Status pills: Thinking, Working read_file 3.42s, Waiting for approval run_command, Done 21.8s, and an error pill reading Rate limited by provider.">
+</picture>
 
 Thinking, working, waiting for approval, done or error, with an elapsed timer. Changes are announced through a live region: debounced so quick flips are not read out one by one, and assertive only for approvals and errors. `deriveAgentState` maps `useChat` status and the latest message to a state, with human-in-the-loop waits taking precedence.
 
@@ -334,7 +349,10 @@ Thinking, working, waiting for approval, done or error, with an elapsed timer. C
 
 ### `Sources`
 
-<img src="docs/media/components/sources.png" width="100%" alt="Three sources shown as numbered chips with a monogram, title and hostname, and again as cards in a two-column grid.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/sources-light.png">
+  <img src="docs/media/components/sources.png" width="100%" alt="Three sources shown as numbered chips with a monogram, title and hostname, and again as cards in a two-column grid.">
+</picture>
 
 `source-url` and `source-document` parts as numbered chips or cards. In `AgentMessage`, `[n]` markers in the text become links to the matching source.
 
@@ -344,7 +362,10 @@ Thinking, working, waiting for approval, done or error, with an elapsed timer. C
 
 ### `AgentMessage`
 
-<img src="docs/media/components/agent-message.png" width="100%" alt="An assistant message: a collapsed Reasoning section, a line of text, a two-step tool timeline, a sentence with bold text and citation markers 1 and 3, and a row of source chips.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/agent-message-light.png">
+  <img src="docs/media/components/agent-message.png" width="100%" alt="An assistant message: a collapsed Reasoning section, a line of text, a two-step tool timeline, a sentence with bold text and citation markers 1 and 3, and a row of source chips.">
+</picture>
 
 A whole assistant `UIMessage`, part by part: streaming-safe markdown (unterminated syntax is closed while streaming, raw HTML is never rendered, `javascript:` and `data:` URLs are stripped), collapsible reasoning that summarizes how long the model thought, consecutive tool parts grouped into one timeline with inline approval cards, files, `data-*` parts through `renderData`, and sources. `renderTool` lets you take over any tool part, as the playground does for `review_changes`.
 
@@ -520,7 +541,10 @@ Everything is a CSS variable. Override on `:root`, on `.dark`, or on any subtree
 }
 ```
 
-<img src="docs/media/components/theming.png" width="100%" alt="The same status pill and tool timeline in three frames: the default dark theme, the light theme, and a custom theme with a lime accent, orange attention color and tighter radius.">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/components/theming-light.png">
+  <img src="docs/media/components/theming.png" width="100%" alt="The same status pill and tool timeline in three frames: the default dark theme, the light theme, and a custom theme with a lime accent, orange attention color and tighter radius.">
+</picture>
 
 | Token group                                                             | Purpose                          |
 | ----------------------------------------------------------------------- | -------------------------------- |
