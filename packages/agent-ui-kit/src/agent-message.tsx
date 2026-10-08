@@ -6,6 +6,7 @@ import { getSourceParts, getToolPartName, isToolPart, type AnyUIPart, type ToolP
 import { useToolTimings, type ToolTimings } from './lib/hooks';
 import { FileIcon, ImageIcon } from './lib/icons';
 import { getImagePolicy, isAllowedImage, type ImagePolicy } from './lib/images';
+import { Img } from './lib/primitives';
 import { cn } from './lib/utils';
 import { Markdown } from './markdown';
 import { Reasoning } from './reasoning';
@@ -213,7 +214,7 @@ function FileAttachment({ part, imagePolicy }: { part: FilePart; imagePolicy: Im
         rel="noopener noreferrer"
         className="focus-visible:outline-aui-ring block w-fit rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2"
       >
-        <img
+        <Img
           src={part.url}
           alt={part.filename ?? 'Attached image'}
           className="border-aui-border max-h-64 rounded-lg border"

@@ -31,6 +31,23 @@ export default defineConfig(
         'error',
         { tags: [], roles: ['tabpanel', 'group'], allowExpressionValues: true },
       ],
+      // Composite widgets take keys and focus on their container: shortcuts scoped to focus within
+      // the approval card and the diff review (sections, WCAG 2.1.4), arrow keys between tool calls
+      // (the list) and roving focus between diff hunks (groups). Allowed here rather than with
+      // disable comments, which the shadcn registry would copy into apps that lint without this rule.
+      'jsx-a11y/no-noninteractive-element-interactions': [
+        'error',
+        {
+          body: ['onError', 'onLoad'],
+          iframe: ['onError', 'onLoad'],
+          img: ['onError', 'onLoad'],
+          section: ['onKeyDown'],
+          ol: ['onKeyDown'],
+          div: ['onFocus'],
+        },
+      ],
+      // Message images render through Img (lib/primitives.tsx); check its alt text like an <img>.
+      'jsx-a11y/alt-text': ['error', { img: ['Img'] }],
     },
   },
   {

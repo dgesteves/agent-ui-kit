@@ -52,6 +52,9 @@ jobs:
       - name: shadcn registry
         run: pnpm registry:build
 
+      - name: Registry files under a new Next.js app's ESLint config, with no warnings
+        run: pnpm lint:registry
+
       - name: Build playground
         run: pnpm build:playground
 
