@@ -74,6 +74,13 @@ const ITEMS = [
     description:
       'Renders an assistant UIMessage: markdown, reasoning, grouped tool calls, inline approvals and sources.',
   },
+  {
+    name: 'ag-ui',
+    entry: 'use-ag-ui-agent.ts',
+    title: 'AG-UI Adapter',
+    description:
+      'useAgUiAgent: renders any AG-UI agent (LangGraph, CrewAI, Mastra, Pydantic AI) with these components, interrupts as approvals.',
+  },
 ];
 
 const read = (file) => readFileSync(file, 'utf8');

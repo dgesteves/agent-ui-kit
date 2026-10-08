@@ -33,7 +33,7 @@ for (const file of modules(src)) {
   if (expected) clientModules++;
   if (expected !== actual) problems.push(`${file}: 'use client' ${expected ? 'missing from' : 'added to'} the build`);
 }
-for (const entry of ['index.js', 'core.js']) {
+for (const entry of ['index.js', 'core.js', 'ag-ui.js']) {
   if (directive(readFileSync(join(dist, entry), 'utf8')))
     problems.push(`${entry}: entry points must not be client modules`);
 }

@@ -16,6 +16,7 @@
     "ai",
     "ai-sdk",
     "agents",
+    "ag-ui",
     "agent-ui",
     "human-in-the-loop",
     "tool-calling",
@@ -42,6 +43,10 @@
     "./core": {
       "types": "./dist/core.d.ts",
       "default": "./dist/core.js"
+    },
+    "./ag-ui": {
+      "types": "./dist/ag-ui.d.ts",
+      "default": "./dist/ag-ui.js"
     },
     "./styles.css": "./dist/styles.css",
     "./tailwind.css": "./dist/tailwind.css",
@@ -71,6 +76,8 @@
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
+    "@ag-ui/client": "^1.0.2",
+    "@ag-ui/core": "^1.0.2",
     "@arethetypeswrong/cli": "^0.18.5",
     "@tailwindcss/cli": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
@@ -86,6 +93,7 @@
     "publint": "^0.3.25",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "rxjs": "7.8.1",
     "tailwindcss": "^4.3.3",
     "tsdown": "^0.23.0",
     "typescript": "~6.0.3",

@@ -44,6 +44,8 @@ export function AgentRun() {
 
 Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCard`, `DiffReview`, `RunMeter`, `AgentStatus`, `Sources`, `Markdown`, `Reasoning`. Hooks and helpers: `useRunTiming`, `useToolTimings`, `deriveAgentState`, `applyHunks`, `estimateCost`, `addUsage`.
 
+AG-UI agents (LangGraph, CrewAI, Mastra, Pydantic AI...) render with the same components through `useAgUiAgent` from `@dgesteves/agent-ui-kit/ag-ui`: messages become AI SDK parts, and interrupts become approval cards that resume the run.
+
 Components and hooks carry their own `'use client'` directive (`Sources` needs none). The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
 
 Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^6.0.0 || ^7.0.102` (the kit imports its types only). On AI SDK 7, 7.0.102 or later settles tool calls that a `toolApproval` policy denies, which earlier releases can leave reading "Running"; policies, and the "Auto-approved" and "Blocked by policy" labels, are AI SDK 7 features.

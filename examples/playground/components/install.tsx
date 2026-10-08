@@ -4,21 +4,34 @@ import { useId, useState } from 'react';
 
 const REGISTRY = 'https://agent-ui-kit-demo.vercel.app/r';
 
+export interface InstallProps {
+  /** The registry item. */
+  item: string;
+  /** What to import: the export first, then helpers from lib/ai. */
+  name: string;
+  usage: string;
+  /** Where the export lives, when not the main entry and `components/agent-ui/<item>`. */
+  from?: { npm: string; shadcn: string };
+  /** Packages the app adds alongside, e.g. `@ag-ui/client`. */
+  packages?: string[];
+}
+
 /** How to get one component: from npm or as a shadcn registry item, and a minimal usage. */
-export function Install({ item, name, usage }: { item: string; name: string; usage: string }) {
+export function Install({ item, name, usage, from, packages = [] }: InstallProps) {
   const [tab, setTab] = useState<'npm' | 'shadcn'>('npm');
   const id = useId();
+  const extra = packages.join(' ');
   const commands = {
-    npm: `pnpm add @dgesteves/agent-ui-kit ai`,
-    shadcn: `npx shadcn@latest add ${REGISTRY}/${item}.json`,
+    npm: `pnpm add @dgesteves/agent-ui-kit ai${extra ? ` ${extra}` : ''}`,
+    shadcn: `npx shadcn@latest add ${REGISTRY}/${item}.json${extra ? `\npnpm add ${extra}` : ''}`,
   };
   // The registry copies each component to components/agent-ui/ and its helpers to lib/.
   const [component, ...helpers] = name.split(', ');
   const imports =
     tab === 'npm'
-      ? `import { ${name} } from '@dgesteves/agent-ui-kit';`
+      ? `import { ${name} } from '${from?.npm ?? '@dgesteves/agent-ui-kit'}';`
       : [
-          `import { ${component ?? name} } from '@/components/agent-ui/${item}';`,
+          `import { ${component ?? name} } from '@/components/agent-ui/${from?.shadcn ?? item}';`,
           ...(helpers.length ? [`import { ${helpers.join(', ')} } from '@/components/agent-ui/lib/ai';`] : []),
         ].join('\n');
   const code = `${imports}\n\n${usage}`;

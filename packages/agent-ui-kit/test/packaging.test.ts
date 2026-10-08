@@ -63,6 +63,10 @@ describe('server/client module boundaries', () => {
     expect(coreModules.filter(isClient)).toEqual([]);
     // No React at runtime: the core entry is safe in Route Handlers and plain Node.
     expect(coreModules.filter((file) => file.endsWith('.tsx') || /from 'react'/.test(code(file)))).toEqual([]);
+    // The AG-UI entry: its hook is a client module, its converters and reducer are not.
+    expect(isClient('ag-ui.ts')).toBe(false);
+    expect(isClient('use-ag-ui-agent.ts')).toBe(true);
+    expect(closure('lib/ag-ui.ts').filter((file) => isClient(file) || /from 'react'/.test(code(file)))).toEqual([]);
   });
 
   it('exposes the pure helpers from /core and re-exports them from the main entry', () => {

@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ag-ui/client": "^1.0.2",
+    "@ag-ui/core": "^1.0.2",
     "@ai-sdk/openai": "^4.0.84",
     "@ai-sdk/react": "^4.0.131",
     "@dgesteves/agent-ui-kit": "workspace:*",
@@ -17,6 +19,7 @@
     "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "rxjs": "7.8.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
