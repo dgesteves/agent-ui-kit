@@ -13,6 +13,7 @@ import {
 import {
   getToolPartName,
   getToolPhase,
+  isAutomaticApproval,
   isSettledPhase,
   isToolPart,
   TOOL_PHASE_LABEL,
@@ -228,7 +229,8 @@ export function ToolCallTimeline({
     const name = tools?.[getToolPartName(part)]?.label ?? humanizeToolName(getToolPartName(part));
     const phase = getToolPhase(part);
     if (phase === 'error') return `${name} failed: ${part.errorText ?? 'unknown error'}`;
-    if (phase === 'denied') return part.approval?.isAutomatic ? `${name} was blocked by policy` : `${name} was denied`;
+    if (phase === 'denied')
+      return isAutomaticApproval(part.approval) ? `${name} was blocked by policy` : `${name} was denied`;
     return `${name} finished in ${formatDurationLong(getDuration(timings[part.toolCallId], latest.at))}`;
   }, [toolParts, timings, tools]);
 
@@ -446,7 +448,7 @@ export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMet
       )}
       {(part.state === 'output-denied' || (part.state === 'approval-responded' && !part.approval.approved)) && (
         <p className="text-aui-fg-muted text-xs">
-          {part.approval.isAutomatic ? 'Blocked by policy' : 'Denied by user'}
+          {isAutomaticApproval(part.approval) ? 'Blocked by policy' : 'Denied by user'}
           {part.approval.reason ? (
             <>
               : <span className="text-aui-fg">{part.approval.reason}</span>

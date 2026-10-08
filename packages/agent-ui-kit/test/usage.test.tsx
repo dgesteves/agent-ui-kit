@@ -12,6 +12,7 @@ import { MockLanguageModelV4 } from 'ai/test';
 import { describe, expect, it } from 'vitest';
 import { addUsage } from '../src/lib/usage';
 import { RunMeter } from '../src/run-meter';
+import { AI_SDK_MAJOR } from './utils';
 
 describe('addUsage', () => {
   it('adds every field, keeping fields that neither side reports undefined', () => {
@@ -143,7 +144,8 @@ async function runWithApproval(sumUsage: boolean) {
   return final.metadata?.usage;
 }
 
-describe('usage across an approval round trip (README server recipe)', () => {
+// `toolApproval` policies and the V4 mock models are AI SDK 7.
+describe.skipIf(AI_SDK_MAJOR < 7)('usage across an approval round trip (README server recipe)', () => {
   it('reports the whole run on the RunMeter, not just the last request', async () => {
     const total = await runWithApproval(true);
     expect(total).toMatchObject({ inputTokens: 2500, outputTokens: 120, totalTokens: 2620 });

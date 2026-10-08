@@ -9,7 +9,14 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import { getApprovalStatus, getToolPartName, type ApprovalStatus, type ToolPart } from './lib/ai';
+import {
+  getApprovalRequestReason,
+  getApprovalStatus,
+  getToolPartName,
+  isAutomaticApproval,
+  type ApprovalStatus,
+  type ToolPart,
+} from './lib/ai';
 import { humanizeToolName } from './lib/format';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
@@ -454,7 +461,7 @@ export interface ToolApprovalCardProps extends Omit<
 export function ToolApprovalCard({ part, onRespond, meta, risk, description, title, ...props }: ToolApprovalCardProps) {
   const status = getApprovalStatus(part);
   if (!status || !part.approval) return null;
-  const automatic = part.approval.isAutomatic === true;
+  const automatic = isAutomaticApproval(part.approval);
   if (automatic && status === 'pending') return null;
   const approvalId = part.approval.id;
   const resolvedRisk = risk ?? (typeof meta?.risk === 'function' ? meta.risk(part.input) : meta?.risk);
@@ -462,7 +469,7 @@ export function ToolApprovalCard({ part, onRespond, meta, risk, description, tit
     <ApprovalCard
       toolName={getToolPartName(part)}
       title={title ?? part.title ?? meta?.label}
-      description={description ?? part.approval.requestReason}
+      description={description ?? getApprovalRequestReason(part.approval)}
       input={part.input}
       risk={resolvedRisk}
       status={status}

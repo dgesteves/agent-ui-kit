@@ -1,7 +1,13 @@
+import { createRequire } from 'node:module';
 import type { DynamicToolUIPart, UIMessage } from 'ai';
 import { vi } from 'vitest';
 import { configureAxe } from 'vitest-axe';
 import type { ToolPart } from '../src/lib/ai';
+
+/** Major version of the installed AI SDK; CI also runs the suite against AI SDK 6. */
+export const AI_SDK_MAJOR = Number(
+  (createRequire(import.meta.url)('ai/package.json') as { version: string }).version.split('.')[0],
+);
 
 /**
  * axe in jsdom cannot compute colors or layout, so color-contrast is covered by

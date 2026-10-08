@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { AgentMessage } from '../src/agent-message';
 import { deriveAgentState, getToolPhase } from '../src/lib/ai';
 import { ToolCallTimeline } from '../src/tool-call-timeline';
-import { toolPart } from './utils';
+import { AI_SDK_MAJOR, toolPart } from './utils';
 
 /** Every intermediate message useChat would render for a run whose approvals a policy decides. */
 async function policyRun() {
@@ -56,7 +56,8 @@ async function policyRun() {
   return snapshots;
 }
 
-describe('approvals decided automatically by a policy', () => {
+// `toolApproval` policies and the V4 mock models are AI SDK 7.
+describe.skipIf(AI_SDK_MAJOR < 7)('approvals decided automatically by a policy', () => {
   it('never shows an approval prompt, steals focus or reports a wait on the user', async () => {
     const snapshots = await policyRun();
     // The SDK streams a policy decision as a request (isAutomatic) followed by its response.
