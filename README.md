@@ -342,22 +342,22 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 - **Type-only dependency on `ai`.** No SDK runtime in the build (about 35 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
 - **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
 
-## Why not AI Elements or assistant-ui?
+## How it compares
 
-Both are good, and you may well want one of them for the chat shell.
+[AI Elements](https://github.com/vercel/ai-elements) and [assistant-ui](https://github.com/assistant-ui/assistant-ui) are both good, and you may well want one of them for the chat shell.
 
-- **[AI Elements](https://github.com/vercel/ai-elements)** is Vercel's shadcn registry for AI SDK apps, with a broad set of components: conversation, message, prompt input, reasoning, sources, a per-call `Tool` card, a `Confirmation` for tool approvals, a `Context` usage indicator, and more. If you want the widest coverage of the message surface in shadcn style, start there.
-- **[assistant-ui](https://github.com/assistant-ui/assistant-ui)** is a chat runtime plus composable primitives (thread, composer, message) with adapters for the AI SDK, LangGraph and custom backends, including tool UIs and approvals. If you need a full chat product with threads, branching and attachments, it covers far more ground.
+- **AI Elements** is Vercel's shadcn registry for AI SDK apps: conversation, message, prompt input, reasoning, sources, a per-call `Tool` card, a `Confirmation` for tool approvals, a `Context` usage indicator and more. If you want the widest coverage of the message surface in shadcn style, start there.
+- **assistant-ui** is a chat runtime plus composable primitives, with adapters for the AI SDK, LangGraph and others. Its Elements collection (August 2026) adds agent pieces close to this kit's: an approval card, a reviewable diff, a trace waterfall, a tool timeline, a cost meter and agent status. They are presentational: with the assistant-ui runtime, or standalone, you derive each one's data (hunks, spans, cost lines) from your own state.
 
-This kit goes deeper on a narrower slice, the run around the conversation:
+Where this kit differs:
 
-- **A timeline, not a card per call**, with measured durations that exclude approval waits, a waterfall that shows parallelism, keyboard movement between calls and announced completions.
-- **Approvals with judgement**: risk levels, a command preview, deny-with-reason routed to `addToolApprovalResponse`, focus-scoped shortcuts and two-step confirmation for critical actions.
-- **Hunk-level diff review that returns the applied files**. I did not find an equivalent in either library when this was written.
-- **Run telemetry across round trips**: TTFT and active time over approval and client-tool continuations, cache hit rate and a cost breakdown, rather than a single request's context window.
-- **No framework buy-in**: plain props over `UIMessage` parts, an npm package that works without Tailwind or shadcn, or registry items if you prefer to own the code.
+- **It reads AI SDK messages as they are.** Hand `AgentMessage` a `UIMessage` from `useChat` and tool parts become one timeline with inline approvals, sources become citations, and usage metadata feeds the meter. There is no runtime to adopt and no per-component data mapping.
+- **Diff review works from file contents.** `DiffReview` takes the old and new text of several files, computes the hunks with word-level highlights, and `onSubmit` returns each file with only the accepted hunks applied, ready to send back as a client-side tool result.
+- **Timings are measured, not supplied.** Tool durations are recorded on the client and exclude time spent waiting for an approval; `useRunTiming` reports time to first token and active time across approval round trips, and `RunMeter` shows the prompt-cache hit rate, the cost lever that matters for agents.
+- **It works without Tailwind or shadcn.** The npm package ships precompiled CSS; the shadcn registry items are there if you prefer to own the code.
+- **Accessibility is audited.** Focus-scoped shortcuts, live-region announcements and contrast are covered by axe in jsdom and in a real browser (see [Accessibility](#accessibility)).
 
-They compose: render the thread with either library and drop these components into tool parts and side panels.
+They compose: render the thread with either library and use these components for tool parts and side panels.
 
 ## Known limitations
 
