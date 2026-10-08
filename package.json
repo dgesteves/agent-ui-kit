@@ -23,7 +23,8 @@
     "release": "pnpm build:lib && changeset publish",
     "registry:generate": "node scripts/registry.mjs",
     "registry:check": "node scripts/registry.mjs --check",
-    "a11y": "node scripts/a11y-audit.mjs"
+    "a11y": "node scripts/a11y-audit.mjs",
+    "smoke:nextjs": "node scripts/smoke-nextjs-minimal.mjs"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
