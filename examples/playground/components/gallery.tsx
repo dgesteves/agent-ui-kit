@@ -11,7 +11,7 @@ import {
   type ToolPart,
 } from '@dgesteves/agent-ui-kit';
 import type { UIMessage } from 'ai';
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { PRICING, RATELIMIT_UPSTASH, ROUTE_NEW, ROUTE_OLD, WEB_RESULTS } from '@/lib/scenario';
 import { toolMeta } from '@/lib/tools';
 import dynamic from 'next/dynamic';
@@ -110,12 +110,39 @@ const message: UIMessage = {
   ],
 };
 
+type Theme = 'dark' | 'light';
+
+/** Which palette the component frames use. The tokens switch with a `.dark` or `.light` ancestor. */
+function ThemeToggle({ theme, onChange }: { theme: Theme; onChange: (theme: Theme) => void }) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Component theme"
+      className="border-line bg-raised/60 flex rounded-lg border p-0.5"
+    >
+      {(['dark', 'light'] as const).map((t) => (
+        <button
+          key={t}
+          type="button"
+          role="radio"
+          aria-checked={theme === t}
+          onClick={() => onChange(t)}
+          className="focus-visible:outline-cyan-soft cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium text-[#a1a9b4] capitalize transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 aria-checked:bg-[#262b33] aria-checked:text-[#e8eaed]"
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Section({
   id,
   title,
   heading = `<${title} />`,
   description,
   install,
+  theme,
   children,
 }: {
   id: string;
@@ -125,6 +152,7 @@ function Section({
   description: string;
   /** The registry item, what to import and a minimal usage, for the install panel. */
   install?: InstallProps;
+  theme: Theme;
   children: ReactNode;
 }) {
   return (
@@ -135,7 +163,8 @@ function Section({
         </h2>
         <p className="mt-1 max-w-2xl text-[13px] text-[#a1a9b4]">{description}</p>
       </div>
-      <div data-shot={id} className="border-line bg-ink rounded-2xl border p-5 sm:p-6">
+      {/* The frame takes the chosen palette; the page around it stays dark. */}
+      <div data-shot={id} className={`${theme} border-aui-border bg-aui-bg rounded-2xl border p-5 sm:p-6`}>
         {children}
       </div>
       {install ? <Install {...install} /> : null}
@@ -145,10 +174,20 @@ function Section({
 
 export function Gallery() {
   const [approval, setApproval] = useState<'pending' | 'approved' | 'denied'>('pending');
+  const [theme, setTheme] = useState<Theme>('dark');
+  // ?theme=light opens the gallery on the light palette, for screenshots.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('theme') !== 'light') return;
+    const id = setTimeout(() => setTheme('light'), 0);
+    return () => clearTimeout(id);
+  }, []);
   return (
     <main className="mx-auto flex w-full max-w-[1000px] flex-col gap-14 px-4 pt-10 pb-24 sm:px-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
+          <ThemeToggle theme={theme} onChange={setTheme} />
+        </div>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
           Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent, at the end), with
           how to install it from npm or as a shadcn registry item. Everything here is interactive and keyboard
@@ -157,6 +196,7 @@ export function Gallery() {
       </div>
 
       <Section
+        theme={theme}
         id="agent-status"
         install={{
           item: 'agent-status',
@@ -177,6 +217,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="tool-call-timeline"
         install={{
           item: 'tool-call-timeline',
@@ -191,6 +232,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="approval-card"
         install={{
           item: 'approval-card',
@@ -215,7 +257,7 @@ export function Gallery() {
             <button
               type="button"
               onClick={() => setApproval('pending')}
-              className="mt-3 cursor-pointer text-xs text-[#a1a9b4] underline underline-offset-2 hover:text-[#e8eaed]"
+              className="text-aui-fg-muted hover:text-aui-fg mt-3 cursor-pointer text-xs underline underline-offset-2"
             >
               Reset
             </button>
@@ -224,6 +266,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="diff-review"
         install={{
           item: 'diff-review',
@@ -245,6 +288,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="run-meter"
         install={{
           item: 'run-meter',
@@ -257,7 +301,9 @@ export function Gallery() {
       >
         <div className="grid items-start gap-6 md:grid-cols-[minmax(0,22rem)_1fr]">
           <figure>
-            <figcaption className="mb-2 font-mono text-[11px] text-[#8b94a0]">variant=&quot;expanded&quot;</figcaption>
+            <figcaption className="text-aui-fg-subtle mb-2 font-mono text-[11px]">
+              variant=&quot;expanded&quot;
+            </figcaption>
             <RunMeter
               variant="expanded"
               usage={{
@@ -273,24 +319,27 @@ export function Gallery() {
             />
           </figure>
           <figure>
-            <figcaption className="mb-2 font-mono text-[11px] text-[#8b94a0]">variant=&quot;compact&quot;</figcaption>
+            <figcaption className="text-aui-fg-subtle mb-2 font-mono text-[11px]">
+              variant=&quot;compact&quot;
+            </figcaption>
             <RunMeter
               usage={{ inputTokens: 38_660, outputTokens: 2_412, inputTokenDetails: { cacheReadTokens: 28_800 } }}
               pricing={PRICING}
               ttftMs={684}
               durationMs={21_800}
             />
-            <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-[#a1a9b4]">
-              Pass <code className="font-mono text-[12px] text-[#e8eaed]">totalUsage</code> from{' '}
-              <code className="font-mono text-[12px] text-[#e8eaed]">streamText</code> through message metadata, and
-              timing from <code className="font-mono text-[12px] text-[#e8eaed]">useRunTiming(status)</code>. Cost is an
-              estimate from the pricing you supply.
+            <p className="text-aui-fg-muted mt-4 max-w-sm text-[13px] leading-relaxed">
+              Pass <code className="text-aui-fg font-mono text-[12px]">totalUsage</code> from{' '}
+              <code className="text-aui-fg font-mono text-[12px]">streamText</code> through message metadata, and timing
+              from <code className="text-aui-fg font-mono text-[12px]">useRunTiming(status)</code>. Cost is an estimate
+              from the pricing you supply.
             </p>
           </figure>
         </div>
       </Section>
 
       <Section
+        theme={theme}
         id="sources"
         install={{
           item: 'sources',
@@ -307,6 +356,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="theming"
         title="Theming"
         description="Every color, radius and font is a CSS variable. Light is the default, .dark switches, and any subtree can override tokens."
@@ -350,6 +400,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="agent-message"
         install={{
           item: 'agent-message',
@@ -364,6 +415,7 @@ export function Gallery() {
       </Section>
 
       <Section
+        theme={theme}
         id="ag-ui"
         title="useAgUiAgent"
         heading="useAgUiAgent(agent)"

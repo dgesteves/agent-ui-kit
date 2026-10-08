@@ -2,8 +2,6 @@
 
 import { useId, useState } from 'react';
 
-const REGISTRY = 'https://agent-ui-kit-demo.vercel.app/r';
-
 export interface InstallProps {
   /** The registry item. */
   item: string;
@@ -23,13 +21,19 @@ export function Install({ item, name, usage, from, packages = [] }: InstallProps
   const extra = packages.join(' ');
   const commands = {
     npm: `pnpm add @dgesteves/agent-ui-kit ai${extra ? ` ${extra}` : ''}`,
-    shadcn: `npx shadcn@latest add ${REGISTRY}/${item}.json${extra ? `\npnpm add ${extra}` : ''}`,
+    // @agent-ui-kit is in the shadcn registry directory, so no registry URL is needed.
+    shadcn: `npx shadcn@latest add @agent-ui-kit/${item}${extra ? `\npnpm add ${extra}` : ''}`,
   };
   // The registry copies each component to components/agent-ui/ and its helpers to lib/.
   const [component, ...helpers] = name.split(', ');
+  // From npm the styles come separately, once per app; shadcn writes the tokens into the app's CSS.
   const imports =
     tab === 'npm'
-      ? `import { ${name} } from '${from?.npm ?? '@dgesteves/agent-ui-kit'}';`
+      ? [
+          `import { ${name} } from '${from?.npm ?? '@dgesteves/agent-ui-kit'}';`,
+          `// Once per app (with Tailwind v4: @import '@dgesteves/agent-ui-kit/tailwind.css'; in your CSS)`,
+          `import '@dgesteves/agent-ui-kit/styles.css';`,
+        ].join('\n')
       : [
           `import { ${component ?? name} } from '@/components/agent-ui/${from?.shadcn ?? item}';`,
           ...(helpers.length ? [`import { ${helpers.join(', ')} } from '@/components/agent-ui/lib/ai';`] : []),

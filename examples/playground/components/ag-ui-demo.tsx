@@ -184,7 +184,7 @@ function Run({ onReset }: { onReset: () => void }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         {prompt ? (
-          <p className="rounded-lg bg-[#181c22] px-3 py-1.5 text-[13px] text-[#e8eaed]">{PROMPT}</p>
+          <p className="bg-aui-surface text-aui-fg rounded-lg px-3 py-1.5 text-[13px]">{PROMPT}</p>
         ) : (
           <button
             type="button"
@@ -192,7 +192,7 @@ function Run({ onReset }: { onReset: () => void }) {
               agent.addMessage({ id: 'u1', role: 'user', content: PROMPT });
               void agent.runAgent();
             }}
-            className="bg-cyan rounded-lg px-3 py-1.5 text-[13px] font-medium text-[#0b0d10] hover:opacity-90"
+            className="bg-aui-accent text-aui-on-accent rounded-lg px-3 py-1.5 text-[13px] font-medium hover:opacity-90"
           >
             Run the AG-UI agent
           </button>
@@ -202,7 +202,7 @@ function Run({ onReset }: { onReset: () => void }) {
           <button
             type="button"
             onClick={onReset}
-            className="border-line ml-auto rounded-lg border px-3 py-1.5 font-mono text-xs text-[#a1a9b4] hover:text-[#e8eaed]"
+            className="border-aui-border text-aui-fg-muted hover:text-aui-fg ml-auto rounded-lg border px-3 py-1.5 font-mono text-xs"
           >
             Reset
           </button>
