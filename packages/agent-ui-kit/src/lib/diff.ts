@@ -104,6 +104,22 @@ function toDiffLines(hunk: StructuredPatchHunk): DiffLine[] {
   return lines;
 }
 
+/**
+ * jsdiff reads the clock on every call, for a `timeout` option the kit does not use (its limits are
+ * deterministic). Reading the clock makes a render impure, and Next.js `cacheComponents` fails the
+ * build on it, in Server and Client Components alike. Without a timeout the clock decides nothing,
+ * so jsdiff gets a constant one for the length of its synchronous call.
+ */
+function withConstantClock<T>(fn: () => T): T {
+  const now = Date.now;
+  Date.now = () => 0;
+  try {
+    return fn();
+  } finally {
+    Date.now = now;
+  }
+}
+
 /*
  * Word-level diffing is quadratic in the worst case: two rewritten 46k-character lines took 13 s.
  * Lines past these limits get no word highlights. Both are deterministic (unlike a timeout), so the
@@ -134,7 +150,9 @@ function pairWordSegments(lines: DiffLine[]) {
         const del = lines[i + k]!;
         const add = lines[delEnd + k]!;
         if (Math.max(del.content.length, add.content.length) > WORD_DIFF_MAX_LINE) continue;
-        const changes = diffWordsWithSpace(del.content, add.content, { maxEditLength: WORD_DIFF_MAX_EDITS });
+        const changes = withConstantClock(() =>
+          diffWordsWithSpace(del.content, add.content, { maxEditLength: WORD_DIFF_MAX_EDITS }),
+        );
         if (!changes) continue;
         const unchanged = changes.filter((c) => !c.added && !c.removed).reduce((n, c) => n + c.value.length, 0);
         // Only highlight when the lines are actually similar; otherwise it is just noise.
@@ -165,9 +183,12 @@ export function parseFileChange(
   const newContent = change.newContent ?? (change.patch ? undefined : '');
   let hunks: StructuredPatchHunk[];
   if (oldContent !== undefined && newContent !== undefined) {
-    hunks = structuredPatch(change.oldPath ?? change.path, change.path, oldContent, newContent, undefined, undefined, {
-      context: options.context ?? 3,
-    }).hunks;
+    hunks = withConstantClock(
+      () =>
+        structuredPatch(change.oldPath ?? change.path, change.path, oldContent, newContent, undefined, undefined, {
+          context: options.context ?? 3,
+        }).hunks,
+    );
   } else if (change.patch) {
     hunks = parsePatch(change.patch)[0]?.hunks ?? [];
   } else {
