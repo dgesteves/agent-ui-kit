@@ -1,16 +1,28 @@
 // Verifies what the build ships beyond the modules' directives:
+//   - every sourceMappingURL in dist/ points to a file that is shipped;
 //   - styles.css has no @layer (Tailwind v3 rejects it, and layered rules lose to any host reset);
 //   - styles.css styles only the kit's elements: apart from the --aui-* tokens on :root and the
 //     theme classes, every rule is scoped to [data-aui], so it cannot restyle the host app or
 //     shadow its Tailwind theme and fonts.
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
 const problems = [];
+
+const files = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory() ? files(join(dir, entry.name)) : [join(dir, entry.name)],
+  );
+
+for (const file of files(dist)) {
+  const map = /\/\/# sourceMappingURL=(\S+)\s*$/.exec(readFileSync(file, 'utf8'))?.[1];
+  if (map && !existsSync(join(dirname(file), map)))
+    problems.push(`${relative(root, file)}: points to ${map}, which is not shipped`);
+}
 
 const THEME_SELECTORS = new Set([':root', '.light', '[data-theme=light]', '.dark', '[data-theme=dark]']);
 const css = readFileSync(join(dist, 'styles.css'), 'utf8');
@@ -33,4 +45,4 @@ if (problems.length > 0) {
   console.error(`dist/ check failed:\n  ${problems.join('\n  ')}`);
   process.exit(1);
 }
-console.log('dist: styles.css is unlayered and scoped to [data-aui]');
+console.log('dist: source maps resolve; styles.css is unlayered and scoped to [data-aui]');
