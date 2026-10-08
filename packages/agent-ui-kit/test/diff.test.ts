@@ -1,5 +1,5 @@
 import { applyPatch, structuredPatch } from 'diff';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyHunks, inferLanguage, parseFileChange } from '../src/lib/diff';
 import { ROUTE_NEW, ROUTE_OLD } from './fixtures';
 
@@ -113,6 +113,21 @@ describe('parseFileChange', () => {
     expect(parseFileChange({ path: 'new.ts', oldPath: 'new.ts', patch: body }).status).toBe('modified');
     const added = ['--- /dev/null', '+++ b/new.ts', '@@ -0,0 +1 @@', '+a', ''].join('\n');
     expect(parseFileChange({ path: 'new.ts', oldPath: 'old.ts', patch: added }).status).toBe('added');
+  });
+
+  it('does not read the clock, so Server Components and prerendered pages can call it', () => {
+    // jsdiff reads Date.now() for its timeout on every call; Next.js cacheComponents rejects that.
+    const now = Date.now;
+    const clock = vi.fn(now);
+    Date.now = clock;
+    try {
+      const file = parseFileChange({ path: 'a.ts', oldContent: ROUTE_OLD, newContent: ROUTE_NEW });
+      expect(file.hunks[2]!.lines.some((l) => l.segments)).toBe(true);
+      expect(clock).not.toHaveBeenCalled();
+      expect(Date.now).toBe(clock);
+    } finally {
+      Date.now = now;
+    }
   });
 
   it('infers languages from extensions', () => {

@@ -5,7 +5,7 @@ React components for agent-run UX: tool call timelines, human-in-the-loop approv
 <img src="https://raw.githubusercontent.com/dgesteves/agent-ui-kit/main/docs/media/hero.png" width="100%" alt="An agent run rendered with agent-ui-kit: a tool call timeline with durations, a failed call with its error inline, a high-risk approval card, and a sidebar with agent status and a run meter.">
 
 ```bash
-pnpm add @dgesteves/agent-ui-kit ai
+pnpm add @dgesteves/agent-ui-kit ai @ai-sdk/react
 ```
 
 ```css
@@ -41,6 +41,8 @@ export function AgentRun() {
   );
 }
 ```
+
+The core of it, rendering the run from `useChat`. The [quickstart](https://github.com/dgesteves/agent-ui-kit#quickstart) has the full client, the route (tools, an approval, `stopWhen`, usage) and a [runnable Next.js app](https://github.com/dgesteves/agent-ui-kit/tree/main/examples/nextjs-minimal).
 
 Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCard`, `DiffReview`, `RunMeter`, `AgentStatus`, `Sources`, `Markdown`, `Reasoning`. Hooks and helpers: `useRunTiming`, `useToolTimings`, `deriveAgentState`, `applyHunks`, `estimateCost`, `addUsage`.
 

@@ -76,3 +76,29 @@ jobs:
             pnpm exec tsc --noEmit -p tsconfig.src.json
             pnpm test
           done
+
+  nextjs-quickstart:
+    name: Next.js quickstart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build library
+        run: pnpm build:lib
+
+      # cacheComponents is on: next build fails if a component reads the clock or a random number
+      # while prerendering (app/static/page.tsx renders every component from a Server Component).
+      - name: Build examples/nextjs-minimal
+        run: pnpm --filter nextjs-minimal build
+
+      - name: Run the quickstart in Chrome, approve the command, wait for the final answer
+        run: pnpm smoke:nextjs

@@ -29,9 +29,12 @@ export function usePrefersReducedMotion(): boolean {
 /**
  * Current time in ms, re-rendering on an interval while `active`.
  * The value can lag by up to one interval; clamp derived durations at 0.
+ *
+ * 0 on the server: reading the clock there makes the render impure (Next.js `cacheComponents`
+ * fails the build on it), and clock-derived output waits for hydration anyway (`useHydrated`).
  */
 export function useNow(active: boolean, intervalMs = 100): number {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => (typeof window === 'undefined' ? 0 : Date.now()));
   useEffect(() => {
     if (!active) return;
     const tick = () => setNow(Date.now());

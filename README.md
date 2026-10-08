@@ -31,10 +31,12 @@ Most AI UI libraries are built around the chat bubble. Agents changed what the i
 
 ## Quickstart
 
+A Next.js App Router app with AI SDK 7: a client component, a page and a route. **[The quickstart, running](examples/nextjs-minimal)** is this section as an app, against a scripted model, so it needs no API key.
+
 ### npm
 
 ```bash
-pnpm add @dgesteves/agent-ui-kit ai
+pnpm add @dgesteves/agent-ui-kit ai @ai-sdk/react @ai-sdk/openai zod
 ```
 
 Styles, either way:
@@ -52,26 +54,32 @@ import '@dgesteves/agent-ui-kit/styles.css';
 
 Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette.
 
+The client renders the last assistant message, its status and its cost, with a minimal composer. The wrapper paints the kit's own background and text colors (`bg-aui-bg text-aui-fg`), so the run reads well whatever the page's colors are. The class names are Tailwind; without it, give the wrapper `background: var(--aui-bg); color: var(--aui-fg)` and style the form your own way.
+
 ```tsx
+// app/agent-run.tsx
 'use client';
 
 import { useChat } from '@ai-sdk/react';
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type LanguageModelUsage, type UIMessage } from 'ai';
+import { useState } from 'react';
 import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from '@dgesteves/agent-ui-kit';
 
 type Message = UIMessage<{ usage?: LanguageModelUsage }>;
 
 export function AgentRun() {
-  const { messages, status, addToolApprovalResponse } = useChat<Message>({
+  const { messages, status, sendMessage, addToolApprovalResponse } = useChat<Message>({
     // Continue the run as soon as every pending approval has an answer.
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
   });
+  const [input, setInput] = useState('');
   const last = messages.findLast((m) => m.role === 'assistant');
   const { state, detail } = deriveAgentState({ status, message: last });
   const timing = useRunTiming(status);
 
   return (
-    <div className="dark flex flex-col gap-4">
+    // The kit's own background and text colors, so it reads well on any page. Add `dark` for the dark theme.
+    <div className="bg-aui-bg text-aui-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
       <AgentStatus state={state} detail={detail} elapsedMs={timing.activeMs} />
       {last && (
         <AgentMessage
@@ -88,26 +96,96 @@ export function AgentRun() {
         ttftMs={timing.ttftMs}
         durationMs={timing.activeMs}
       />
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!input.trim()) return;
+          void sendMessage({ text: input });
+          setInput('');
+        }}
+      >
+        <input
+          aria-label="Message the agent"
+          placeholder="Ask the agent to change something"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          className="border-aui-border bg-aui-surface flex-1 rounded-lg border px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={status !== 'ready' && status !== 'error'}
+          className="bg-aui-accent text-aui-on-accent rounded-lg px-4 text-sm font-medium disabled:opacity-50"
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }
 ```
 
-On the server, request approval for risky tools and send usage as message metadata:
+Render it from a page. On Next.js 16 with `cacheComponents`, on in new apps, the page needs a `<Suspense>` boundary around it:
+
+```tsx
+// app/page.tsx
+import { Suspense } from 'react';
+import { AgentRun } from './agent-run';
+
+export default function Page() {
+  // With cacheComponents (on in new Next.js 16 apps), useChat needs a Suspense boundary:
+  // it creates ids with Math.random(), which Next.js does not allow in prerendered output.
+  return (
+    <Suspense>
+      <AgentRun />
+    </Suspense>
+  );
+}
+```
+
+On the server, give the model tools, ask for approval before the risky one, and send usage as message metadata:
 
 ```ts
+// app/api/chat/route.ts
+import { openai } from '@ai-sdk/openai';
 import { addUsage } from '@dgesteves/agent-ui-kit/core';
-import { convertToModelMessages, streamText, type LanguageModelUsage, type UIMessage } from 'ai';
+import { convertToModelMessages, stepCountIs, streamText, tool, type LanguageModelUsage, type UIMessage } from 'ai';
+import { z } from 'zod';
 
 type Message = UIMessage<{ usage?: LanguageModelUsage }>;
+
+// A pretend repository, so nothing touches your disk or shell.
+const FILES: Record<string, string> = {
+  'app/api/chat/route.ts': 'export async function POST(req: Request) {\n  // ...\n}\n',
+};
+
+const tools = {
+  read_file: tool({
+    description: 'Read a file from the repository.',
+    inputSchema: z.object({ path: z.string() }),
+    execute: async ({ path }) => {
+      const content = FILES[path];
+      if (content === undefined) throw new Error(`ENOENT: no such file or directory, open '${path}'`);
+      return { path, content };
+    },
+  }),
+  run_command: tool({
+    description: 'Run a shell command in the repository.',
+    inputSchema: z.object({ command: z.string() }),
+    execute: async ({ command }) => ({ exitCode: 0, stdout: `(simulated) ${command}` }),
+  }),
+};
 
 export async function POST(req: Request) {
   const { messages }: { messages: Message[] } = await req.json();
   const result = streamText({
-    model,
+    model: openai('gpt-5.4-mini'),
     messages: await convertToModelMessages(messages, { tools }),
     tools,
+    // Ask before running commands. The reason shows on the approval card.
     toolApproval: { run_command: { type: 'user-approval', reason: 'Runs a shell command in the repository.' } },
+    // Keep going after tool calls: the AI SDK stops after the first step by default.
+    stopWhen: stepCountIs(10),
   });
 
   // Once approved, the run continues the same message in a new request whose totalUsage starts
@@ -118,13 +196,29 @@ export async function POST(req: Request) {
 
   return result.toUIMessageStreamResponse({
     originalMessages: messages,
+    sendSources: true,
     messageMetadata: ({ part }) =>
       part.type === 'finish' ? { usage: addUsage(previous, part.totalUsage) } : undefined,
+    // Failed tool calls show this text. The default hides every error as "An error occurred.".
+    onError: (error) => (error instanceof Error ? error.message : 'An error occurred.'),
   });
 }
 ```
 
-The `reason` shows up on the approval card as `approval.requestReason`. Without `addUsage`, the meter would show only the last request of a run that paused for approval.
+- **`stopWhen`.** The AI SDK stops after one step by default, so without it the run ends with the first tool call and never reaches the approval.
+- **`toolApproval`.** The `reason` shows up on the approval card as `approval.requestReason`.
+- **`addUsage`.** Without it, the meter would show only the last request of a run that paused for approval.
+
+**AI SDK 6.** Install `ai@^6 @ai-sdk/react@^3 @ai-sdk/openai@^3`. `toolApproval` is an AI SDK 7 option: on 6, drop it and mark the tool instead. The rest is the same.
+
+```ts
+run_command: tool({
+  description: 'Run a shell command in the repository.',
+  inputSchema: z.object({ command: z.string() }),
+  needsApproval: true,
+  execute: async ({ command }) => ({ exitCode: 0, stdout: `(simulated) ${command}` }),
+}),
+```
 
 #### Server Components
 
@@ -396,7 +490,7 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 - **Review returns code.** `DiffReview` does not stop at a decision map: `onSubmit` includes each file with only the accepted hunks applied (`applyHunks`), and unreviewed hunks are skipped. That makes it usable as a client-side tool whose result goes straight back to the model.
 - **Cache hit rate over tokens per second.** Throughput looked precise but mixed tool time into generation speed. For agents, cached input is the bigger cost lever, so that is what the meter shows.
 - **Shortcuts scoped to focus.** Global single-key shortcuts are an accessibility problem and fight with text inputs; scoping them to the component avoids both. Critical approvals require a second press.
-- **Hydration-safe clocks.** Live durations and waterfall widths render after hydration, so server and client markup always match.
+- **Hydration-safe clocks.** Live durations and waterfall widths render after hydration, so server and client markup always match. Nothing reads the clock while rendering on the server, so pages that render the components prerender under Next.js `cacheComponents`.
 - **Type-only dependency on `ai`.** No SDK runtime in the build (about 35 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
 - **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
 
@@ -444,12 +538,14 @@ pnpm lint         # ESLint (typescript-eslint, react-hooks, jsx-a11y strict) wit
 pnpm typecheck
 pnpm build        # library, shadcn registry, playground
 pnpm a11y         # axe in Chrome against the running playground
+pnpm smoke:nextjs # the quickstart example in Chrome: approve, resume, final answer (build it first)
 pnpm media        # regenerate docs/media (Chrome and ffmpeg required)
 ```
 
 ```
 packages/agent-ui-kit/   the library: src/ (components + lib/), test/, tsdown + Tailwind CSS build
 examples/playground/     Next.js 16 showpiece: scripted ChatTransport, gallery, optional live mode
+examples/nextjs-minimal/ the README quickstart as a Next.js 16 app, against a scripted model
 registry.json            shadcn registry, generated by scripts/registry.mjs
 scripts/                 registry generator, media capture, real-browser accessibility audit
 ```
