@@ -14,7 +14,11 @@ import type { UIMessage } from 'ai';
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { PRICING, RATELIMIT_UPSTASH, ROUTE_NEW, ROUTE_OLD, WEB_RESULTS } from '@/lib/scenario';
 import { toolMeta } from '@/lib/tools';
-import { Install } from './install';
+import dynamic from 'next/dynamic';
+import { Install, type InstallProps } from './install';
+
+// Loaded on the client only: it brings @ag-ui/client, which the rest of the page doesn't need.
+const AgUiDemo = dynamic(() => import('./ag-ui-demo'), { ssr: false });
 
 const now = Date.now();
 
@@ -109,22 +113,25 @@ const message: UIMessage = {
 function Section({
   id,
   title,
+  heading = `<${title} />`,
   description,
   install,
   children,
 }: {
   id: string;
   title: string;
+  /** Defaults to the component as a tag. */
+  heading?: string;
   description: string;
   /** The registry item, what to import and a minimal usage, for the install panel. */
-  install?: { item: string; name: string; usage: string };
+  install?: InstallProps;
   children: ReactNode;
 }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20">
       <div className="mb-3">
         <h2 id={`${id}-title`} className="font-mono text-sm font-semibold text-[#e8eaed]">
-          {`<${title} />`}
+          {heading}
         </h2>
         <p className="mt-1 max-w-2xl text-[13px] text-[#a1a9b4]">{description}</p>
       </div>
@@ -143,8 +150,9 @@ export function Gallery() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
-          Each component in isolation, rendered from AI SDK 6 and 7 message parts, with how to install it from npm or as
-          a shadcn registry item. Everything here is interactive and keyboard accessible.
+          Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent, at the end), with
+          how to install it from npm or as a shadcn registry item. Everything here is interactive and keyboard
+          accessible.
         </p>
       </div>
 
@@ -353,6 +361,23 @@ export function Gallery() {
         description="A whole assistant UIMessage: reasoning, streaming markdown, grouped tool calls and sources."
       >
         <AgentMessage message={message} tools={toolMeta} />
+      </Section>
+
+      <Section
+        id="ag-ui"
+        title="useAgUiAgent"
+        heading="useAgUiAgent(agent)"
+        install={{
+          item: 'ag-ui',
+          name: 'useAgUiAgent',
+          from: { npm: '@dgesteves/agent-ui-kit/ag-ui', shadcn: 'use-ag-ui-agent' },
+          packages: ['@ag-ui/client'],
+          usage:
+            "const agent = new HttpAgent({ url: '/api/agent' });\nconst { messages, status, usage, respond } = useAgUiAgent(agent);\n\n<AgentMessage message={last} onToolApproval={respond} />",
+        }}
+        description="AG-UI agents (LangGraph, CrewAI, Mastra, Pydantic AI) through the same components. This one is a real @ag-ui/client agent replaying a LangGraph-style run: steps, streamed tool arguments, and an interrupt that resumes the run when you answer it."
+      >
+        <AgUiDemo />
       </Section>
     </main>
   );

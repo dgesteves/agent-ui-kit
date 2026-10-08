@@ -236,6 +236,12 @@ importers:
 
   examples/playground:
     dependencies:
+      '@ag-ui/client':
+        specifier: ^1.0.2
+        version: 1.0.2
+      '@ag-ui/core':
+        specifier: ^1.0.2
+        version: 1.0.2(zod@4.6.5)
       '@ai-sdk/openai':
         specifier: ^4.0.84
         version: 4.0.84(zod@4.6.5)
@@ -260,6 +266,9 @@ importers:
       react-dom:
         specifier: ^19.3.0
         version: 19.3.0(react@19.3.0)
+      rxjs:
+        specifier: 7.8.1
+        version: 7.8.1
       zod:
         specifier: ^4.6.5
         version: 4.6.5
