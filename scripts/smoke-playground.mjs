@@ -1,5 +1,6 @@
-// Checks the built playground: link preview metadata, then in Chrome what a visitor sees first on
-// a phone, and what the header offers when it was built without a model key (OPENAI_API_KEY), as in CI.
+// Checks the built playground: link preview metadata and llms.txt, then in Chrome what a visitor
+// sees first on a phone, what the header offers when it was built without a model key
+// (OPENAI_API_KEY, as in CI), and the gallery.
 //
 //   pnpm build:lib && pnpm registry:build && pnpm build:playground
 //   pnpm smoke:playground   # starts the built playground on :3220, or tests BASE_URL if set
@@ -53,6 +54,24 @@ try {
         served?.headers.get('content-type') === 'image/png',
       `${path}: Open Graph and Twitter metadata with an image`,
       `og:title ${meta('og:title')}, og:image ${image} (${served?.status})`,
+    );
+  }
+
+  // Docs for LLMs, built from the README and the registry.
+  for (const [path, heading] of [
+    ['/llms.txt', '## Components'],
+    ['/llms-full.txt', '## shadcn registry items'],
+  ]) {
+    const response = await fetch(BASE + path);
+    const text = await response.text();
+    check(
+      response.ok &&
+        response.headers.get('content-type')?.startsWith('text/plain') &&
+        text.startsWith('# agent-ui-kit\n') &&
+        text.includes(heading) &&
+        !/<img|\]\((?!https?:)/.test(text),
+      `${path}: plain markdown with absolute links`,
+      `${response.status} ${response.headers.get('content-type')}`,
     );
   }
 
