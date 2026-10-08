@@ -8,6 +8,13 @@ const config: NextConfig = {
   reactStrictMode: true,
   turbopack: { root },
   outputFileTracingRoot: root,
+  // Each docs page as Markdown, at its own URL plus .md (app/md/docs/[slug]/route.ts).
+  async rewrites() {
+    return [
+      { source: '/docs.md', destination: '/md/docs/introduction' },
+      { source: '/docs/:slug.md', destination: '/md/docs/:slug' },
+    ];
+  },
 };
 
 export default config;
