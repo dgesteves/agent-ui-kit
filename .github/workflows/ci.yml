@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Started by the release workflow on its release pull request, which its own pushes can't trigger.
+  workflow_dispatch:
 
 permissions:
   contents: read
