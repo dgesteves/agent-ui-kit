@@ -1,0 +1,59 @@
+name: Bug report
+description: Something renders or behaves wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: Screenshots help, especially for styling problems.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: The smallest code that shows it, ideally the message parts you pass in (or a link to a repository).
+      render: tsx
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How you installed the kit
+      options:
+        - npm package, with styles.css
+        - npm package, with tailwind.css (Tailwind v4)
+        - shadcn registry item
+    validations:
+      required: true
+  - type: input
+    id: kit
+    attributes:
+      label: '@dgesteves/agent-ui-kit version (or the date you added the registry item)'
+    validations:
+      required: true
+  - type: input
+    id: ai
+    attributes:
+      label: ai and @ai-sdk/react versions (or @ag-ui/client, for AG-UI agents)
+    validations:
+      required: true
+  - type: input
+    id: react
+    attributes:
+      label: react version
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Framework and version (Next.js, Vite...), and next.config options such as cacheComponents
+  - type: input
+    id: tailwind
+    attributes:
+      label: Tailwind CSS version, if any
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS, for rendering or keyboard problems
