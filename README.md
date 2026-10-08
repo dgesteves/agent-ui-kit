@@ -570,6 +570,7 @@ pnpm typecheck
 pnpm build        # library, shadcn registry, playground
 pnpm a11y         # axe in Chrome against the running playground
 pnpm smoke:nextjs # the quickstart example in Chrome: approve, resume, final answer (build it first)
+pnpm smoke:playground # the built playground in Chrome (build it first)
 pnpm media        # regenerate docs/media (Chrome and ffmpeg required)
 ```
 

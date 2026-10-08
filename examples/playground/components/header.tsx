@@ -54,25 +54,21 @@ export function Header({
           </a>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          {mode && onModeChange && (
+          {/* Live mode exists only when the server has a model key (OPENAI_API_KEY); otherwise there is no choice to offer. */}
+          {mode && onModeChange && liveAvailable && (
             <div role="radiogroup" aria-label="Agent" className="border-line bg-raised/60 flex rounded-lg border p-0.5">
-              {(['mock', 'live'] as const).map((m) => {
-                const disabled = m === 'live' && !liveAvailable;
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={mode === m}
-                    disabled={disabled}
-                    title={disabled ? 'Set OPENAI_API_KEY on the server to enable live mode' : undefined}
-                    onClick={() => onModeChange(m)}
-                    className="focus-visible:outline-cyan-soft cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-45 aria-checked:bg-[#262b33] aria-checked:text-[#e8eaed]"
-                  >
-                    {m === 'mock' ? 'Scripted' : 'Live'}
-                  </button>
-                );
-              })}
+              {(['mock', 'live'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === m}
+                  onClick={() => onModeChange(m)}
+                  className="focus-visible:outline-cyan-soft cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 aria-checked:bg-[#262b33] aria-checked:text-[#e8eaed]"
+                >
+                  {m === 'mock' ? 'Scripted' : 'Live'}
+                </button>
+              ))}
             </div>
           )}
           <a

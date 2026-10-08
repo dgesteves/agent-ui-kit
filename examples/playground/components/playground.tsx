@@ -102,6 +102,15 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
     void sendMessage({ text: PROMPT });
   }, [stop, setMessages, sendMessage]);
 
+  // Follow the run once the reader is at the bottom of the page or has started a run themselves.
+  // Not from the start: on a phone, following the run that starts on load scrolls past the headline.
+  const endRef = useRef<HTMLDivElement>(null);
+  const stickRef = useRef(false);
+  const replay = useCallback(() => {
+    stickRef.current = true;
+    startRun();
+  }, [startRun]);
+
   // The mock run starts on load; live mode waits for a prompt.
   useEffect(() => {
     if (mode !== 'mock') return;
@@ -200,9 +209,6 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
     }
   }, [autopilot, mode, paused, lastAssistant, addToolApprovalResponse, addToolOutput, speed]);
 
-  // Follow the run while the reader is at the bottom of the page.
-  const endRef = useRef<HTMLDivElement>(null);
-  const stickRef = useRef(true);
   useEffect(() => {
     const onScroll = () => {
       stickRef.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
@@ -270,7 +276,7 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
                 paused={paused}
                 onPausedChange={setPaused}
                 running={running}
-                onReplay={startRun}
+                onReplay={replay}
                 autopilot={autopilot}
                 onAutopilotChange={setAutopilot}
                 inspect={inspect}
@@ -355,7 +361,7 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
               </span>
               <button
                 type="button"
-                onClick={startRun}
+                onClick={replay}
                 className="border-line hover:bg-raised focus-visible:outline-cyan-soft ml-auto inline-flex h-8 cursor-pointer items-center rounded-lg border px-3 text-[13px] font-medium text-[#e8eaed] transition-colors hover:border-[#353c47] focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 Replay run
@@ -366,7 +372,10 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
           {mode === 'live' && (
             <Composer
               disabled={running}
-              onSend={(text) => void sendMessage({ text })}
+              onSend={(text) => {
+                stickRef.current = true;
+                void sendMessage({ text });
+              }}
               onStop={() => void stop()}
               running={running}
             />
