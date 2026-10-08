@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/core.ts'],
+  entry: ['src/index.ts', 'src/core.ts', 'src/ag-ui.ts'],
   format: 'esm',
   platform: 'neutral',
   target: 'es2022',

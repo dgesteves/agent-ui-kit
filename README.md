@@ -10,7 +10,7 @@ React components for the hard parts of agentic products: watching an agent work,
 
 <img src="docs/media/hero.png" width="100%" alt="The agent-ui-kit playground mid-run. A tool call timeline shows a code search, two file reads, a failed read of middleware.ts with its error inline, and a web search, each with a duration and a waterfall bar. Below, a high-risk approval card asks to run 'pnpm add @upstash/ratelimit' with Deny and Approve buttons and Y/N shortcuts. A sidebar shows the agent status 'Waiting for approval', playback controls, and a run meter with 20.9k tokens, $0.025 estimated cost, 689ms time to first token and a 63% cache hit rate.">
 
-Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), and tested against both in CI. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
+Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), and tested against both in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
 
 <p align="center">
   <img src="docs/media/run.gif" width="100%" alt="A full scripted run, driven from the keyboard: the agent plans, searches and reads files, one read fails, it asks to install a package, Y approves it, the proposed diff is reviewed with A to accept three hunks and R to reject the model change, Ctrl+Enter applies it, and the agent's final answer reflects the review and cites three sources.">
@@ -147,7 +147,7 @@ npx shadcn@latest add dgesteves/agent-ui-kit/tool-call-timeline
 npx shadcn@latest add https://agent-ui-kit-demo.vercel.app/r/tool-call-timeline.json
 ```
 
-Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`. Installing a second item skips the shared files it already added. Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them.
+Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`, and `ag-ui` (the [AG-UI adapter](#ag-ui-agents)). Installing a second item skips the shared files it already added. Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them.
 
 ## Components
 
@@ -289,6 +289,64 @@ The kit depends on `ai` for types only. Part detection (`isToolPart`, `getToolPa
 
 The playground does not fake any of this. Its scripted agent is a `ChatTransport` that streams real `UIMessageChunk`s through `useChat`, so the SDK assembles parts, merges usage metadata, and drives the approval and client-tool round trips exactly as it would against a server. The [live mode](examples/playground/app/api/chat/route.ts) runs the same tools against a real model with `streamText` when `OPENAI_API_KEY` is set.
 
+## AG-UI agents
+
+[AG-UI](https://docs.ag-ui.com) is the open protocol that LangGraph, CrewAI, Mastra, Pydantic AI and other agent frameworks use to stream runs to a frontend. `@dgesteves/agent-ui-kit/ag-ui` turns an AG-UI agent into the same message parts, so every component above works with it unchanged, approvals included:
+
+```tsx
+'use client';
+
+import { HttpAgent } from '@ag-ui/client';
+import { AgentMessage, AgentStatus, RunMeter, deriveAgentState } from '@dgesteves/agent-ui-kit';
+import { useAgUiAgent } from '@dgesteves/agent-ui-kit/ag-ui';
+
+const agent = new HttpAgent({ url: '/api/agent' });
+
+export function AgentRun() {
+  const { messages, status, usage, step, respond } = useAgUiAgent(agent);
+  const last = messages.findLast((m) => m.role === 'assistant');
+  const { state, detail } = deriveAgentState({ status, message: last });
+  return (
+    <>
+      <AgentStatus state={state} detail={step ?? detail} />
+      {last ? (
+        <AgentMessage
+          message={last}
+          streaming={status === 'streaming'}
+          active={state !== 'done' && state !== 'error'}
+          onToolApproval={respond}
+        />
+      ) : null}
+      <RunMeter usage={usage} />
+    </>
+  );
+}
+
+export async function send(text: string) {
+  agent.addMessage({ id: crypto.randomUUID(), role: 'user', content: text });
+  await agent.runAgent();
+}
+```
+
+The hook takes any `@ag-ui/client` agent (`HttpAgent`, or a framework integration's own `AbstractAgent`) and reads the agent's messages and event stream:
+
+| AG-UI 1.0                                                           | Becomes                                                                                         |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| user message                                                        | `user` message with `text` parts, images and documents as `file` parts                          |
+| the assistant, reasoning, tool and activity messages that follow it | one `assistant` message, the way the AI SDK groups a multi-step run                             |
+| `TEXT_MESSAGE_*`, `REASONING_*`                                     | `text` and `reasoning` parts, `state: 'streaming'` until their end event                        |
+| `TOOL_CALL_START`, `TOOL_CALL_ARGS`                                 | `dynamic-tool` part, `input-streaming`, with the arguments parsed as they arrive                |
+| `TOOL_CALL_END`                                                     | `input-available`                                                                               |
+| `TOOL_CALL_RESULT`, tool message                                    | `output-available` (JSON results parsed), or `output-error` with the tool message's `error`     |
+| `RUN_FINISHED` with an `interrupt` outcome bound to a tool call     | `approval-requested`, the interrupt's `message` as `approval.requestReason`                     |
+| `respond({ id, approved, reason })`                                 | `approval-responded` or `output-denied`; the agent resumes with `payload: { approved, reason }` |
+| `RUN_STARTED`, content, `RUN_FINISHED`, `RUN_ERROR`                 | `status`: `submitted`, `streaming`, then `ready` or `error`                                     |
+| `usage` on `RUN_FINISHED` and `RUN_ERROR`                           | `usage`, summed over runs, with cache and reasoning tokens, for `RunMeter`                      |
+| `STEP_STARTED`                                                      | `step`, such as the LangGraph node running                                                      |
+| activity message                                                    | a `data-${activityType}` part, rendered by `renderData`                                         |
+
+AG-UI resumes every open interrupt in one run, so the hook waits until each has an answer before it calls `runAgent({ resume })`. Interrupts that aren't tool approvals (`input_required`, or your own) are in `interrupts`; answer them with `resolve({ interruptId, status: 'resolved', payload })`, matching the interrupt's `responseSchema`. The pure pieces behind the hook, `fromAgUiMessages`, `reduceAgUiRun`, `answerAgUiInterrupt` and `getAgUiResume`, work with your own store or a recorded event log. Shared state (`STATE_SNAPSHOT`, `STATE_DELTA`) stays on `agent.state`, and a subagent's messages render inline in its parent's timeline. The adapter has no dependency on `@ag-ui/*`: it reads their objects structurally, and its tests run a real `@ag-ui/client` agent through an interrupt and a resumed run.
+
 ## Accessibility
 
 - **Keyboard first.** Every action is a real button. Single-key shortcuts (Y/N, J/K/A/R/U) only fire while focus is inside the component, which keeps them compliant with WCAG 2.1.4 and out of the way of text fields. They are exposed through `aria-keyshortcuts` and described in visually hidden text. The page-wide <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approval is opt-in because it collides with most chat composers.
@@ -351,7 +409,7 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 
 Where this kit differs:
 
-- **It reads AI SDK messages as they are.** Hand `AgentMessage` a `UIMessage` from `useChat` and tool parts become one timeline with inline approvals, sources become citations, and usage metadata feeds the meter. There is no runtime to adopt and no per-component data mapping.
+- **It reads AI SDK messages as they are.** Hand `AgentMessage` a `UIMessage` from `useChat` and tool parts become one timeline with inline approvals, sources become citations, and usage metadata feeds the meter. There is no runtime to adopt and no per-component data mapping. AG-UI agents get the same treatment through [`useAgUiAgent`](#ag-ui-agents), interrupts included.
 - **Diff review works from file contents.** `DiffReview` takes the old and new text of several files, computes the hunks with word-level highlights, and `onSubmit` returns each file with only the accepted hunks applied, ready to send back as a client-side tool result.
 - **Timings are measured, not supplied.** Tool durations are recorded on the client and exclude time spent waiting for an approval; `useRunTiming` reports time to first token and active time across approval round trips, and `RunMeter` shows the prompt-cache hit rate, the cost lever that matters for agents.
 - **It works without Tailwind or shadcn.** The npm package ships precompiled CSS; the shadcn registry items are there if you prefer to own the code.
