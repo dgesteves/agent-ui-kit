@@ -15,6 +15,23 @@ import type {
   UITools,
 } from 'ai';
 
+/**
+ * Fields AI SDK 7 added to a tool part's `approval`: whether a `toolApproval` policy decided it,
+ * and why the tool asked. AI SDK 6 has neither, so they are read defensively.
+ */
+type ApprovalExtras = { isAutomatic?: unknown; requestReason?: unknown } | undefined;
+
+/** Whether a policy decided the approval rather than a person. Always false on AI SDK 6. */
+export function isAutomaticApproval(approval: object | undefined): boolean {
+  return (approval as ApprovalExtras)?.isAutomatic === true;
+}
+
+/** The reason the tool gave for asking (AI SDK 7's `requestReason`), if any. */
+export function getApprovalRequestReason(approval: object | undefined): string | undefined {
+  const reason = (approval as ApprovalExtras)?.requestReason;
+  return typeof reason === 'string' ? reason : undefined;
+}
+
 export type { ChatStatus, UIMessage };
 
 /** Any part of any `UIMessage`. */
@@ -221,7 +238,7 @@ export function deriveAgentState({
   if (status === 'error') return { state: 'error' };
   const parts = message?.role === 'assistant' ? message.parts : [];
   const tools = getToolParts(parts);
-  const approval = tools.find((t) => t.state === 'approval-requested' && !t.approval.isAutomatic);
+  const approval = tools.find((t) => t.state === 'approval-requested' && !isAutomaticApproval(t.approval));
   if (approval) return { state: 'awaiting-approval', detail: getToolPartName(approval) };
   const clientWait = tools.find(
     (t) => t.state === 'input-available' && pendingClientTools.includes(getToolPartName(t)),

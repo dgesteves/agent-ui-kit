@@ -104,9 +104,12 @@ describe('ai peer range', () => {
   };
   const range = pkg.peerDependencies.ai!;
 
-  it('requires a release that settles automatically denied tool calls (7.0.102)', () => {
-    // Before 7.0.102 a call that a toolApproval policy denied could stay unsettled and read "Running".
-    const [, minor, patch] = /^\^7\.(\d+)\.(\d+)$/.exec(range) ?? [];
+  it('takes AI SDK 6, and AI SDK 7 from the release that settles automatically denied calls', () => {
+    // CI runs the suite against AI SDK 6 too. On 7, before 7.0.102 a call that a toolApproval
+    // policy denied could stay unsettled and read "Running".
+    const [six, seven] = range.split(' || ');
+    expect(six).toBe('^6.0.0');
+    const [, minor, patch] = /^\^7\.(\d+)\.(\d+)$/.exec(seven ?? '') ?? [];
     expect({ range, ok: Number(minor) > 0 || Number(patch) >= 102 }).toEqual({ range, ok: true });
   });
 

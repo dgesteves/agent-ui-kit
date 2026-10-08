@@ -1,6 +1,6 @@
 # @dgesteves/agent-ui-kit
 
-React components for agent-run UX: tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry. Typed against AI SDK v7 `UIMessage` parts.
+React components for agent-run UX: tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry. Typed against AI SDK 6 and 7 `UIMessage` parts.
 
 <img src="https://raw.githubusercontent.com/dgesteves/agent-ui-kit/main/docs/media/hero.png" width="100%" alt="An agent run rendered with agent-ui-kit: a tool call timeline with durations, a failed call with its error inline, a high-risk approval card, and a sidebar with agent status and a run meter.">
 
@@ -46,7 +46,7 @@ Components: `AgentMessage`, `ToolCallTimeline`, `ApprovalCard` / `ToolApprovalCa
 
 Components and hooks carry their own `'use client'` directive (`Sources` needs none). The pure helpers do not, so Server Components and Route Handlers can call them, from the main entry or from `@dgesteves/agent-ui-kit/core` (helpers only, no React).
 
-Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^7.0.102` (the kit imports its types only; 7.0.102 settles tool calls that a `toolApproval` policy denies, which earlier releases can leave reading "Running").
+Peer dependencies: `react@^19`, `react-dom@^19`, `ai@^6.0.0 || ^7.0.102` (the kit imports its types only). On AI SDK 7, 7.0.102 or later settles tool calls that a `toolApproval` policy denies, which earlier releases can leave reading "Running"; policies, and the "Auto-approved" and "Blocked by policy" labels, are AI SDK 7 features.
 
 Documentation, the playground, the shadcn registry and design notes: [github.com/dgesteves/agent-ui-kit](https://github.com/dgesteves/agent-ui-kit).
 

@@ -57,7 +57,7 @@
     "lint:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./tailwind.css ./theme.css"
   },
   "peerDependencies": {
-    "ai": "^7.0.102",
+    "ai": "^6.0.0 || ^7.0.102",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
