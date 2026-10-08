@@ -1,6 +1,6 @@
 # agent-ui-kit
 
-React components for the hard parts of agentic products: watching an agent work, approving what it does, reviewing what it changed, and understanding what the run cost.
+React components for the hard parts of agentic products: watching an agent work, approving what it does, reviewing what it changed, and understanding what the run cost. For AI SDK 6 & 7 and AG-UI.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/dgesteves/agent-ui-kit/ci.yml?branch=main&label=CI&labelColor=0d0f12&color=22d3ee)](https://github.com/dgesteves/agent-ui-kit/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@dgesteves/agent-ui-kit?labelColor=0d0f12&color=22d3ee)](https://www.npmjs.com/package/@dgesteves/agent-ui-kit)

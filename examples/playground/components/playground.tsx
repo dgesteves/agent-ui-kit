@@ -232,8 +232,9 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
           </h1>
           <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#a1a9b4]">
             A scripted coding agent adds rate limiting to a Next.js route. Every panel is a component from{' '}
-            <code className="font-mono text-[13px] text-[#67e8f9]">@dgesteves/agent-ui-kit</code>, rendered from AI SDK
-            v7 message parts streamed through <code className="font-mono text-[13px] text-[#e8eaed]">useChat</code>.
+            <code className="font-mono text-[13px] text-[#67e8f9]">@dgesteves/agent-ui-kit</code>, rendered from the
+            message parts <code className="font-mono text-[13px] text-[#e8eaed]">useChat</code> streams. The kit works
+            with AI SDK 6 &amp; 7 and AG-UI.
           </p>
         </div>
 
