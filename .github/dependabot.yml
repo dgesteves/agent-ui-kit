@@ -11,6 +11,13 @@ updates:
         patterns: ['ai', '@ai-sdk/*', '@ag-ui/*']
       react:
         patterns: ['react', 'react-dom', '@types/react', '@types/react-dom', 'next']
+    ignore:
+      # TypeScript 7 is the Go compiler, which typescript-eslint doesn't support yet. Move to it by hand.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # rxjs stays at the exact version @ag-ui/client pins: two copies of rxjs make their Observable
+      # types incompatible. Update it together with @ag-ui/client.
+      - dependency-name: rxjs
   - package-ecosystem: github-actions
     directory: /
     schedule:
