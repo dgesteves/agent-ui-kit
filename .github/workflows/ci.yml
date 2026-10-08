@@ -46,6 +46,9 @@ jobs:
       - name: Package exports (publint, attw)
         run: pnpm --filter @dgesteves/agent-ui-kit lint:package
 
+      - name: styles.css in Chrome, next to a global reset and in a Tailwind v3 build
+        run: pnpm smoke:styles
+
       - name: shadcn registry
         run: pnpm registry:build
 

@@ -24,7 +24,8 @@
     "registry:generate": "node scripts/registry.mjs",
     "registry:check": "node scripts/registry.mjs --check",
     "a11y": "node scripts/a11y-audit.mjs",
-    "smoke:nextjs": "node scripts/smoke-nextjs-minimal.mjs"
+    "smoke:nextjs": "node scripts/smoke-nextjs-minimal.mjs",
+    "smoke:styles": "node scripts/smoke-styles.mjs"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
@@ -36,9 +37,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "playwright-core": "^1.63.0",
+    "postcss": "^8.5.29",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "shadcn": "^4.21.3",
+    "tailwindcss-v3": "npm:tailwindcss@^3.4.19",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1"
   }

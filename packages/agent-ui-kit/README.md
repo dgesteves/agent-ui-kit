@@ -15,7 +15,7 @@ pnpm add @dgesteves/agent-ui-kit ai @ai-sdk/react
 ```
 
 ```ts
-// Without Tailwind
+// Tailwind v3 or no Tailwind: precompiled, unlayered, scoped to the components
 import '@dgesteves/agent-ui-kit/styles.css';
 ```
 

@@ -48,9 +48,11 @@ Styles, either way:
 ```
 
 ```ts
-// No Tailwind: a precompiled stylesheet with only the utilities the kit uses, and no global reset
+// Tailwind v3 or no Tailwind: a precompiled stylesheet with only the utilities the kit uses, and no global reset
 import '@dgesteves/agent-ui-kit/styles.css';
 ```
+
+`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` cannot strip the components' spacing. Every rule in it is scoped to the components' own elements, so it does not restyle your app; import it after your global CSS. `styles.layered.css` is the same stylesheet in `@layer theme, base, utilities`, for apps that order their CSS with layers.
 
 Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette.
 
@@ -492,7 +494,7 @@ In a shadcn/ui app you can point the kit at your existing tokens, for example `-
 - **Shortcuts scoped to focus.** Global single-key shortcuts are an accessibility problem and fight with text inputs; scoping them to the component avoids both. Critical approvals require a second press.
 - **Hydration-safe clocks.** Live durations and waterfall widths render after hydration, so server and client markup always match. Nothing reads the clock while rendering on the server, so pages that render the components prerender under Next.js `cacheComponents`.
 - **Type-only dependency on `ai`.** No SDK runtime in the build (about 35 kB gzipped in all, dependencies external), while props stay typed to SDK parts.
-- **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
+- **Two distribution channels from one source.** The npm build ships precompiled CSS for apps without Tailwind v4: unlayered and scoped to the components, and checked in Chrome next to a global reset and inside a Tailwind v3 build. The registry is generated from the same files by `scripts/registry.mjs`, which computes each item's file closure from its imports, so items install by URL or from GitHub without cross-item dependencies. CI fails if `registry.json` drifts. Both channels keep `'use client'` per module (the build emits one module per source file and checks the directives), so Server Components can render the components and call the pure helpers.
 
 ## How it compares
 
