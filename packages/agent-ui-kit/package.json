@@ -1,10 +1,10 @@
 {
   "name": "@dgesteves/agent-ui-kit",
   "version": "0.3.0",
-  "description": "Accessible React components for agent-run UX: tool timelines, human-in-the-loop approvals, diff review and run telemetry. Typed against AI SDK v7 message parts.",
+  "description": "Accessible React components for agent-run UX: tool timelines, human-in-the-loop approvals, diff review and run telemetry. For AI SDK 6 & 7 and AG-UI.",
   "license": "MIT",
   "author": "Diogo Esteves (https://diogo-studio.com)",
-  "homepage": "https://github.com/dgesteves/agent-ui-kit#readme",
+  "homepage": "https://agent-ui-kit-demo.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dgesteves/agent-ui-kit.git",

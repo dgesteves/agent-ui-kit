@@ -1,0 +1,22 @@
+name: Feature request
+description: A component, prop or integration the kit is missing
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to build
+      description: The agent run, and what the user needs to see or decide in it. What do you do today instead?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: The API you have in mind, if any. Message parts or AG-UI events it should read are useful.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Checked
+      options:
+        - label: The [roadmap](https://github.com/dgesteves/agent-ui-kit#roadmap) and existing issues do not cover it

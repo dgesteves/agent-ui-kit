@@ -4,9 +4,10 @@
 //   pnpm media                                                          # needs Chrome and ffmpeg
 //
 // Outputs to docs/media/: hero.png, review.png, inspect.png, mobile.png,
-// run.gif + run.mp4 (a full run driven by the keyboard), components/*.png.
+// run.gif + run.mp4 (a full run driven by the keyboard), components/*.png and *-light.png.
+// `og` crops hero.png into the playground's Open Graph image, and needs no playground.
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -118,6 +119,18 @@ if (want('hero') || want('review')) {
   await page.context().close();
 }
 
+if (want('og')) {
+  // The top of the hero at 1200×630, the size link previews use.
+  const page = await newPage({ width: 1200, height: 630, scale: 1 });
+  const hero = readFileSync(join(out, 'hero.png')).toString('base64');
+  await page.setContent(
+    `<body style="margin:0;background:#0d0f12"><img src="data:image/png;base64,${hero}" style="display:block;width:1200px"></body>`,
+  );
+  await page.screenshot({ path: join(root, 'examples/playground/app/opengraph-image.png') });
+  console.log('wrote examples/playground/app/opengraph-image.png');
+  await page.context().close();
+}
+
 if (want('inspect')) {
   const page = await newPage();
   await page.goto(`${BASE}/?inspect=1&speed=4`, { waitUntil: 'networkidle' });
@@ -140,17 +153,25 @@ if (want('mobile')) {
 }
 
 if (want('components')) {
-  const page = await newPage({ width: 1100, height: 900 });
-  await page.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
-  // Tall sections scroll under the sticky header; take it out of the way for element shots.
-  await page.addStyleTag({ content: 'header { position: static !important; }' });
-  await page.waitForTimeout(800);
-  const ids = await page.$$eval('[data-shot]', (els) => els.map((e) => e.getAttribute('data-shot')));
-  for (const id of ids) {
-    await page.locator(`[data-shot="${id}"]`).screenshot({ path: join(out, 'components', `${id}.png`) });
-    console.log(`wrote docs/media/components/${id}.png`);
+  // Each gallery section in both palettes: <id>.png (dark) and <id>-light.png, which the README
+  // shows through <picture> by the reader's color scheme. The AG-UI demo plays a run; no still.
+  for (const theme of ['dark', 'light']) {
+    const page = await newPage({ width: 1100, height: 900 });
+    await page.goto(`${BASE}/gallery${theme === 'light' ? '?theme=light' : ''}`, { waitUntil: 'networkidle' });
+    // Tall sections scroll under the sticky header; take it out of the way for element shots. The
+    // frames' rounded corners show the page behind them: white for the light shots.
+    await page.addStyleTag({
+      content: `header { position: static !important; }${theme === 'light' ? ' html, body { background: #fff !important; }' : ''}`,
+    });
+    await page.waitForTimeout(800);
+    const ids = await page.$$eval('[data-shot]', (els) => els.map((e) => e.getAttribute('data-shot')));
+    for (const id of ids.filter((id) => id !== 'ag-ui')) {
+      const file = `${id}${theme === 'light' ? '-light' : ''}.png`;
+      await page.locator(`[data-shot="${id}"]`).screenshot({ path: join(out, 'components', file) });
+      console.log(`wrote docs/media/components/${file}`);
+    }
+    await page.context().close();
   }
-  await page.context().close();
 }
 
 if (want('gif')) {

@@ -233,6 +233,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.8.1
         version: 0.8.1(prettier@3.9.9)
+      rolldown:
+        specifier: ^1.2.12
+        version: 1.2.12
       shadcn:
         specifier: ^4.21.3
         version: 4.21.3(supports-color@7.2.0)

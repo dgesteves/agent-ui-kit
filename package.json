@@ -25,7 +25,9 @@
     "registry:generate": "node scripts/registry.mjs",
     "registry:check": "node scripts/registry.mjs --check",
     "a11y": "node scripts/a11y-audit.mjs",
+    "size": "node scripts/size.mjs",
     "smoke:nextjs": "node scripts/smoke-nextjs-minimal.mjs",
+    "smoke:playground": "node scripts/smoke-playground.mjs",
     "smoke:styles": "node scripts/smoke-styles.mjs"
   },
   "devDependencies": {
@@ -42,6 +44,7 @@
     "postcss": "^8.5.29",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "rolldown": "^1.2.12",
     "shadcn": "^4.21.3",
     "tailwindcss-v3": "npm:tailwindcss@^3.4.19",
     "typescript": "~6.0.3",

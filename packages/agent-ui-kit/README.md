@@ -1,6 +1,8 @@
 # @dgesteves/agent-ui-kit
 
-React components for agent-run UX: tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry. Typed against AI SDK 6 and 7 `UIMessage` parts.
+React components for agent-run UX: tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry. For AI SDK 6 & 7 and AG-UI: typed against AI SDK `UIMessage` parts, with an adapter for AG-UI agents.
+
+**[Live playground →](https://agent-ui-kit-demo.vercel.app)**
 
 <img src="https://raw.githubusercontent.com/dgesteves/agent-ui-kit/main/docs/media/hero.png" width="100%" alt="An agent run rendered with agent-ui-kit: a tool call timeline with durations, a failed call with its error inline, a high-risk approval card, and a sidebar with agent status and a run meter.">
 
