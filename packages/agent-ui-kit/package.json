@@ -1,6 +1,6 @@
 {
   "name": "@dgesteves/agent-ui-kit",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Accessible React components for agent-run UX: tool timelines, human-in-the-loop approvals, diff review and run telemetry. For AI SDK 6 & 7 and AG-UI.",
   "license": "MIT",
   "author": "Diogo Esteves (https://diogo-studio.com)",
