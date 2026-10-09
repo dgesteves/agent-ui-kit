@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { GUIDES } from './docs';
 
 /*
  * /llms.txt and /llms-full.txt (https://llmstxt.org), built from the repository's README and
@@ -86,6 +87,7 @@ export function llmsTxt() {
     ...rest.flatMap((p) => [p, '']),
     '## Docs',
     '',
+    ...GUIDES.map((doc) => `- [${doc.title}](${SITE}${doc.href}.md): ${doc.description}`),
     `- [Everything in one file](${SITE}/llms-full.txt): the README as plain markdown, and the shadcn registry items`,
     `- [The quickstart, running](${REPO}/tree/main/examples/nextjs-minimal): a Next.js 16 app against a scripted model`,
     ...docs,

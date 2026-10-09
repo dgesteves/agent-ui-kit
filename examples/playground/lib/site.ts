@@ -4,7 +4,7 @@ export const GITHUB_URL = 'https://github.com/dgesteves/agent-ui-kit';
 export const NPM_URL = 'https://www.npmjs.com/package/@dgesteves/agent-ui-kit';
 export const PACKAGE = '@dgesteves/agent-ui-kit';
 export const INSTALL_COMMAND = `npm i ${PACKAGE}`;
-export const GET_STARTED_URL = `${GITHUB_URL}#quickstart`;
+export const GET_STARTED_URL = '/docs/getting-started';
 export const RELEASES_URL = `${GITHUB_URL}/releases`;
 
 export const AUTHOR = { name: 'Diogo Esteves', url: 'https://github.com/dgesteves' };

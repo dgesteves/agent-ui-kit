@@ -19,7 +19,10 @@
     "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "rxjs": "7.8.1",
+    "shiki": "^4.5.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

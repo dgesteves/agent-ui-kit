@@ -42,6 +42,7 @@ try {
   for (const [path, title] of [
     ['/', 'agent-ui-kit · playground'],
     ['/gallery', 'agent-ui-kit · components'],
+    ['/docs/getting-started', 'Getting started · agent-ui-kit docs'],
   ]) {
     const html = await (await fetch(BASE + path)).text();
     const meta = (key) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
@@ -74,6 +75,34 @@ try {
       `${response.status} ${response.headers.get('content-type')}`,
     );
   }
+
+  // Each docs page is also Markdown at its URL plus .md, for "Copy page" and coding agents.
+  for (const [path, heading] of [
+    ['/docs.md', '# Introduction\n'],
+    ['/docs/getting-started.md', '# Getting started\n'],
+    ['/docs/ag-ui.md', '# AG-UI agents\n'],
+  ]) {
+    const response = await fetch(BASE + path);
+    const text = await response.text();
+    check(
+      response.ok && response.headers.get('content-type')?.startsWith('text/markdown') && text.startsWith(heading),
+      `${path}: the page as Markdown`,
+      `${response.status} ${response.headers.get('content-type')}`,
+    );
+  }
+
+  // The docs search finds sections, not only pages.
+  const docs = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+  await docs.goto(`${BASE}/docs`, { waitUntil: 'networkidle' });
+  await docs.keyboard.press('ControlOrMeta+k');
+  await docs.keyboard.type('theme');
+  const found = await docs.getByRole('list', { name: 'Search results' }).getByRole('link').allInnerTexts();
+  check(
+    found.some((text) => text.includes('Theming')),
+    'docs: ⌘K focuses the search, and "theme" finds Theming',
+    found.join(', '),
+  );
+  await docs.close();
 
   // On a phone the run starts on load and grows past the screen; the page must not follow it
   // (and scroll the headline away) until the reader scrolls down or starts a run.
