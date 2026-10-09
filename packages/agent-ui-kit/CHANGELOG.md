@@ -1,5 +1,13 @@
 # @dgesteves/agent-ui-kit
 
+## 0.4.1
+
+### Patch Changes
+
+- [#19](https://github.com/dgesteves/agent-ui-kit/pull/19) [`afc5071`](https://github.com/dgesteves/agent-ui-kit/commit/afc507189fd2f54b77440003e702f8348bba6347) Thanks [@dgesteves](https://github.com/dgesteves)! - Content that scrolls sideways is now reachable from the keyboard: a diff hunk's code, a code block or table in `Markdown`, an approval card's command preview and the compact `RunMeter` strip. While their content is wider than they are, they join the tab order as named groups ("Hunk 2 code, app/api/chat/route.ts", "Code, ts"), so the arrow keys scroll them, with a visible focus ring; once everything fits, they add no tab stop. Fixes axe's `scrollable-region-focusable` (WCAG 2.1.1).
+
+- [#18](https://github.com/dgesteves/agent-ui-kit/pull/18) [`b3e4361`](https://github.com/dgesteves/agent-ui-kit/commit/b3e4361a3118199e8fc04faefe6b5aabb8953f74) Thanks [@dgesteves](https://github.com/dgesteves)! - `ToolCallTimeline` fits narrow columns: a long tool label truncates instead of pushing the row wider than its container, and the waterfall bar shows from a 24rem-wide timeline rather than from a 640px-wide screen, so a timeline in a sidebar or a phone-width panel no longer scrolls sideways.
+
 ## 0.4.0
 
 ### Minor Changes
