@@ -8,25 +8,23 @@ React components for the hard parts of agentic products: watching an agent work,
 
 **[Open the live playground →](https://agent-ui-kit-demo.vercel.app)** A scripted agent run with replay, speed and keyboard controls. No API key needed. **[Read the docs →](https://agent-ui-kit-demo.vercel.app/docs)** Getting started, AG-UI agents, and a page per component with its props, keyboard and theming hooks. For coding agents, the docs are also at [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt) and [`/llms-full.txt`](https://agent-ui-kit-demo.vercel.app/llms-full.txt), and every page as Markdown at its URL plus `.md`.
 
-<img src="docs/media/hero.png" width="100%" alt="The agent-ui-kit site mid-run. The headline reads Accessible React components for agent runs, with an npm install command, Get started and Star on GitHub. Below, a scripted agent's tool call timeline shows a code search, file reads, a failed read of middleware.ts with its error inline, and a web search, each with a duration and a waterfall bar, then a high-risk approval card asking to run 'pnpm add @upstash/ratelimit' with Deny and Approve buttons and Y/N shortcuts. A sidebar shows the agent status 'Waiting for approval', playback controls, and a run meter with 20.9k tokens, $0.025 estimated cost and a 63% cache hit rate.">
-
-Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), runs on React 18 and 19 (`react@^18.2.0 || ^19.0.0`), and tested against each in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
-
-**Any model, nothing extra to pay.** The kit calls no model, needs no API key and makes no network requests of its own: it renders what your agent streams. Your backend picks the model and holds the keys, so it works with OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, and with any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is one line in your route; the components don't change.
-
 <!-- npm-readme:video -->
 
-https://github.com/user-attachments/assets/ed4e99bc-2674-4de8-8f2d-63956ec493d6
+https://github.com/user-attachments/assets/eb7c6a77-555f-4f6e-badf-230ebeeba45e
 
 <sub>The <a href="https://agent-ui-kit-demo.vercel.app">playground</a>, driven from the keyboard: tool calls stream into the timeline, <kbd>Y</kbd> approves the install, <kbd>A</kbd>/<kbd>R</kbd> review hunks, <kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. Then the <a href="https://agent-ui-kit-demo.vercel.app/gallery#ag-ui">AG-UI demo</a>, a real <code>@ag-ui/client</code> agent that resumes once you approve.</sub>
 
 <!-- npm-readme:image
 <p align="center">
-  <a href="https://agent-ui-kit-demo.vercel.app"><img src="docs/media/run.gif" width="100%" alt="A full scripted run, driven from the keyboard: the agent plans, searches and reads files, one read fails, it asks to install a package, Y approves it, the proposed diff is reviewed with A to accept three hunks and R to reject the model change, Ctrl+Enter applies it, and the agent's final answer reflects the review and cites three sources."></a>
+  <a href="https://agent-ui-kit-demo.vercel.app"><img src="docs/media/demo.webp" width="100%" alt="The playground driven from the keyboard: tool calls stream into a timeline, Y approves a package install, A and R accept and reject diff hunks, Ctrl+Enter applies them and the run meter shows the cost. Then the AG-UI demo: a LangGraph-style run that resumes once the install is approved."></a>
 </p>
 
-<sub>A full run in the <a href="https://agent-ui-kit-demo.vercel.app">playground</a>, driven from the keyboard: <kbd>Y</kbd> approves the install, <kbd>A</kbd>/<kbd>R</kbd> review hunks, <kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. A 23-second demo video, with the AG-UI demo, plays in the <a href="https://github.com/dgesteves/agent-ui-kit#readme">README on GitHub</a>.</sub>
+<sub>The <a href="https://agent-ui-kit-demo.vercel.app">playground</a>, driven from the keyboard: tool calls stream into the timeline, <kbd>Y</kbd> approves the install, <kbd>A</kbd>/<kbd>R</kbd> review hunks, <kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. Then the <a href="https://agent-ui-kit-demo.vercel.app/gallery#ag-ui">AG-UI demo</a>, a real <code>@ag-ui/client</code> agent that resumes once you approve.</sub>
 -->
+
+Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), runs on React 18 and 19 (`react@^18.2.0 || ^19.0.0`), and tested against each in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
+
+**Any model, nothing extra to pay.** The kit calls no model, needs no API key and makes no network requests of its own: it renders what your agent streams. Your backend picks the model and holds the keys, so it works with OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, and with any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is one line in your route; the components don't change.
 
 ## Why it exists
 
