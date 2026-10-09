@@ -1,5 +1,7 @@
 agent-ui-kit is a set of React components for the parts of an agent product that aren't the chat bubble: watching an agent work, approving what it does, reviewing what it changed, and understanding what the run cost. They render the message parts the AI SDK's `useChat` already gives you, and AG-UI agents through an adapter, so there's no new runtime or state model to adopt.
 
+It works with any model and costs nothing extra. The kit calls no model, needs no API key and makes no network requests of its own. Your backend picks the model and holds the keys: OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, or an agent on any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is [one line in your route](/docs/getting-started#choosing-a-model); the components don't change.
+
 ## Why it exists
 
 Most AI UI libraries are built around the chat bubble. Agents changed what the interface has to do. A single run can call a dozen tools, stop to ask permission before something risky, propose edits across several files, and burn through tens of thousands of tokens. The questions people have are about the run:

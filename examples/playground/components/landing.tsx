@@ -214,8 +214,9 @@ export function Landing() {
 
       <Section id="works-heading">
         <SectionHeading id="works-heading" eyebrow="Works with" title="Fits the stack you already have">
-          It renders what your agent already streams, so there’s no state model to adopt. Typed against AI SDK 6 and 7,
-          tested on React 18 and 19 in CI, and prerenders under Next.js 16 with <Code>cacheComponents</Code>.
+          It renders what your agent already streams, so there’s no state model to adopt, and it calls no model itself:
+          bring OpenAI, Anthropic, Google, xAI, Mistral or a local model, with your own keys. Typed against AI SDK 6 and
+          7, tested on React 18 and 19 in CI, and prerenders under Next.js 16 with <Code>cacheComponents</Code>.
         </SectionHeading>
         <ul className="border-line mt-8 grid overflow-hidden rounded-xl border sm:mt-10 md:grid-cols-2">
           {WORKS_WITH.map((item) => (

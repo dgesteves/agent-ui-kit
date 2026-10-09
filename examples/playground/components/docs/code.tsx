@@ -4,8 +4,11 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { CopyButton } from '../copy-button';
 import { CheckIcon, CopyIcon } from '../icons';
 
-/** Copies the code block it sits in, read from the page, so the code isn't sent twice. */
-export function CopyCodeButton() {
+/**
+ * Copies the code block it sits in, read from the page, so the code isn't sent twice. `inline` puts
+ * it in the block's title bar; otherwise it floats over the code's top-right corner.
+ */
+export function CopyCodeButton({ inline = false }: { inline?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null);
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   useEffect(() => {
@@ -27,7 +30,11 @@ export function CopyCodeButton() {
             () => setState('failed'),
           );
         }}
-        className="focus-visible:outline-cyan-soft border-line bg-surface-2 text-fg-muted hover:text-fg absolute top-2 right-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border opacity-100 transition-[color,opacity] focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 sm:opacity-0 sm:group-hover/code:opacity-100 pointer-coarse:opacity-100"
+        className={`focus-visible:outline-cyan-soft text-fg-muted hover:text-fg inline-flex cursor-pointer items-center justify-center rounded-md transition-[color,opacity] focus-visible:outline-2 focus-visible:outline-offset-1 ${
+          inline
+            ? 'hover:bg-line absolute top-1 right-1.5 size-7'
+            : 'border-line bg-surface-2 absolute top-2 right-2 size-8 border opacity-100 focus-visible:opacity-100 sm:opacity-0 sm:group-hover/code:opacity-100 pointer-coarse:opacity-100'
+        }`}
       >
         {state === 'copied' ? <CheckIcon className="text-cyan-soft size-4" /> : <CopyIcon className="size-4" />}
       </button>
