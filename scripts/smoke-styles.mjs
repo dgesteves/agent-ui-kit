@@ -2,7 +2,7 @@
 // create-next-app's (`* { padding: 0; margin: 0 }`), and a Tailwind v3 app, whose PostCSS build
 // must accept the stylesheet. Every element of a few rendered components must compute the same
 // spacing, type, borders and colors as with the kit's stylesheet alone. Then theme.auto.css
-// against the OS color scheme, and the app's font.
+// against the OS color scheme, the app's font, and a timeline in a narrow column.
 //
 //   pnpm build:lib && pnpm smoke:styles
 import { readFileSync } from 'node:fs';
@@ -142,6 +142,36 @@ try {
     const ok = actual[0] === background && (font === undefined || actual[1] === font);
     failed ||= !ok;
     console.log(`${ok ? 'pass' : 'FAIL'}  ${check}${ok ? '' : `: --aui-bg ${actual[0]}, font ${actual[1]}`}`);
+    await page.close();
+  }
+
+  // A timeline in a narrow column (a sidebar, a phone-width panel) stays inside it: long labels
+  // truncate, and the waterfall bar waits for a wide enough timeline, not a wide enough screen.
+  const narrow = renderToStaticMarkup(
+    h(kit.ToolCallTimeline, {
+      parts: [
+        tool('approval-requested', 'n1', 'run_shell_command_in_repository', { approval: { id: 'y' } }),
+        tool('output-error', 'n2', 'read_file', { errorText: 'ENOENT' }),
+      ],
+    }),
+  );
+  for (const width of [240, 320]) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.setContent(
+      `<!doctype html><html><head><style>${styles}</style></head>` +
+        `<body style="margin: 0"><div id="column" style="width: ${width}px">${narrow}</div></body></html>`,
+    );
+    const overflow = await page.$eval('#column', (column) => {
+      const right = column.getBoundingClientRect().right;
+      return [...column.querySelectorAll('*')]
+        .filter((el) => el.getBoundingClientRect().right > right + 0.5)
+        .map((el) => el.dataset.slot ?? el.tagName.toLowerCase());
+    });
+    const ok = overflow.length === 0;
+    failed ||= !ok;
+    console.log(
+      `${ok ? 'pass' : 'FAIL'}  a timeline in a ${width}px column${ok ? '' : `: ${overflow.join(', ')} overflow`}`,
+    );
     await page.close();
   }
 } finally {
