@@ -361,7 +361,8 @@ function TimelineItem({
               {meta.icon}
             </span>
           )}
-          <span className="text-aui-fg shrink-0 text-[13px] font-medium">{label}</span>
+          {/* Truncates rather than pushing the row past a narrow container; the full name stays in the button's. */}
+          <span className="text-aui-fg min-w-0 truncate text-[13px] font-medium">{label}</span>
           {summary !== undefined && summary !== null && summary !== '' && (
             // In narrow containers the summary is visually hidden but stays in the button's accessible name.
             <span className="font-aui-mono text-aui-fg-muted sr-only min-w-0 text-xs @md:not-sr-only @md:truncate">
@@ -381,7 +382,7 @@ function TimelineItem({
             {bar && (
               <span
                 aria-hidden="true"
-                className="bg-aui-surface-2 relative hidden h-1 w-16 overflow-hidden rounded-full sm:block"
+                className="bg-aui-surface-2 relative hidden h-1 w-16 overflow-hidden rounded-full @sm:block"
               >
                 <span
                   className={cn(
