@@ -1,18 +1,20 @@
-import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { GeistMono } from './fonts';
 import './globals.css';
 
-const title = 'agent-ui-kit · playground';
+const title = 'agent-ui-kit: accessible React components for agent runs';
 const description =
-  'React components for agent-run UX: tool timelines, human-in-the-loop approvals, diff review and run telemetry, for AI SDK 6 & 7 and AG-UI. Watch a scripted agent run, no API key needed.';
+  'Tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry, for AI SDK 6 & 7 and AG-UI agents (LangGraph, CrewAI, Mastra). Watch a scripted agent run, no API key needed.';
 
-// app/opengraph-image.png is the top of docs/media/hero.png (`pnpm media og`).
+// app/opengraph-image.png is the top of docs/media/hero.png (`pnpm media og`); the docs and the
+// components page draw their own (lib/og.tsx).
 export const metadata: Metadata = {
   metadataBase: new URL('https://agent-ui-kit-demo.vercel.app'),
   title,
   description,
+  alternates: { canonical: '/' },
   openGraph: { type: 'website', siteName: 'agent-ui-kit', title, description, url: '/' },
   twitter: { card: 'summary_large_image', title, description },
 };

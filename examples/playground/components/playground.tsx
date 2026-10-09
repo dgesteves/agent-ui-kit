@@ -25,12 +25,11 @@ import {
   lastAssistantMessageIsCompleteWithApprovalResponses,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from 'ai';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MockAgentTransport, PlaybackClock, type AgentUIMessage, type ReviewOutput } from '@/lib/mock-agent';
 import { MODEL, PRICING, PROMPT, REPO } from '@/lib/scenario';
 import { toolMeta } from '@/lib/tools';
 import { Composer } from './composer';
-import { Header } from './header';
 import { CompactRunControls, KeyboardCard, RunControls, Sheet } from './controls';
 
 type Mode = 'mock' | 'live';
@@ -54,17 +53,12 @@ function decisionsFrom(output: ReviewOutput | undefined): Record<string, HunkDec
   return decisions;
 }
 
-export function Playground({
-  liveAvailable,
-  hero,
-  children,
-}: {
-  liveAvailable: boolean;
-  /** The headline, rendered on the server, beside the run's sidebar on wide screens. */
-  hero: ReactNode;
-  /** Sections after the run. */
-  children?: ReactNode;
-}) {
+/**
+ * The live run: the sidebar (status, controls, telemetry) and the conversation. It renders into the
+ * page's grid (app/page.tsx) as two of its items, and loads after the page (playground-island.tsx),
+ * so the headline and the rest of the page don't wait for the AI SDK and the kit.
+ */
+export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
   const [mode, setMode] = useState<Mode>('mock');
   const [clock] = useState(() => new PlaybackClock());
   const [speed, setSpeed] = useState(1);
@@ -258,186 +252,178 @@ export function Playground({
   };
 
   return (
-    <div className="min-h-dvh">
-      <Header mode={mode} liveAvailable={liveAvailable} onModeChange={setMode} />
-      <div className="grid-backdrop pointer-events-none fixed inset-x-0 top-0 -z-10 h-[70vh]" aria-hidden="true" />
-
-      <main id="main">
-        {/*
-         * Phones: the headline, a sticky bar with the status and playback, then the conversation; the
-         * rest of the controls open in a sheet. Wide screens: the headline and the run on the left, the
-         * status, controls and telemetry in a sticky sidebar. Flex on phones so the bar can stick for
-         * the whole run (a grid item only sticks within its own row). The sidebar spans both rows; the
-         * second row takes its extra height, so the run doesn't move once it outgrows the sidebar.
-         */}
-        <div
-          data-inspect={inspect || undefined}
-          className="mx-auto flex w-full max-w-[1320px] flex-col gap-6 px-4 pt-7 sm:px-6 sm:pt-12 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[auto_1fr] lg:gap-x-10 lg:gap-y-8 lg:pt-12"
+    <>
+      <aside
+        data-inspect={inspect || undefined}
+        className="border-line/80 bg-ink/85 sticky top-14 z-30 -mx-4 border-y px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:top-20 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-m-2 lg:flex lg:max-h-[calc(100dvh-6rem)] lg:[scrollbar-width:thin] lg:flex-col lg:gap-4 lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:border-0 lg:bg-transparent lg:p-2 lg:backdrop-blur-none"
+        aria-label="Run status and controls"
+      >
+        <section
+          className="lg:border-line lg:bg-raised/70 lg:rounded-xl lg:border lg:p-4 lg:backdrop-blur"
+          aria-labelledby="status-heading"
         >
-          <div className="lg:col-start-1 lg:row-start-1">{hero}</div>
-
-          <aside
-            className="border-line/80 bg-ink/85 sticky top-14 z-30 -mx-4 border-y px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:top-20 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-m-2 lg:flex lg:max-h-[calc(100dvh-6rem)] lg:[scrollbar-width:thin] lg:flex-col lg:gap-4 lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:border-0 lg:bg-transparent lg:p-2 lg:backdrop-blur-none"
-            aria-label="Run status and controls"
-          >
-            <section
-              className="lg:border-line lg:bg-raised/70 lg:rounded-xl lg:border lg:p-4 lg:backdrop-blur"
-              aria-labelledby="status-heading"
+          <div className="mb-3 flex items-center justify-between max-lg:sr-only">
+            <h2
+              id="status-heading"
+              className="font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"
             >
-              <div className="mb-3 flex items-center justify-between max-lg:sr-only">
-                <h2
-                  id="status-heading"
-                  className="font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"
-                >
-                  Agent
-                </h2>
-                <span className="font-mono text-[11px] text-[#8b94a0]">{mode === 'mock' ? MODEL : 'live'}</span>
-              </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <AgentStatus
-                  state={paused && running ? 'idle' : derived.state}
-                  label={statusLabel}
-                  detail={statusDetail}
-                  elapsedMs={timing.startedAt !== undefined ? timing.activeMs : undefined}
-                  // Phones: no room for the tool name next to the playback buttons; the timeline has it.
-                  className="min-w-0 max-sm:[&>.truncate]:hidden"
-                />
-                {mode === 'mock' && (
-                  <CompactRunControls
-                    className="ml-auto lg:hidden"
-                    paused={paused}
-                    running={running}
-                    onPausedChange={setPaused}
-                    onReplay={replay}
-                    onOpenControls={() => setSheetOpen(true)}
-                    controlsId="run-controls-sheet"
-                  />
-                )}
-              </div>
-              {mode === 'mock' && <RunControls className="mt-4 hidden lg:flex" {...controls} />}
-            </section>
-            <RunMeter
-              variant="expanded"
-              {...meter}
-              model={mode === 'mock' ? MODEL : undefined}
-              className="border-line bg-raised/70 hidden backdrop-blur lg:block"
-            />
-            {/* Shortcuts mean nothing on a touch screen. */}
-            <KeyboardCard className="hidden lg:block pointer-coarse:hidden" />
-          </aside>
-
-          {/*
-           * At least a screen tall, so the sections below start off screen and the run growing into
-           * its space doesn't push them around (layout shift).
-           */}
-          <div className="flex min-h-svh min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2">
-            <div className="flex flex-col gap-3">
-              <p className="text-[13px] leading-relaxed text-[#8b94a0]">
-                <span className="font-medium text-[#e8eaed]">Live demo, no API key.</span> A scripted coding agent adds
-                rate limiting to a Next.js route. Every panel is a kit component.
-              </p>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="border-line bg-raised/60 hidden items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] text-[#a1a9b4] sm:inline-flex">
-                  <span className="bg-cyan size-1.5 rounded-full" aria-hidden="true" />
-                  {REPO}
-                </span>
-                <span className="hidden font-mono text-[11px] text-[#8b94a0] sm:inline">main · next@16 · ai@7</span>
-                <div className="max-w-full min-w-0 sm:ml-auto lg:hidden">
-                  <RunMeter
-                    {...meter}
-                    durationMs={timing.activeMs}
-                    live={running}
-                    // Narrow phones: a size smaller, so the strip fits without scrolling.
-                    className="max-[389px]:text-[11px] max-[359px]:[&>span]:px-1.5"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {userMessage && (
-              <section aria-label="Your request" className="border-line bg-raised/60 rounded-xl border px-4 py-3.5">
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span
-                    className="flex size-5 items-center justify-center rounded-full bg-[#262b33] font-mono text-[10px] font-semibold text-[#e8eaed]"
-                    aria-hidden="true"
-                  >
-                    DE
-                  </span>
-                  <span className="text-[13px] font-medium text-[#a1a9b4]">You</span>
-                </div>
-                <p className="text-[15px] leading-relaxed text-[#e8eaed]">
-                  {userMessage.parts.map((p) => (p.type === 'text' ? p.text : '')).join('')}
-                </p>
-              </section>
-            )}
-
-            {lastAssistant ? (
-              <section aria-label="Agent run" className="flex min-w-0 flex-col gap-3">
-                <div className="flex items-center gap-2 text-[13px] text-[#a1a9b4]" aria-hidden="true">
-                  <AgentGlyph />
-                  <span className="font-medium text-[#e8eaed]">Agent</span>
-                </div>
-                <AgentMessage
-                  message={lastAssistant}
-                  streaming={running}
-                  active={derived.state !== 'done' && derived.state !== 'error'}
-                  tools={toolMeta}
-                  onToolApproval={addToolApprovalResponse}
-                  approvalProps={{ autoFocus: !autopilot }}
-                  renderTool={review}
-                  sourcesVariant="cards"
-                />
-              </section>
+              Agent
+            </h2>
+            {liveAvailable ? (
+              // Phones get it in the bar or the sheet: this row is only read out there.
+              <ModeSwitch mode={mode} onModeChange={setMode} className="max-lg:hidden" />
             ) : (
-              userMessage && <SkeletonRun />
+              <span className="font-mono text-[11px] text-[#8b94a0]">{MODEL}</span>
             )}
-
-            {done && mode === 'mock' && (
-              <div className="border-line bg-raised/40 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-[13px] text-[#a1a9b4]">
-                <span className="font-medium text-[#e8eaed]">Run complete</span>
-                <span className="font-mono text-xs">
-                  {formatDuration(timing.activeMs)} active · {cost !== undefined ? formatCost(cost) : '–'}
-                </span>
-                <button
-                  type="button"
-                  onClick={replay}
-                  className="border-line hover:bg-raised focus-visible:outline-cyan-soft ml-auto inline-flex h-8 cursor-pointer items-center rounded-lg border px-3 text-[13px] font-medium text-[#e8eaed] transition-colors hover:border-[#353c47] focus-visible:outline-2 focus-visible:outline-offset-2"
-                >
-                  Replay run
-                </button>
-              </div>
-            )}
-
-            {mode === 'live' && (
-              <Composer
-                disabled={running}
-                onSend={(text) => {
-                  stickRef.current = true;
-                  void sendMessage({ text });
-                }}
-                onStop={() => void stop()}
+          </div>
+          <div className="flex min-w-0 items-center gap-2">
+            <AgentStatus
+              state={paused && running ? 'idle' : derived.state}
+              label={statusLabel}
+              detail={statusDetail}
+              elapsedMs={timing.startedAt !== undefined ? timing.activeMs : undefined}
+              // Phones: no room for the tool name next to the playback buttons; the timeline has it.
+              className="min-w-0 max-sm:[&>.truncate]:hidden"
+            />
+            {mode === 'mock' && (
+              <CompactRunControls
+                className="ml-auto lg:hidden"
+                paused={paused}
                 running={running}
+                onPausedChange={setPaused}
+                onReplay={replay}
+                onOpenControls={() => setSheetOpen(true)}
+                controlsId="run-controls-sheet"
               />
             )}
-            {chat.error && (
-              <p
-                role="alert"
-                className="border-magenta/40 bg-magenta/10 rounded-lg border px-3 py-2 text-[13px] text-[#f472a8]"
-              >
-                {chat.error.message}
-              </p>
+            {mode === 'live' && liveAvailable && (
+              <ModeSwitch mode={mode} onModeChange={setMode} className="ml-auto lg:hidden" />
             )}
-            <div ref={endRef} className="h-px" />
+          </div>
+          {mode === 'mock' && <RunControls className="mt-4 hidden lg:flex" {...controls} />}
+        </section>
+        <RunMeter
+          variant="expanded"
+          {...meter}
+          model={mode === 'mock' ? MODEL : undefined}
+          className="border-line bg-raised/70 hidden backdrop-blur lg:block"
+        />
+        {/* Shortcuts mean nothing on a touch screen. */}
+        <KeyboardCard className="hidden lg:block pointer-coarse:hidden" />
+      </aside>
+
+      {/*
+       * At least a screen tall, so the sections below start off screen and the run growing into
+       * its space doesn't push them around (layout shift).
+       */}
+      <div
+        data-inspect={inspect || undefined}
+        className="flex min-h-svh min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2"
+      >
+        <div className="flex flex-col gap-3">
+          <p className="text-[13px] leading-relaxed text-[#8b94a0]">
+            <span className="font-medium text-[#e8eaed]">Live demo, no API key.</span> A scripted coding agent adds rate
+            limiting to a Next.js route. Every panel is a kit component.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="border-line bg-raised/60 hidden items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] text-[#a1a9b4] sm:inline-flex">
+              <span className="bg-cyan size-1.5 rounded-full" aria-hidden="true" />
+              {REPO}
+            </span>
+            <span className="hidden font-mono text-[11px] text-[#8b94a0] sm:inline">main · next@16 · ai@7</span>
+            <div className="max-w-full min-w-0 sm:ml-auto lg:hidden">
+              <RunMeter
+                {...meter}
+                durationMs={timing.activeMs}
+                live={running}
+                // Narrow phones: a size smaller, so the strip fits without scrolling.
+                className="max-[389px]:text-[11px] max-[359px]:[&>span]:px-1.5"
+              />
+            </div>
           </div>
         </div>
 
-        {children}
-      </main>
+        {userMessage && (
+          <section aria-label="Your request" className="border-line bg-raised/60 rounded-xl border px-4 py-3.5">
+            <div className="mb-1.5 flex items-center gap-2">
+              <span
+                className="flex size-5 items-center justify-center rounded-full bg-[#262b33] font-mono text-[10px] font-semibold text-[#e8eaed]"
+                aria-hidden="true"
+              >
+                DE
+              </span>
+              <span className="text-[13px] font-medium text-[#a1a9b4]">You</span>
+            </div>
+            <p className="text-[15px] leading-relaxed text-[#e8eaed]">
+              {userMessage.parts.map((p) => (p.type === 'text' ? p.text : '')).join('')}
+            </p>
+          </section>
+        )}
+
+        {lastAssistant ? (
+          <section aria-label="Agent run" className="flex min-w-0 flex-col gap-3">
+            <div className="flex items-center gap-2 text-[13px] text-[#a1a9b4]" aria-hidden="true">
+              <AgentGlyph />
+              <span className="font-medium text-[#e8eaed]">Agent</span>
+            </div>
+            <AgentMessage
+              message={lastAssistant}
+              streaming={running}
+              active={derived.state !== 'done' && derived.state !== 'error'}
+              tools={toolMeta}
+              onToolApproval={addToolApprovalResponse}
+              approvalProps={{ autoFocus: !autopilot }}
+              renderTool={review}
+              sourcesVariant="cards"
+            />
+          </section>
+        ) : (
+          userMessage && <SkeletonRun />
+        )}
+
+        {done && mode === 'mock' && (
+          <div className="border-line bg-raised/40 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-[13px] text-[#a1a9b4]">
+            <span className="font-medium text-[#e8eaed]">Run complete</span>
+            <span className="font-mono text-xs">
+              {formatDuration(timing.activeMs)} active · {cost !== undefined ? formatCost(cost) : '–'}
+            </span>
+            <button
+              type="button"
+              onClick={replay}
+              className="border-line hover:bg-raised focus-visible:outline-cyan-soft ml-auto inline-flex h-8 cursor-pointer items-center rounded-lg border px-3 text-[13px] font-medium text-[#e8eaed] transition-colors hover:border-[#353c47] focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              Replay run
+            </button>
+          </div>
+        )}
+
+        {mode === 'live' && (
+          <Composer
+            disabled={running}
+            onSend={(text) => {
+              stickRef.current = true;
+              void sendMessage({ text });
+            }}
+            onStop={() => void stop()}
+            running={running}
+          />
+        )}
+        {chat.error && (
+          <p
+            role="alert"
+            className="border-magenta/40 bg-magenta/10 rounded-lg border px-3 py-2 text-[13px] text-[#f472a8]"
+          >
+            {chat.error.message}
+          </p>
+        )}
+        <div ref={endRef} className="h-px" />
+      </div>
 
       {mode === 'mock' && (
         <Sheet id="run-controls-sheet" open={sheetOpen} onClose={() => setSheetOpen(false)} title="Run controls">
           {sheetOpen && (
             <>
+              {liveAvailable && <ModeSwitch mode={mode} onModeChange={setMode} className="self-start" />}
               <RunControls
                 {...controls}
                 onReplay={() => {
@@ -450,7 +436,7 @@ export function Playground({
           )}
         </Sheet>
       )}
-    </div>
+    </>
   );
 }
 
@@ -552,5 +538,37 @@ function AgentGlyph() {
         <path d="M12 3c.6 4.4 2.6 6.9 7.5 8.5-4.9 1.6-6.9 4.1-7.5 8.5-.6-4.4-2.6-6.9-7.5-8.5C9.4 9.9 11.4 7.4 12 3Z" />
       </svg>
     </span>
+  );
+}
+
+/** Scripted or live, when the server has a model key (OPENAI_API_KEY); otherwise there's no choice to offer. */
+function ModeSwitch({
+  mode,
+  onModeChange,
+  className = '',
+}: {
+  mode: Mode;
+  onModeChange: (mode: Mode) => void;
+  className?: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Agent"
+      className={`border-line bg-raised/60 flex rounded-lg border p-0.5 ${className}`}
+    >
+      {(['mock', 'live'] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          role="radio"
+          aria-checked={mode === m}
+          onClick={() => onModeChange(m)}
+          className="focus-visible:outline-cyan-soft cursor-pointer rounded-md px-2 py-0.5 text-[11px] font-medium text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 aria-checked:bg-[#262b33] aria-checked:text-[#e8eaed]"
+        >
+          {m === 'mock' ? 'Scripted' : 'Live'}
+        </button>
+      ))}
+    </div>
   );
 }

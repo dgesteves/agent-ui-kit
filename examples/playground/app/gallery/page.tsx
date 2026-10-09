@@ -11,7 +11,7 @@ import { componentHref, getComponent } from '@/lib/components';
 import { pageMetadata } from '@/lib/metadata';
 
 export const metadata = pageMetadata({
-  title: 'agent-ui-kit · components',
+  title: 'Components · agent-ui-kit',
   description:
     'Every agent-ui-kit component in isolation: status, tool call timeline, approval card, diff review, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
   path: '/gallery',
