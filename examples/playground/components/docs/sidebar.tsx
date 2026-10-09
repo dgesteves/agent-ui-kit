@@ -64,8 +64,8 @@ function NavLinks({
   const link = (active: boolean) =>
     `focus-visible:outline-cyan-soft relative flex items-center rounded-md px-2.5 py-1.5 text-[13.5px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
       active
-        ? 'bg-[#181c22] font-medium text-[#f1f3f5] before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-cyan'
-        : 'text-[#a1a9b4] hover:bg-[#14181d] hover:text-[#e8eaed]'
+        ? 'bg-raised font-medium text-fg-strong before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-cyan'
+        : 'text-fg-muted hover:bg-surface-2 hover:text-fg'
     }`;
 
   return (
@@ -86,11 +86,11 @@ function NavLinks({
           }}
           placeholder="Search docs"
           autoComplete="off"
-          className="border-line focus-visible:outline-cyan-soft h-9 w-full rounded-lg border bg-[#101317] pr-12 pl-3 text-[13.5px] text-[#e8eaed] placeholder:text-[#8b94a0] focus-visible:border-transparent focus-visible:outline-2 [&::-webkit-search-cancel-button]:hidden"
+          className="border-line focus-visible:outline-cyan-soft bg-code text-fg placeholder:text-fg-subtle h-9 w-full rounded-lg border pr-12 pl-3 text-[13.5px] focus-visible:border-transparent focus-visible:outline-2 [&::-webkit-search-cancel-button]:hidden"
         />
         <kbd
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded border border-[#353c47] px-1.5 font-mono text-[10.5px] text-[#8b94a0] lg:block pointer-coarse:hidden"
+          className="border-line-strong text-fg-subtle pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded border px-1.5 font-mono text-[10.5px] lg:block pointer-coarse:hidden"
         >
           ⌘K
         </kbd>
@@ -106,14 +106,14 @@ function NavLinks({
               {results.map((result) => (
                 <li key={result.href}>
                   <Link href={result.href} onClick={onNavigate} className={`${link(false)} flex-col items-start`}>
-                    {result.page && <span className="font-mono text-[10.5px] text-[#8b94a0]">{result.page}</span>}
+                    {result.page && <span className="text-fg-subtle font-mono text-[10.5px]">{result.page}</span>}
                     <span>{result.title}</span>
                   </Link>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="px-2.5 text-[13px] text-[#8b94a0]">Nothing matches “{query.trim()}”.</p>
+            <p className="text-fg-subtle px-2.5 text-[13px]">Nothing matches “{query.trim()}”.</p>
           )}
         </div>
       ) : (
@@ -121,7 +121,7 @@ function NavLinks({
           <div key={group.title}>
             <p
               id={`${id}-group-${g}`}
-              className="mb-1.5 px-2.5 font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"
+              className="text-fg-subtle mb-1.5 px-2.5 font-mono text-[10.5px] font-medium tracking-[0.08em] uppercase"
             >
               {group.title}
             </p>
@@ -178,16 +178,16 @@ export function DocsSidebar({ nav, index }: { nav: NavGroup[]; index: SearchInde
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-controls="docs-menu"
-          className="focus-visible:outline-cyan-soft -ml-1.5 inline-flex h-9 min-w-0 cursor-pointer items-center gap-2.5 rounded-md px-1.5 text-[13.5px] text-[#a1a9b4] hover:text-[#e8eaed] focus-visible:outline-2"
+          className="focus-visible:outline-cyan-soft text-fg-muted hover:text-fg -ml-1.5 inline-flex h-9 min-w-0 cursor-pointer items-center gap-2.5 rounded-md px-1.5 text-[13.5px] focus-visible:outline-2"
         >
           <MenuIcon className="size-4 shrink-0" />
-          <span className="text-[#8b94a0]">Docs</span>
+          <span className="text-fg-subtle">Docs</span>
           {current && (
             <>
-              <span aria-hidden="true" className="text-[#353c47]">
+              <span aria-hidden="true" className="text-line-strong">
                 /
               </span>
-              <span className="truncate font-medium text-[#e8eaed]">{current.title}</span>
+              <span className="text-fg truncate font-medium">{current.title}</span>
             </>
           )}
         </button>

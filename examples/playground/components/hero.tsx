@@ -5,9 +5,9 @@ import { CommandLine } from './copy-button';
 import { ArrowRightIcon, GitHubIcon } from './icons';
 
 export const primaryButton =
-  'bg-cyan text-ink hover:bg-cyan-soft focus-visible:outline-[#e8eaed] inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-[14px] font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2';
+  'bg-cyan text-ink hover:bg-cyan-soft focus-visible:outline-fg inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-[14px] font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2';
 export const secondaryButton =
-  'border-line bg-raised/70 focus-visible:outline-cyan-soft inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-[14px] font-medium whitespace-nowrap text-[#e8eaed] transition-colors hover:border-[#353c47] hover:bg-[#1e232a] focus-visible:outline-2 focus-visible:outline-offset-2';
+  'border-line bg-raised/70 focus-visible:outline-cyan-soft inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-[14px] font-medium whitespace-nowrap text-fg transition-colors hover:border-line-strong hover:bg-raised-2 focus-visible:outline-2 focus-visible:outline-offset-2';
 
 /** Install, read the quickstart, star the repository: the three things a visitor can do next. */
 export function CallsToAction() {
@@ -37,20 +37,20 @@ export function CallsToAction() {
 export function Hero() {
   return (
     <div>
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-[#8b94a0]">
+      <p className="text-fg-subtle flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px]">
         <span className="text-cyan-soft">v{kit.version}</span>
         <span aria-hidden="true">·</span>
         <span>MIT</span>
         <span aria-hidden="true">·</span>
         <span>React 18 &amp; 19</span>
       </p>
-      <h1 className="mt-3 text-[28px] leading-[1.12] font-semibold tracking-[-0.025em] text-balance text-[#f1f3f5] sm:mt-4 sm:text-[38px] xl:text-[42px]">
+      <h1 className="text-fg-strong mt-3 text-[28px] leading-[1.12] font-semibold tracking-[-0.025em] text-balance sm:mt-4 sm:text-[38px] xl:text-[42px]">
         Accessible React components for agent runs
       </h1>
-      <p className="mt-4 max-w-[42rem] text-[15px] leading-relaxed text-pretty text-[#a1a9b4] sm:text-[17px]">
+      <p className="text-fg-muted mt-4 max-w-[42rem] text-[15px] leading-relaxed text-pretty sm:text-[17px]">
         Tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry, for{' '}
-        <span className="text-[#e8eaed]">AI SDK 6 &amp; 7</span> and <span className="text-[#e8eaed]">AG-UI</span>{' '}
-        agents (LangGraph, CrewAI, Mastra).
+        <span className="text-fg">AI SDK 6 &amp; 7</span> and <span className="text-fg">AG-UI</span> agents (LangGraph,
+        CrewAI, Mastra).
       </p>
       <div className="mt-6 sm:mt-7">
         <CallsToAction />

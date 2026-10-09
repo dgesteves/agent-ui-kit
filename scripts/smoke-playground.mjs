@@ -168,8 +168,33 @@ try {
   check(new URL(phone.url()).pathname === '/gallery', 'phone: the menu reaches the components page', phone.url());
   await phoneContext.close();
 
-  // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and frames
-  // that switch to the light palette with no axe violations (contrast included).
+  // Through a whole run from the keyboard: after the review is applied, the reader stays with the
+  // run (the diff folds away above them) and sees it finish at the bottom of the screen, not
+  // scrolled past it into the sections below.
+  const run = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' });
+  await run.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
+  await run.waitForSelector('[data-slot="approval-card"][data-status="pending"]', { timeout: 60_000 });
+  await run.keyboard.press('y');
+  await run.waitForSelector('[data-slot="diff-submit"]', { timeout: 60_000 });
+  for (const key of ['a', 'a', 'a', 'r']) await run.keyboard.press(key);
+  await run.keyboard.press('Control+Enter');
+  await run.getByText('Run complete').waitFor({ timeout: 60_000 });
+  await run.waitForTimeout(1000);
+  const end = await run.evaluate(() => {
+    const box = [...document.querySelectorAll('span')].find((el) => el.textContent === 'Run complete');
+    const { top, bottom } = box.getBoundingClientRect();
+    return { top: Math.round(top), bottom: Math.round(bottom), height: innerHeight };
+  });
+  check(
+    end.top > end.height / 2 && end.bottom <= end.height,
+    'run: after the review is applied, the run fills the screen down to its end',
+    JSON.stringify(end),
+  );
+  await run.close();
+
+  // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and the
+  // header's theme switch, which re-themes the page and the frames, with no axe violations
+  // (contrast included) and remembered on the next visit.
   const gallery = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
   await gallery.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
   const anchors = ['agent-status', 'tool-call-timeline', 'approval-card', 'diff-review', 'run-meter', 'sources'];
@@ -181,9 +206,17 @@ try {
     snippets.some((text) => text.includes("import '@dgesteves/agent-ui-kit/styles.css';")),
     'gallery: the npm snippets import the styles',
   );
-  await gallery.getByRole('radio', { name: 'light' }).click();
+  await gallery.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: 'Light' }).click();
   const frame = await gallery.$eval('[data-shot="approval-card"]', (el) => getComputedStyle(el).backgroundColor);
-  check(frame === 'rgb(255, 255, 255)', 'gallery: the light toggle switches the frames', frame);
+  const page = await gallery.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  check(
+    frame === 'rgb(255, 255, 255)' && page === 'rgb(255, 255, 255)',
+    'gallery: the theme switch turns the page and the frames light',
+    `frame ${frame}, page ${page}`,
+  );
+  await gallery.reload({ waitUntil: 'networkidle' });
+  const remembered = await gallery.evaluate(() => document.documentElement.className);
+  check(/\blight\b/.test(remembered), 'theme: the choice is remembered, and applied before paint', remembered);
   await gallery.waitForTimeout(800);
   const require = createRequire(join(import.meta.dirname, '../packages/agent-ui-kit/package.json'));
   await gallery.addScriptTag({ content: readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8') });

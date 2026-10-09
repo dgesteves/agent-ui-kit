@@ -43,14 +43,14 @@ export function Composer({
           }
         }}
         placeholder="Ask the agent to change something in the repo…"
-        className="w-full resize-none bg-transparent px-2 py-1.5 text-[14px] text-[#e8eaed] placeholder:text-[#8b94a0] focus:outline-none"
+        className="text-fg placeholder:text-fg-subtle w-full resize-none bg-transparent px-2 py-1.5 text-[14px] focus:outline-none"
       />
       <div className="flex justify-end">
         {running ? (
           <button
             type="button"
             onClick={onStop}
-            className="border-line focus-visible:outline-cyan-soft h-8 cursor-pointer rounded-lg border px-3 text-[13px] text-[#e8eaed] focus-visible:outline-2"
+            className="border-line focus-visible:outline-cyan-soft text-fg h-8 cursor-pointer rounded-lg border px-3 text-[13px] focus-visible:outline-2"
           >
             Stop
           </button>

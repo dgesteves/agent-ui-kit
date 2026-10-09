@@ -44,7 +44,7 @@ export function PageActions({ markdownPath }: { markdownPath: string }) {
     { verb: 'Open in ', label: 'Claude', href: `https://claude.ai/new?q=${encodeURIComponent(prompt)}` },
   ];
   const button =
-    'focus-visible:outline-cyan-soft inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-[#262b33] bg-[#12151a] px-2.5 text-[12.5px] font-medium text-[#c9d1d9] transition-colors hover:border-[#353c47] hover:text-[#f1f3f5] focus-visible:outline-2 focus-visible:outline-offset-2';
+    'focus-visible:outline-cyan-soft inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[12.5px] font-medium text-fg-soft transition-colors hover:border-line-strong hover:text-fg-strong focus-visible:outline-2 focus-visible:outline-offset-2';
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -75,7 +75,7 @@ export function PageActions({ markdownPath }: { markdownPath: string }) {
           </span>
           {link.href.startsWith('http') && (
             <>
-              <ArrowUpRightIcon className="size-3 text-[#8b94a0]" />
+              <ArrowUpRightIcon className="text-fg-subtle size-3" />
               <span className="sr-only">(opens in a new tab)</span>
             </>
           )}

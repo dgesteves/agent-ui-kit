@@ -26,7 +26,7 @@ export function CopyButton({ text, label, className = '' }: { text: string; labe
             () => setState('failed'),
           );
         }}
-        className={`focus-visible:outline-cyan-soft inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-[#a1a9b4] transition-colors hover:bg-[#262b33] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 ${className}`}
+        className={`focus-visible:outline-cyan-soft text-fg-muted hover:bg-line hover:text-fg inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 ${className}`}
       >
         {state === 'copied' ? <CheckIcon className="text-cyan-soft size-4" /> : <CopyIcon className="size-4" />}
       </button>
@@ -49,12 +49,12 @@ export function CommandLine({
 }) {
   return (
     <div
-      className={`border-line flex h-11 min-w-0 items-center gap-2 rounded-lg border bg-[#101317] pr-1.5 pl-3.5 ${className}`}
+      className={`border-line bg-code flex h-11 min-w-0 items-center gap-2 rounded-lg border pr-1.5 pl-3.5 ${className}`}
     >
-      <span className="font-mono text-[13px] text-[#8b94a0] select-none" aria-hidden="true">
+      <span className="text-fg-subtle font-mono text-[13px] select-none" aria-hidden="true">
         $
       </span>
-      <code className="min-w-0 flex-1 truncate font-mono text-[13px] text-[#e8eaed]">{command}</code>
+      <code className="text-fg min-w-0 flex-1 truncate font-mono text-[13px]">{command}</code>
       <CopyButton text={command} label={label} />
     </div>
   );

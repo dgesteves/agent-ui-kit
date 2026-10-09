@@ -26,8 +26,8 @@ export function installSnippets(component: ComponentDoc) {
 function Panel({ command, code, label }: { command: string; code: string; label: string }) {
   return (
     <div>
-      <div className="flex items-start gap-2 border-b border-[#262b33] py-1.5 pr-1.5 pl-4">
-        <code className="min-w-0 flex-1 py-1.5 font-mono text-[13px] leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap text-[#e8eaed]">
+      <div className="border-line flex items-start gap-2 border-b py-1.5 pr-1.5 pl-4">
+        <code className="text-fg min-w-0 flex-1 py-1.5 font-mono text-[13px] leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap">
           {command}
         </code>
         <CopyButton text={command} label={label} />

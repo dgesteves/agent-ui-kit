@@ -4,7 +4,6 @@ import { DEMOS } from '@/components/demos';
 import { ThemingDemo } from '@/components/demos/theming';
 import { ComponentInstall } from '@/components/docs/component-install';
 import { Footer } from '@/components/footer';
-import { GalleryTheme } from '@/components/gallery';
 import { Header } from '@/components/header';
 import { ArrowRightIcon } from '@/components/icons';
 import { componentHref, getComponent } from '@/lib/components';
@@ -101,10 +100,10 @@ function Section({ id, slug, heading, description }: (typeof SECTIONS)[number]) 
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
-          <h2 id={`${id}-title`} className="font-mono text-sm font-semibold text-[#e8eaed]">
+          <h2 id={`${id}-title`} className="text-fg font-mono text-sm font-semibold">
             {heading}
           </h2>
-          <p className="mt-1 max-w-2xl text-[13px] text-[#a1a9b4]">{description}</p>
+          <p className="text-fg-muted mt-1 max-w-2xl text-[13px]">{description}</p>
         </div>
         <Link
           href={docs}
@@ -130,22 +129,20 @@ export default function GalleryPage() {
     <div className="min-h-dvh">
       <Header page="components" />
       <main id="main" className="mx-auto w-full max-w-[1000px] px-4 pt-10 pb-24 sm:px-6">
-        <GalleryTheme
-          intro={
-            <>
-              <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
-              <p className="mt-2 text-[14px] leading-relaxed text-[#a1a9b4]">
-                Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent, at the end),
-                with how to install it from npm or as a shadcn registry item. Everything here is interactive and
-                keyboard accessible; each component&apos;s docs page has its props, keyboard and theming hooks.
-              </p>
-            </>
-          }
-        >
+        <div className="max-w-2xl">
+          <h1 className="text-fg text-2xl font-semibold tracking-tight">Components</h1>
+          <p className="text-fg-muted mt-2 text-[14px] leading-relaxed">
+            Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent, at the end),
+            with how to install it from npm or as a shadcn registry item. Everything here is interactive and keyboard
+            accessible; each component&apos;s docs page has its props, keyboard and theming hooks. The frames follow the
+            site&apos;s theme: switch it in the header to see either palette.
+          </p>
+        </div>
+        <div className="mt-14 flex flex-col gap-16">
           {SECTIONS.map((section) => (
             <Section key={section.id} {...section} />
           ))}
-        </GalleryTheme>
+        </div>
       </main>
       <Footer />
     </div>

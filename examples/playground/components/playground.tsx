@@ -163,13 +163,16 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
           <ReviewStep
             key={`${runId}-${part.toolCallId}`}
             files={files}
-            onSubmit={(result) =>
+            onSubmit={(result) => {
+              // The review folds into a one-line summary; follow the run on from there, rather than
+              // staying where the last hunk was, which is now past the end of the run.
+              stickRef.current = true;
               void addToolOutput({
                 tool: 'review_changes',
                 toolCallId: part.toolCallId,
                 output: toReviewOutput(result),
-              })
-            }
+              });
+            }}
           />
         );
       }
@@ -229,6 +232,16 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
   }, [messages, running]);
 
   const done = status === 'ready' && derived.state === 'done';
+  // When the run finishes, the reasoning and the reviewed diff fold away above the answer; a reader
+  // who was following stays with the end of the run rather than the sections below it.
+  useEffect(() => {
+    if (!done || !stickRef.current) return;
+    const id = setTimeout(() => {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      endRef.current?.scrollIntoView({ block: 'end', behavior: smooth ? 'smooth' : 'auto' });
+    }, 250);
+    return () => clearTimeout(id);
+  }, [done]);
   const cost = usage ? estimateCost(usage, PRICING).total : undefined;
 
   const controls = {
@@ -265,7 +278,7 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
           <div className="mb-3 flex items-center justify-between max-lg:sr-only">
             <h2
               id="status-heading"
-              className="font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"
+              className="text-fg-subtle font-mono text-[10.5px] font-medium tracking-[0.08em] uppercase"
             >
               Agent
             </h2>
@@ -273,7 +286,7 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
               // Phones get it in the bar or the sheet: this row is only read out there.
               <ModeSwitch mode={mode} onModeChange={setMode} className="max-lg:hidden" />
             ) : (
-              <span className="font-mono text-[11px] text-[#8b94a0]">{MODEL}</span>
+              <span className="text-fg-subtle font-mono text-[11px]">{MODEL}</span>
             )}
           </div>
           <div className="flex min-w-0 items-center gap-2">
@@ -321,16 +334,16 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
         className="flex min-h-svh min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2"
       >
         <div className="flex flex-col gap-3">
-          <p className="text-[13px] leading-relaxed text-[#8b94a0]">
-            <span className="font-medium text-[#e8eaed]">Live demo, no API key.</span> A scripted coding agent adds rate
+          <p className="text-fg-subtle text-[13px] leading-relaxed">
+            <span className="text-fg font-medium">Live demo, no API key.</span> A scripted coding agent adds rate
             limiting to a Next.js route. Every panel is a kit component.
           </p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="border-line bg-raised/60 hidden items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] text-[#a1a9b4] sm:inline-flex">
+            <span className="border-line bg-raised/60 text-fg-muted hidden items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] sm:inline-flex">
               <span className="bg-cyan size-1.5 rounded-full" aria-hidden="true" />
               {REPO}
             </span>
-            <span className="hidden font-mono text-[11px] text-[#8b94a0] sm:inline">main · next@16 · ai@7</span>
+            <span className="text-fg-subtle hidden font-mono text-[11px] sm:inline">main · next@16 · ai@7</span>
             <div className="max-w-full min-w-0 sm:ml-auto lg:hidden">
               <RunMeter
                 {...meter}
@@ -347,14 +360,14 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
           <section aria-label="Your request" className="border-line bg-raised/60 rounded-xl border px-4 py-3.5">
             <div className="mb-1.5 flex items-center gap-2">
               <span
-                className="flex size-5 items-center justify-center rounded-full bg-[#262b33] font-mono text-[10px] font-semibold text-[#e8eaed]"
+                className="bg-line text-fg flex size-5 items-center justify-center rounded-full font-mono text-[10px] font-semibold"
                 aria-hidden="true"
               >
                 DE
               </span>
-              <span className="text-[13px] font-medium text-[#a1a9b4]">You</span>
+              <span className="text-fg-muted text-[13px] font-medium">You</span>
             </div>
-            <p className="text-[15px] leading-relaxed text-[#e8eaed]">
+            <p className="text-fg text-[15px] leading-relaxed">
               {userMessage.parts.map((p) => (p.type === 'text' ? p.text : '')).join('')}
             </p>
           </section>
@@ -362,9 +375,9 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
 
         {lastAssistant ? (
           <section aria-label="Agent run" className="flex min-w-0 flex-col gap-3">
-            <div className="flex items-center gap-2 text-[13px] text-[#a1a9b4]" aria-hidden="true">
+            <div className="text-fg-muted flex items-center gap-2 text-[13px]" aria-hidden="true">
               <AgentGlyph />
-              <span className="font-medium text-[#e8eaed]">Agent</span>
+              <span className="text-fg font-medium">Agent</span>
             </div>
             <AgentMessage
               message={lastAssistant}
@@ -382,15 +395,15 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
         )}
 
         {done && mode === 'mock' && (
-          <div className="border-line bg-raised/40 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-[13px] text-[#a1a9b4]">
-            <span className="font-medium text-[#e8eaed]">Run complete</span>
+          <div className="border-line bg-raised/40 text-fg-muted flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-[13px]">
+            <span className="text-fg font-medium">Run complete</span>
             <span className="font-mono text-xs">
               {formatDuration(timing.activeMs)} active · {cost !== undefined ? formatCost(cost) : '–'}
             </span>
             <button
               type="button"
               onClick={replay}
-              className="border-line hover:bg-raised focus-visible:outline-cyan-soft ml-auto inline-flex h-8 cursor-pointer items-center rounded-lg border px-3 text-[13px] font-medium text-[#e8eaed] transition-colors hover:border-[#353c47] focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="border-line hover:bg-raised focus-visible:outline-cyan-soft text-fg hover:border-line-strong ml-auto inline-flex h-8 cursor-pointer items-center rounded-lg border px-3 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               Replay run
             </button>
@@ -411,7 +424,7 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
         {chat.error && (
           <p
             role="alert"
-            className="border-magenta/40 bg-magenta/10 rounded-lg border px-3 py-2 text-[13px] text-[#f472a8]"
+            className="border-magenta/40 bg-magenta/10 text-magenta-soft rounded-lg border px-3 py-2 text-[13px]"
           >
             {chat.error.message}
           </p>
@@ -472,10 +485,10 @@ function AppliedChanges({ files, output }: { files: FileChange[]; output: Review
         >
           <path d="M5 12.5 9.5 17 19 7.5" />
         </svg>
-        <span className="text-[13px] font-semibold text-[#e8eaed]">
+        <span className="text-fg text-[13px] font-semibold">
           Applied {output.accepted} of {output.accepted + output.rejected} hunks
         </span>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-[#a1a9b4]" aria-label="Files">
+        <ul className="text-fg-muted flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs" aria-label="Files">
           {parsed.map((file) => (
             <li key={file.id} className="flex items-center gap-2">
               {file.path}
@@ -487,7 +500,7 @@ function AppliedChanges({ files, output }: { files: FileChange[]; output: Review
                 {file.hunks.map((h) => (
                   <span
                     key={h.id}
-                    className={`size-1.5 rounded-full ${decisions[h.id] === 'accepted' ? 'bg-cyan' : decisions[h.id] === 'rejected' ? 'bg-magenta' : 'bg-[#353c47]'}`}
+                    className={`size-1.5 rounded-full ${decisions[h.id] === 'accepted' ? 'bg-cyan' : decisions[h.id] === 'rejected' ? 'bg-magenta' : 'bg-line-strong'}`}
                   />
                 ))}
               </span>
@@ -496,7 +509,7 @@ function AppliedChanges({ files, output }: { files: FileChange[]; output: Review
         </ul>
       </div>
       <details className="group border-line border-t">
-        <summary className="focus-visible:outline-cyan-soft cursor-pointer list-none rounded-b-xl px-4 py-2 text-xs text-[#a1a9b4] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-[-2px] [&::-webkit-details-marker]:hidden">
+        <summary className="focus-visible:outline-cyan-soft text-fg-muted hover:text-fg cursor-pointer list-none rounded-b-xl px-4 py-2 text-xs focus-visible:outline-2 focus-visible:outline-offset-[-2px] [&::-webkit-details-marker]:hidden">
           <span className="group-open:hidden">Show reviewed diff</span>
           <span className="hidden group-open:inline">Hide reviewed diff</span>
         </summary>
@@ -511,10 +524,10 @@ function AppliedChanges({ files, output }: { files: FileChange[]; output: Review
 function PreparingChanges() {
   return (
     <div
-      className="border-line bg-raised/60 flex items-center gap-3 rounded-xl border px-4 py-3.5 text-[13px] text-[#a1a9b4]"
+      className="border-line bg-raised/60 text-fg-muted flex items-center gap-3 rounded-xl border px-4 py-3.5 text-[13px]"
       role="status"
     >
-      <span className="relative h-1 w-24 overflow-hidden rounded-full bg-[#1e232a]" aria-hidden="true">
+      <span className="bg-raised-2 relative h-1 w-24 overflow-hidden rounded-full" aria-hidden="true">
         <span className="bg-cyan motion-safe:animate-aui-indeterminate absolute inset-y-0 w-1/3 rounded-full" />
       </span>
       Preparing changes…
@@ -564,7 +577,7 @@ function ModeSwitch({
           role="radio"
           aria-checked={mode === m}
           onClick={() => onModeChange(m)}
-          className="focus-visible:outline-cyan-soft cursor-pointer rounded-md px-2 py-0.5 text-[11px] font-medium text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 aria-checked:bg-[#262b33] aria-checked:text-[#e8eaed]"
+          className="focus-visible:outline-cyan-soft text-fg-muted hover:text-fg aria-checked:bg-line aria-checked:text-fg cursor-pointer rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1"
         >
           {m === 'mock' ? 'Scripted' : 'Live'}
         </button>

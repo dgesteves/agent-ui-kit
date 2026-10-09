@@ -13,7 +13,7 @@ export function Tabs({ label, labels, children }: { label: string; labels: strin
   };
   return (
     <div className="code-block">
-      <div role="tablist" aria-label={label} className="flex items-center border-b border-[#262b33] px-2">
+      <div role="tablist" aria-label={label} className="border-line flex items-center border-b px-2">
         {labels.map((name, i) => (
           <button
             key={name}
@@ -31,7 +31,7 @@ export function Tabs({ label, labels, children }: { label: string; labels: strin
               select((i + step + labels.length) % labels.length, true);
             }}
             className={`focus-visible:outline-cyan-soft -mb-px cursor-pointer border-b-2 px-2.5 py-2 font-mono text-[12px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
-              selected === i ? 'border-cyan text-[#e8eaed]' : 'border-transparent text-[#8b94a0] hover:text-[#e8eaed]'
+              selected === i ? 'border-cyan text-fg' : 'text-fg-subtle hover:text-fg border-transparent'
             }`}
           >
             {name}
