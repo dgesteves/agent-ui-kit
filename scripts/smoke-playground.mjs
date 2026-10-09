@@ -43,6 +43,7 @@ try {
     ['/', 'agent-ui-kit · playground'],
     ['/gallery', 'agent-ui-kit · components'],
     ['/docs/getting-started', 'Getting started · agent-ui-kit docs'],
+    ['/docs/components/approval-card', 'ApprovalCard · agent-ui-kit docs'],
   ]) {
     const html = await (await fetch(BASE + path)).text();
     const meta = (key) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
@@ -81,6 +82,7 @@ try {
     ['/docs.md', '# Introduction\n'],
     ['/docs/getting-started.md', '# Getting started\n'],
     ['/docs/ag-ui.md', '# AG-UI agents\n'],
+    ['/docs/components/approval-card.md', '# ApprovalCard\n'],
   ]) {
     const response = await fetch(BASE + path);
     const text = await response.text();
@@ -90,6 +92,14 @@ try {
       `${response.status} ${response.headers.get('content-type')}`,
     );
   }
+
+  // Component pages document props from the package's own types: ApprovalCard's toolName is a
+  // required string and risk defaults to 'medium' (the page and its Markdown share the source).
+  const card = await (await fetch(`${BASE}/docs/components/approval-card.md`)).text();
+  check(
+    card.includes('| `toolName` (required) | `string` |') && /\| `risk` \| `RiskLevel`.*\| `'medium'` \|/.test(card),
+    'docs: props tables come from the types, with defaults from the source',
+  );
 
   // The docs search finds sections, not only pages.
   const docs = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
@@ -148,11 +158,15 @@ try {
   check(new URL(phone.url()).pathname === '/gallery', 'phone: the menu reaches the components page', phone.url());
   await phoneContext.close();
 
-  // The gallery: npm snippets that bring the styles, and frames that switch to the light palette
-  // with no axe violations (contrast included).
+  // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and frames
+  // that switch to the light palette with no axe violations (contrast included).
   const gallery = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
   await gallery.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
-  const snippets = await gallery.locator('pre').allInnerTexts();
+  const anchors = ['agent-status', 'tool-call-timeline', 'approval-card', 'diff-review', 'run-meter', 'sources'];
+  anchors.push('theming', 'agent-message', 'ag-ui');
+  const missing = await gallery.evaluate((ids) => ids.filter((id) => !document.getElementById(id)), anchors);
+  check(missing.length === 0, 'gallery: every section anchor is there', missing.join(', '));
+  const snippets = await gallery.locator('pre:visible').allInnerTexts();
   check(
     snippets.some((text) => text.includes("import '@dgesteves/agent-ui-kit/styles.css';")),
     'gallery: the npm snippets import the styles',

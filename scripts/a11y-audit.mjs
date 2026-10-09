@@ -53,7 +53,15 @@ await audit(page, 'playground · done');
 await page.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
 await settle(page);
 await audit(page, 'gallery (dark, light and custom themes)');
-for (const path of ['/docs', '/docs/getting-started', '/docs/ag-ui']) {
+for (const path of [
+  '/docs',
+  '/docs/getting-started',
+  '/docs/ag-ui',
+  '/docs/components/approval-card',
+  '/docs/components/diff-review',
+  '/docs/components/run-meter',
+  '/docs/components/use-ag-ui-agent',
+]) {
   await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
   await settle(page);
   await audit(page, `docs ${path}`);
@@ -66,6 +74,9 @@ await audit(page, 'playground · 390px viewport');
 await page.goto(`${BASE}/docs/getting-started`, { waitUntil: 'networkidle' });
 await settle(page);
 await audit(page, 'docs /docs/getting-started · 390px viewport');
+await page.goto(`${BASE}/docs/components/tool-call-timeline`, { waitUntil: 'networkidle' });
+await settle(page);
+await audit(page, 'docs /docs/components/tool-call-timeline · 390px viewport');
 await browser.close();
 
 if (failures > 0) {
