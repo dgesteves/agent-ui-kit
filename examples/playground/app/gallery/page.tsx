@@ -1,27 +1,152 @@
-import type { Metadata } from 'next';
-import { Gallery } from '@/components/gallery';
+import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { DEMOS } from '@/components/demos';
+import { ThemingDemo } from '@/components/demos/theming';
+import { ComponentInstall } from '@/components/docs/component-install';
 import { Footer } from '@/components/footer';
+import { GalleryTheme } from '@/components/gallery';
 import { Header } from '@/components/header';
+import { ArrowRightIcon } from '@/components/icons';
+import { componentHref, getComponent } from '@/lib/components';
+import { pageMetadata } from '@/lib/metadata';
 
-const title = 'agent-ui-kit · components';
-const description =
-  'Every agent-ui-kit component in isolation: status, tool call timeline, approval card, diff review, run meter, sources, a whole message and an AG-UI agent, with npm and shadcn install snippets.';
+export const metadata = pageMetadata({
+  title: 'agent-ui-kit · components',
+  description:
+    'Every agent-ui-kit component in isolation: status, tool call timeline, approval card, diff review, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
+  path: '/gallery',
+});
 
-// A page's own openGraph replaces the root's, file-based image included, so name the image again.
-const images = [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'The agent-ui-kit playground mid-run.' }];
+// Page order; each id is the section's anchor, which launch posts and the README link to.
+const SECTIONS: Array<{ id: string; slug?: string; heading: string; description: string }> = [
+  {
+    id: 'agent-status',
+    slug: 'agent-status',
+    heading: '<AgentStatus />',
+    description: 'Run state in one pill, announced through a live region.',
+  },
+  {
+    id: 'tool-call-timeline',
+    slug: 'tool-call-timeline',
+    heading: '<ToolCallTimeline />',
+    description: 'Every tool state with durations, a waterfall, and expandable input and output.',
+  },
+  {
+    id: 'approval-card',
+    slug: 'approval-card',
+    heading: '<ApprovalCard />',
+    description: 'Human-in-the-loop approval with risk, preview and Y / N shortcuts.',
+  },
+  {
+    id: 'diff-review',
+    slug: 'diff-review',
+    heading: '<DiffReview />',
+    description: 'Accept or reject agent edits hunk by hunk, unified or split.',
+  },
+  {
+    id: 'run-meter',
+    slug: 'run-meter',
+    heading: '<RunMeter />',
+    description: 'Tokens, estimated cost and latency; compact for headers, expanded for panels.',
+  },
+  {
+    id: 'sources',
+    slug: 'sources',
+    heading: '<Sources />',
+    description: 'Citations as compact chips or cards; inline [n] markers link to them.',
+  },
+  {
+    id: 'theming',
+    heading: 'Theming',
+    description:
+      'Every color, radius and font is a CSS variable. Light is the default, .dark switches, and any subtree can override tokens.',
+  },
+  {
+    id: 'agent-message',
+    slug: 'agent-message',
+    heading: '<AgentMessage />',
+    description: 'A whole assistant UIMessage: reasoning, streaming markdown, grouped tool calls and sources.',
+  },
+  {
+    id: 'markdown',
+    slug: 'markdown',
+    heading: '<Markdown />',
+    description: 'Streaming-safe markdown: syntax that hasn’t closed yet never flashes raw, and no raw HTML.',
+  },
+  {
+    id: 'reasoning',
+    slug: 'reasoning',
+    heading: '<Reasoning />',
+    description: 'Open while the model thinks, then one line: “Thought for 1.7s”.',
+  },
+  {
+    id: 'ag-ui',
+    slug: 'use-ag-ui-agent',
+    heading: 'useAgUiAgent(agent)',
+    description:
+      'AG-UI agents (LangGraph, CrewAI, Mastra, Pydantic AI) through the same components. This one is a real @ag-ui/client agent replaying a LangGraph-style run: steps, streamed tool arguments, and an interrupt that resumes the run when you answer it.',
+  },
+];
 
-export const metadata: Metadata = {
-  title,
-  description,
-  openGraph: { type: 'website', siteName: 'agent-ui-kit', title, description, url: '/gallery', images },
-  twitter: { card: 'summary_large_image', title, description, images },
-};
+function Section({ id, slug, heading, description }: (typeof SECTIONS)[number]) {
+  const component = slug ? getComponent(slug) : undefined;
+  const Demo = slug ? DEMOS[slug] : ThemingDemo;
+  const docs = component ? componentHref(component.slug) : '/docs/getting-started#theming';
+  const frame: ReactNode = (
+    <div data-shot={id} className="border-aui-border bg-aui-bg rounded-2xl border p-3 sm:p-6">
+      {Demo ? <Demo /> : null}
+    </div>
+  );
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+        <div className="min-w-0">
+          <h2 id={`${id}-title`} className="font-mono text-sm font-semibold text-[#e8eaed]">
+            {heading}
+          </h2>
+          <p className="mt-1 max-w-2xl text-[13px] text-[#a1a9b4]">{description}</p>
+        </div>
+        <Link
+          href={docs}
+          className="text-cyan-soft focus-visible:outline-cyan-soft inline-flex items-center gap-1 rounded-sm text-[13px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {component ? 'Docs and props' : 'Theming docs'}
+          <span className="sr-only"> for {component?.name ?? 'theming'}</span>
+          <ArrowRightIcon className="size-3.5" />
+        </Link>
+      </div>
+      {frame}
+      {component && (
+        <div className="mt-3">
+          <ComponentInstall component={component} />
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function GalleryPage() {
   return (
     <div className="min-h-dvh">
       <Header page="components" />
-      <Gallery />
+      <main id="main" className="mx-auto w-full max-w-[1000px] px-4 pt-10 pb-24 sm:px-6">
+        <GalleryTheme
+          intro={
+            <>
+              <h1 className="text-2xl font-semibold tracking-tight text-[#e8eaed]">Components</h1>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#a1a9b4]">
+                Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent, at the end),
+                with how to install it from npm or as a shadcn registry item. Everything here is interactive and
+                keyboard accessible; each component&apos;s docs page has its props, keyboard and theming hooks.
+              </p>
+            </>
+          }
+        >
+          {SECTIONS.map((section) => (
+            <Section key={section.id} {...section} />
+          ))}
+        </GalleryTheme>
+      </main>
       <Footer />
     </div>
   );

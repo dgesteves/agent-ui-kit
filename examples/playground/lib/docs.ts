@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { getInterface } from './api';
+import { componentHref, COMPONENTS } from './components';
 import { SITE_URL } from './site';
 
 /*
@@ -43,36 +45,29 @@ export const GUIDES: DocPage[] = [
   },
 ];
 
-/** The components, until each has its own page: their sections on the components page. */
-const COMPONENTS: NavGroup['items'] = [
-  {
-    title: 'AgentMessage',
-    href: '/gallery#agent-message',
-    description: 'A whole assistant message: reasoning, markdown, tool calls, approvals, sources',
-  },
-  { title: 'ToolCallTimeline', href: '/gallery#tool-call-timeline', description: 'Tool calls, durations, errors' },
-  { title: 'ApprovalCard', href: '/gallery#approval-card', description: 'Human-in-the-loop approval, risk, deny' },
-  { title: 'DiffReview', href: '/gallery#diff-review', description: 'Review edits hunk by hunk, accept, reject' },
-  { title: 'RunMeter', href: '/gallery#run-meter', description: 'Tokens, cost, latency, cache hit rate, usage' },
-  { title: 'AgentStatus', href: '/gallery#agent-status', description: 'Run state pill, live region' },
-  { title: 'Sources', href: '/gallery#sources', description: 'Citations, chips, cards' },
-  { title: 'useAgUiAgent', href: '/gallery#ag-ui', description: 'AG-UI agents, LangGraph, interrupts' },
-];
-
 export const NAV: NavGroup[] = [
   { title: 'Get started', items: GUIDES.slice(0, 2) },
   { title: 'Guides', items: GUIDES.slice(2) },
-  { title: 'Components', items: [{ title: 'All components', href: '/gallery' }, ...COMPONENTS] },
+  {
+    title: 'Components',
+    items: [
+      { title: 'Overview', href: '/gallery', description: 'Every component on one page' },
+      ...COMPONENTS.map((c) => ({ title: c.name, href: componentHref(c.slug), description: c.summary })),
+    ],
+  },
 ];
+
+/** Every docs page in reading order, for previous and next. */
+const ORDER = [...GUIDES, ...COMPONENTS.map((c) => ({ title: c.name, href: componentHref(c.slug) }))];
 
 export function getGuide(slug: string) {
   return GUIDES.find((doc) => doc.slug === slug);
 }
 
-/** The guide before and after this one, in sidebar order. */
-export function getPager(slug: string) {
-  const index = GUIDES.findIndex((doc) => doc.slug === slug);
-  return { prev: GUIDES[index - 1], next: GUIDES[index + 1] };
+/** The pages before and after this one, in sidebar order. */
+export function getPager(href: string) {
+  const index = ORDER.findIndex((page) => page.href === href);
+  return { prev: ORDER[index - 1], next: ORDER[index + 1] };
 }
 
 // `next build` and `next start` run in examples/playground.
@@ -136,11 +131,19 @@ export function getSearchIndex() {
     href: doc.href,
     sections: getHeadings(readGuide(doc)).map((h) => ({ title: h.text, href: `${doc.href}#${h.id}` })),
   }));
-  const components = NAV[2]!.items.map((item) => ({
-    title: item.title,
-    description: item.description ?? '',
-    href: item.href,
-    sections: [],
+  // Components, with their props, so "allowedImageHosts" finds AgentMessage.
+  const components = COMPONENTS.map((c) => ({
+    title: c.name,
+    description: c.summary,
+    href: componentHref(c.slug),
+    sections: c.api.flatMap((entry) => {
+      const owner = entry.props ? entry.name : entry.returns;
+      const doc = getInterface(entry.props ?? entry.returns!);
+      return doc.props.map((prop) => ({
+        title: prop.name,
+        href: `${componentHref(c.slug)}#${`${owner}-${prop.name}`.toLowerCase()}`,
+      }));
+    }),
   }));
   return [...guides, ...components];
 }

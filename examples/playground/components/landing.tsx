@@ -56,7 +56,7 @@ const KIT: Array<{ name: string; id: string; description: ReactNode; meta: strin
   },
   {
     name: 'useAgUiAgent',
-    id: 'ag-ui',
+    id: 'use-ag-ui-agent',
     description:
       'Runs any AG-UI agent and hands the same components its messages, status and usage. Interrupts become approvals.',
     meta: '@dgesteves/agent-ui-kit/ag-ui',
@@ -197,7 +197,7 @@ export function Landing() {
           {KIT.map((item) => (
             <li key={item.id} className="flex">
               <a
-                href={`/gallery#${item.id}`}
+                href={`/docs/components/${item.id}`}
                 className="group border-line bg-raised/40 focus-visible:outline-cyan-soft relative flex w-full flex-col rounded-xl border p-4 transition-colors hover:border-[#353c47] hover:bg-[#14181d] focus-visible:outline-2 focus-visible:outline-offset-2 sm:p-5"
               >
                 <span className="flex items-center justify-between gap-3">
