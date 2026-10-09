@@ -40,8 +40,8 @@ const check = (ok, label, detail = '') => {
 try {
   // Link previews: each page has its title, description and a 1200×630 image that is served.
   for (const [path, title] of [
-    ['/', 'agent-ui-kit · playground'],
-    ['/gallery', 'agent-ui-kit · components'],
+    ['/', 'agent-ui-kit: accessible React components for agent runs'],
+    ['/gallery', 'Components · agent-ui-kit'],
     ['/docs/getting-started', 'Getting started · agent-ui-kit docs'],
     ['/docs/components/approval-card', 'ApprovalCard · agent-ui-kit docs'],
   ]) {
@@ -58,6 +58,16 @@ try {
       `og:title ${meta('og:title')}, og:image ${image} (${served?.status})`,
     );
   }
+
+  // Every page in the sitemap, which robots.txt points to.
+  const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
+  const robots = await (await fetch(`${BASE}/robots.txt`)).text();
+  check(
+    ['/docs/getting-started', '/docs/components/approval-card', '/gallery'].every((path) =>
+      sitemap.includes(`https://agent-ui-kit-demo.vercel.app${path}</loc>`),
+    ) && robots.includes('Sitemap: https://agent-ui-kit-demo.vercel.app/sitemap.xml'),
+    'sitemap.xml lists the docs and components, and robots.txt points to it',
+  );
 
   // Docs for LLMs, built from the README and the registry.
   for (const [path, heading] of [
