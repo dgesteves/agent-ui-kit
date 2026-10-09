@@ -1,14 +1,15 @@
 import Link from 'next/link';
-import { getHeadings, getPager, NAV, readGuide, type DocPage } from '@/lib/docs';
+import type { ReactNode } from 'react';
+import { getHeadings, getPager, NAV, readGuide, type DocPage, type Heading } from '@/lib/docs';
 import { ArrowRightIcon } from '../icons';
 import { DocMarkdown } from './markdown';
 import { PageActions } from './page-actions';
 import { TableOfContents } from './toc';
 
-function Pager({ slug }: { slug: string }) {
-  const { prev, next } = getPager(slug);
-  // After the last guide, the components.
-  const after = next ?? { title: 'Components', href: '/gallery', description: '' };
+function Pager({ href }: { href: string }) {
+  const { prev, next } = getPager(href);
+  // After the last page, the components page.
+  const after = next ?? { title: 'All components', href: '/gallery' };
   const card =
     'group focus-visible:outline-cyan-soft flex flex-col gap-1 rounded-xl border border-[#262b33] px-4 py-3.5 transition-colors hover:border-[#353c47] hover:bg-[#12151a] focus-visible:outline-2 focus-visible:outline-offset-2';
   return (
@@ -35,30 +36,38 @@ function Pager({ slug }: { slug: string }) {
   );
 }
 
-/** A guide: its title, actions, body and pager, with the table of contents beside it on wide screens. */
-export function DocArticle({ doc }: { doc: DocPage }) {
-  const markdown = readGuide(doc);
-  const headings = getHeadings(markdown);
-  const group = NAV.find((g) => g.items.some((item) => item.href === doc.href))?.title;
-  const markdownPath = doc.href === '/docs' ? '/docs.md' : `${doc.href}.md`;
+/** A docs page: title, summary, actions, body and pager, with "On this page" beside it on wide screens. */
+export function DocShell({
+  href,
+  group,
+  title,
+  description,
+  markdownPath,
+  headings,
+  children,
+}: {
+  href: string;
+  group: string | undefined;
+  title: string;
+  description: string;
+  markdownPath: string;
+  headings: Heading[];
+  children: ReactNode;
+}) {
   return (
     <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_13rem] xl:gap-12">
       <article className="min-w-0 pt-8 pb-16 lg:pt-12">
         <div className="max-w-[46rem]">
           {group && <p className="text-cyan-soft font-mono text-[12px]">{group}</p>}
           <h1 className="mt-2 text-[30px] leading-tight font-semibold tracking-[-0.025em] text-[#f1f3f5] sm:text-[36px]">
-            {doc.title}
+            {title}
           </h1>
-          <p className="mt-3 text-[16px] leading-relaxed text-pretty text-[#a1a9b4] sm:text-[17px]">
-            {doc.description}
-          </p>
+          <p className="mt-3 text-[16px] leading-relaxed text-pretty text-[#a1a9b4] sm:text-[17px]">{description}</p>
           <div className="mt-6">
             <PageActions markdownPath={markdownPath} />
           </div>
-          <div className="mt-10">
-            <DocMarkdown markdown={markdown} />
-          </div>
-          <Pager slug={doc.slug} />
+          <div className="mt-10">{children}</div>
+          <Pager href={href} />
         </div>
       </article>
       <div className="hidden xl:block">
@@ -67,5 +76,22 @@ export function DocArticle({ doc }: { doc: DocPage }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** A guide, from its Markdown. */
+export function DocArticle({ doc }: { doc: DocPage }) {
+  const markdown = readGuide(doc);
+  return (
+    <DocShell
+      href={doc.href}
+      group={NAV.find((g) => g.items.some((item) => item.href === doc.href))?.title}
+      title={doc.title}
+      description={doc.description}
+      markdownPath={doc.href === '/docs' ? '/docs.md' : `${doc.href}.md`}
+      headings={getHeadings(markdown)}
+    >
+      <DocMarkdown markdown={markdown} />
+    </DocShell>
   );
 }

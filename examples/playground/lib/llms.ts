@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { componentHref, COMPONENTS } from './components';
 import { GUIDES } from './docs';
 
 /*
@@ -88,6 +89,10 @@ export function llmsTxt() {
     '## Docs',
     '',
     ...GUIDES.map((doc) => `- [${doc.title}](${SITE}${doc.href}.md): ${doc.description}`),
+    ...COMPONENTS.map(
+      (c) =>
+        `- [${c.name}](${SITE}${componentHref(c.slug)}.md): ${c.summary.replace(/`/g, '')} Props, keyboard, theming.`,
+    ),
     `- [Everything in one file](${SITE}/llms-full.txt): the README as plain markdown, and the shadcn registry items`,
     `- [The quickstart, running](${REPO}/tree/main/examples/nextjs-minimal): a Next.js 16 app against a scripted model`,
     ...docs,

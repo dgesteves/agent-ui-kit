@@ -37,7 +37,7 @@ function matches(query: string, index: SearchIndex) {
       if (hit(q, section.title)) results.push({ title: section.title, page: page.title, href: section.href });
     }
   }
-  return results;
+  return results.slice(0, 40);
 }
 
 function NavLinks({

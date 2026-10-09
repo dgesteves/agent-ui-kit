@@ -273,7 +273,10 @@ html:has(dialog:modal) {
   font-family: var(--font-mono);
   font-size: 12px;
 }
-.code-block pre.shiki {
+.code-block-bare {
+  margin: 0;
+}
+:is(.code-block, .code-block-bare) pre.shiki {
   overflow-x: auto;
   padding: 0.9rem 1rem;
   background: transparent !important;
@@ -282,11 +285,46 @@ html:has(dialog:modal) {
   line-height: 1.7;
   scrollbar-width: thin;
 }
-.code-block pre.shiki:focus-visible {
+:is(.code-block, .code-block-bare) pre.shiki:focus-visible {
   outline: 2px solid var(--color-cyan-soft);
   outline-offset: -2px;
 }
-.code-block pre.shiki span {
+:is(.code-block, .code-block-bare) pre.shiki span {
   color: var(--shiki-dark);
   font-style: var(--shiki-dark-font-style);
+}
+
+/* JSDoc in the API reference: compact prose. */
+.prop-doc {
+  margin-top: 0.4rem;
+  color: #a1a9b4;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.prop-doc > * + * {
+  margin-top: 0.5rem;
+}
+.prop-doc ul {
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+.prop-doc li + li {
+  margin-top: 0.25rem;
+}
+.prop-doc code {
+  color: #e8eaed;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+.prop-doc a {
+  color: var(--color-cyan-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prop-row {
+  scroll-margin-top: 7rem;
+}
+.prop-row:target {
+  background: linear-gradient(90deg, rgb(34 211 238 / 0.06), transparent 60%);
 }
