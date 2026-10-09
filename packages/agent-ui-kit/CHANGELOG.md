@@ -1,5 +1,11 @@
 # @dgesteves/agent-ui-kit
 
+## 0.4.3
+
+### Patch Changes
+
+- [#30](https://github.com/dgesteves/agent-ui-kit/pull/30) [`f8dae5e`](https://github.com/dgesteves/agent-ui-kit/commit/f8dae5e591c92ded6f93c1f7afdef53c73fc2d50) Thanks [@dgesteves](https://github.com/dgesteves)! - The README opens with the demo, on GitHub as a video and on npm animated.
+
 ## 0.4.2
 
 ### Patch Changes
