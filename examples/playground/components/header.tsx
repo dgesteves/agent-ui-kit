@@ -31,15 +31,9 @@ const MENU_ID = 'site-menu';
 
 export function Header({
   page,
-  mode,
-  liveAvailable = false,
-  onModeChange,
 }: {
   /** The section the page belongs to; none on the home page. */
   page?: Page;
-  mode?: 'mock' | 'live';
-  liveAvailable?: boolean;
-  onModeChange?: (mode: 'mock' | 'live') => void;
 }) {
   const link = (active: boolean) =>
     `rounded-md px-2 py-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-cyan-soft ${active ? 'text-[#e8eaed]' : 'text-[#a1a9b4] hover:text-[#e8eaed]'}`;
@@ -76,23 +70,6 @@ export function Header({
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          {/* Live mode exists only when the server has a model key (OPENAI_API_KEY); otherwise there is no choice to offer. */}
-          {mode && onModeChange && liveAvailable && (
-            <div role="radiogroup" aria-label="Agent" className="border-line bg-raised/60 flex rounded-lg border p-0.5">
-              {(['mock', 'live'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  role="radio"
-                  aria-checked={mode === m}
-                  onClick={() => onModeChange(m)}
-                  className="focus-visible:outline-cyan-soft cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-1 aria-checked:bg-[#262b33] aria-checked:text-[#e8eaed]"
-                >
-                  {m === 'mock' ? 'Scripted' : 'Live'}
-                </button>
-              ))}
-            </div>
-          )}
           <a
             href={GITHUB_URL}
             className="border-line focus-visible:outline-cyan-soft inline-flex size-9 items-center justify-center rounded-lg border text-[#a1a9b4] transition-colors hover:border-[#353c47] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-2 sm:size-8"
