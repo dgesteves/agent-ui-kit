@@ -220,11 +220,54 @@ What each part is for:
 - **`addUsage`.** Without it, the meter would show only the last request of a run that paused for approval.
 - **`onError`.** A tool that throws becomes an `output-error` part, and its `errorText` goes through `onError`. By default that hides every message behind "An error occurred.", so the timeline would show that instead of `ENOENT`. In production, pass through the errors you're happy for users to read and keep the rest generic.
 
+## Choosing a model
+
+The kit renders what the AI SDK streams, whichever model produced it, so the model is one line in the route. Install the provider's package, put its API key in your environment, and change `model`:
+
+```ts title="app/api/chat/route.ts"
+import { anthropic } from '@ai-sdk/anthropic';
+
+const result = streamText({
+  model: anthropic('claude-sonnet-5-5'), // was openai('gpt-5.4-mini')
+  messages: await convertToModelMessages(messages, { tools }),
+  tools,
+  toolApproval: { run_command: { type: 'user-approval', reason: 'Runs a shell command in the repository.' } },
+  stopWhen: stepCountIs(10),
+});
+```
+
+- **OpenAI**: `openai('gpt-5.4-mini')` from `@ai-sdk/openai`, with `OPENAI_API_KEY`
+- **Anthropic**: `anthropic('claude-sonnet-5-5')` from `@ai-sdk/anthropic`, with `ANTHROPIC_API_KEY`
+- **Google**: `google('gemini-3.5-flash')` from `@ai-sdk/google`, with `GOOGLE_GENERATIVE_AI_API_KEY`
+- **xAI**: `xai('grok-4.7')` from `@ai-sdk/xai`, with `XAI_API_KEY`
+- **Mistral**: `mistral('mistral-medium-latest')` from `@ai-sdk/mistral`, with `MISTRAL_API_KEY`
+- **A local model** (Ollama, LM Studio): `ollama('qwen3')` from `@ai-sdk/openai-compatible`, with no key
+
+A local model runs on your machine, with no key and nothing to pay per token. Point the OpenAI-compatible provider at the local server (LM Studio's is `http://localhost:1234/v1`) and pick a model you've pulled that can call tools:
+
+```ts
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+
+const ollama = createOpenAICompatible({ name: 'ollama', baseURL: 'http://localhost:11434/v1' });
+```
+
+The model ids are from each package's own model-id types, for the AI SDK 7 versions; any id the provider accepts works. Other providers are on the [AI SDK providers page](https://ai-sdk.dev/providers/ai-sdk-providers), including Amazon Bedrock, Azure OpenAI, Groq, DeepSeek and the Vercel AI Gateway. For tool approvals, pick a model that's good at tool calling.
+
+Agents on LangGraph, CrewAI, Mastra or another AG-UI framework pick their model in the framework, and the components render them the same way: see [AG-UI agents](/docs/ag-ui).
+
+## API keys and costs
+
+**Do I need an API key, and does it work with my ChatGPT or Claude subscription?** The kit itself needs no key: it's React components, and it makes no requests of its own. The agent you build calls your provider with your API key, from your server, like any AI SDK app. Chat subscriptions such as ChatGPT Plus or Claude Pro don't include API access; API usage is billed separately by each provider, or runs free on a local model.
+
+**Does the kit cost anything?** No. It's MIT-licensed, with no service, account or usage fees. What a run costs is what your provider charges for it, which [`RunMeter`](/docs/components/run-meter) estimates from the rates you give it.
+
+**Does the playground use a key?** The public playground runs a scripted agent, with no model and no key. Its optional live mode runs the same tools against OpenAI, with the `OPENAI_API_KEY` (and `OPENAI_MODEL`) of whoever runs the playground; it's off on the public demo.
+
 ## AI SDK 6 or 7
 
 The components take the same message parts from both. The differences are on the server:
 
-- Install `ai@^6 @ai-sdk/react@^3 @ai-sdk/openai@^3` for AI SDK 6.
+- Install `ai@^6 @ai-sdk/react@^3 @ai-sdk/openai@^3` for AI SDK 6, and the AI SDK 6 versions of any other providers (`@ai-sdk/anthropic@^3`, `@ai-sdk/google@^3`, `@ai-sdk/xai@^3`, `@ai-sdk/openai-compatible@^2` and so on).
 - `toolApproval` is an AI SDK 7 option. On 6, drop it and mark the tool with `needsApproval: true`:
 
 ```ts

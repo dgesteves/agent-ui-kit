@@ -12,6 +12,8 @@ React components for the hard parts of agentic products: watching an agent work,
 
 Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), runs on React 18 and 19 (`react@^18.2.0 || ^19.0.0`), and tested against each in CI. [AG-UI](#ag-ui-agents) agents (LangGraph, CrewAI, Mastra, Pydantic AI and the rest of the protocol's integrations) render through an adapter. Ships as an npm package with a precompiled stylesheet, and as a shadcn registry. Keyboard-first, screen-reader announced, and audited with axe in jsdom and in a real browser.
 
+**Any model, nothing extra to pay.** The kit calls no model, needs no API key and makes no network requests of its own: it renders what your agent streams. Your backend picks the model and holds the keys, so it works with OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, and with any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is one line in your route; the components don't change.
+
 <p align="center">
   <img src="docs/media/run.gif" width="100%" alt="A full scripted run, driven from the keyboard: the agent plans, searches and reads files, one read fails, it asks to install a package, Y approves it, the proposed diff is reviewed with A to accept three hunks and R to reject the model change, Ctrl+Enter applies it, and the agent's final answer reflects the review and cites three sources.">
   <br>
@@ -211,6 +213,8 @@ export async function POST(req: Request) {
 - **`toolApproval`.** The `reason` shows up on the approval card as `approval.requestReason`.
 - **`addUsage`.** Without it, the meter would show only the last request of a run that paused for approval.
 - **`onError`.** A tool that throws becomes an `output-error` part, and its `errorText` goes through `onError`, which by default hides every message behind "An error occurred.", so the timeline would show that instead of `ENOENT: no such file or directory`. The quickstart shows every error's message; in production, show the ones you are happy for users to read and keep the rest generic.
+
+**Any provider.** The model is the one line to change: `anthropic('claude-sonnet-5-5')` from `@ai-sdk/anthropic`, `google('gemini-3.5-flash')` from `@ai-sdk/google`, `xai('grok-4.7')` from `@ai-sdk/xai`, or any other [AI SDK provider](https://ai-sdk.dev/providers/ai-sdk-providers), each with its own API key in your environment. The client and the components stay as they are. [Choosing a model](https://agent-ui-kit-demo.vercel.app/docs/getting-started#choosing-a-model) has the table, local models included.
 
 **AI SDK 6.** Install `ai@^6 @ai-sdk/react@^3 @ai-sdk/openai@^3`. `toolApproval` is an AI SDK 7 option: on 6, drop it and mark the tool instead. The rest is the same.
 
@@ -422,7 +426,7 @@ The list is compared by value, so an inline array works as well: it does not re-
 
 The kit depends on `ai` for types only. Part detection (`isToolPart`, `getToolPartName`) mirrors the SDK's runtime helpers, and a test checks they agree.
 
-The playground does not fake any of this. Its scripted agent is a `ChatTransport` that streams real `UIMessageChunk`s through `useChat`, so the SDK assembles parts, merges usage metadata, and drives the approval and client-tool round trips exactly as it would against a server. The [live mode](examples/playground/app/api/chat/route.ts) runs the same tools against a real model with `streamText` when `OPENAI_API_KEY` is set.
+The playground does not fake any of this. Its scripted agent is a `ChatTransport` that streams real `UIMessageChunk`s through `useChat`, so the SDK assembles parts, merges usage metadata, and drives the approval and client-tool round trips exactly as it would against a server. The [live mode](examples/playground/app/api/chat/route.ts) runs the same tools against a real OpenAI model with `streamText`, using the `OPENAI_API_KEY` (and optional `OPENAI_MODEL`) of whoever runs the playground; it's off on the public demo, which has no key.
 
 ## AG-UI agents
 

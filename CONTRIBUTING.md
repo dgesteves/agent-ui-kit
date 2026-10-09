@@ -11,7 +11,7 @@ pnpm install
 pnpm dev   # the library in watch mode, and the playground on http://localhost:3100
 ```
 
-The playground runs a scripted agent and needs no key. For live mode, copy `examples/playground/.env.example` to `.env.local` and set `OPENAI_API_KEY`. `examples/nextjs-minimal` is the README quickstart as an app: build the library, then `pnpm --filter nextjs-minimal dev` (port 3200).
+The playground runs a scripted agent and needs no key. For live mode, copy `examples/playground/.env.example` to `.env.local` and set `OPENAI_API_KEY`, and `OPENAI_MODEL` for a model other than `gpt-5.4-mini`. It runs on your key; the public demo has none, so it shows only the scripted run. `examples/nextjs-minimal` is the README quickstart as an app: build the library, then `pnpm --filter nextjs-minimal dev` (port 3200).
 
 ```
 packages/agent-ui-kit/   the library: src/ (components, lib/, styles/), test/, build scripts
