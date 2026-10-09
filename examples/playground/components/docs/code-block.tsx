@@ -18,12 +18,14 @@ export async function CodeBlock({
 }) {
   const html = await highlight(code, language);
   return (
-    <figure data-code-block className={`${bare ? 'code-block-bare' : 'code-block'} group/code`}>
-      {title && <figcaption className="code-title">{title}</figcaption>}
+    <figure data-code-block className={`${bare ? 'code-block-bare' : 'code-block'} group/code relative`}>
+      {/* With a file name, the copy button sits in its bar rather than over the first line of code. */}
+      {title && <figcaption className="code-title truncate pr-12">{title}</figcaption>}
+      {title && <CopyCodeButton inline />}
       <div className="relative">
         {/* Shiki's output: escaped code in spans, from the site's own sources at build time. */}
         <div dangerouslySetInnerHTML={{ __html: html }} />
-        <CopyCodeButton />
+        {!title && <CopyCodeButton />}
       </div>
     </figure>
   );
