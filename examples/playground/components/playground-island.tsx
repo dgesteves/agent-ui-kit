@@ -19,9 +19,9 @@ const RunPlaceholder = () => (
       <span className="border-line bg-raised/70 hidden h-[270px] rounded-xl border lg:block" />
     </div>
     <div className="flex min-h-svh min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2">
-      <p className="text-[13px] leading-relaxed text-[#8b94a0]">
-        <span className="font-medium text-[#e8eaed]">Live demo, no API key.</span> A scripted coding agent adds rate
-        limiting to a Next.js route. Every panel is a kit component.
+      <p className="text-fg-subtle text-[13px] leading-relaxed">
+        <span className="text-fg font-medium">Live demo, no API key.</span> A scripted coding agent adds rate limiting
+        to a Next.js route. Every panel is a kit component.
       </p>
     </div>
   </>

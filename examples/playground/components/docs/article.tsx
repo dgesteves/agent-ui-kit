@@ -11,25 +11,22 @@ function Pager({ href }: { href: string }) {
   // After the last page, the components page.
   const after = next ?? { title: 'All components', href: '/gallery' };
   const card =
-    'group focus-visible:outline-cyan-soft flex flex-col gap-1 rounded-xl border border-[#262b33] px-4 py-3.5 transition-colors hover:border-[#353c47] hover:bg-[#12151a] focus-visible:outline-2 focus-visible:outline-offset-2';
+    'group focus-visible:outline-cyan-soft flex flex-col gap-1 rounded-xl border border-line px-4 py-3.5 transition-colors hover:border-line-strong hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2';
   return (
-    <nav
-      aria-label="Previous and next pages"
-      className="mt-16 grid gap-3 border-t border-[#262b33] pt-8 sm:grid-cols-2"
-    >
+    <nav aria-label="Previous and next pages" className="border-line mt-16 grid gap-3 border-t pt-8 sm:grid-cols-2">
       {prev ? (
         <Link href={prev.href} className={card}>
-          <span className="font-mono text-[11px] text-[#8b94a0]">Previous</span>
-          <span className="text-[14px] font-medium text-[#e8eaed]">{prev.title}</span>
+          <span className="text-fg-subtle font-mono text-[11px]">Previous</span>
+          <span className="text-fg text-[14px] font-medium">{prev.title}</span>
         </Link>
       ) : (
         <span aria-hidden="true" className="hidden sm:block" />
       )}
       <Link href={after.href} className={`${card} sm:items-end sm:text-right`}>
-        <span className="font-mono text-[11px] text-[#8b94a0]">Next</span>
-        <span className="flex items-center gap-1.5 text-[14px] font-medium text-[#e8eaed]">
+        <span className="text-fg-subtle font-mono text-[11px]">Next</span>
+        <span className="text-fg flex items-center gap-1.5 text-[14px] font-medium">
           {after.title}
-          <ArrowRightIcon className="size-3.5 text-[#8b94a0] transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+          <ArrowRightIcon className="text-fg-subtle size-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
         </span>
       </Link>
     </nav>
@@ -59,10 +56,10 @@ export function DocShell({
       <article className="min-w-0 pt-8 pb-16 lg:pt-12">
         <div className="max-w-[46rem]">
           {group && <p className="text-cyan-soft font-mono text-[12px]">{group}</p>}
-          <h1 className="mt-2 text-[30px] leading-tight font-semibold tracking-[-0.025em] text-[#f1f3f5] sm:text-[36px]">
+          <h1 className="text-fg-strong mt-2 text-[30px] leading-tight font-semibold tracking-[-0.025em] sm:text-[36px]">
             {title}
           </h1>
-          <p className="mt-3 text-[16px] leading-relaxed text-pretty text-[#a1a9b4] sm:text-[17px]">{description}</p>
+          <p className="text-fg-muted mt-3 text-[16px] leading-relaxed text-pretty sm:text-[17px]">{description}</p>
           <div className="mt-6">
             <PageActions markdownPath={markdownPath} />
           </div>

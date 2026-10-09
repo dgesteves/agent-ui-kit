@@ -149,7 +149,7 @@ const COMPARISON: Array<{ topic: string; kit: ReactNode; elements: ReactNode }> 
 ];
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="font-mono text-[0.9em] text-[#e8eaed]">{children}</code>;
+  return <code className="text-fg font-mono text-[0.9em]">{children}</code>;
 }
 
 function SectionHeading({
@@ -165,14 +165,14 @@ function SectionHeading({
 }) {
   return (
     <div className="max-w-2xl">
-      <p className="font-mono text-[11px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase">{eyebrow}</p>
+      <p className="text-fg-subtle font-mono text-[11px] font-medium tracking-[0.08em] uppercase">{eyebrow}</p>
       <h2
         id={id}
-        className="mt-3 text-[24px] leading-tight font-semibold tracking-[-0.02em] text-[#f1f3f5] sm:text-[28px]"
+        className="text-fg-strong mt-3 text-[24px] leading-tight font-semibold tracking-[-0.02em] sm:text-[28px]"
       >
         {title}
       </h2>
-      {children && <p className="mt-3 text-[15px] leading-relaxed text-pretty text-[#a1a9b4]">{children}</p>}
+      {children && <p className="text-fg-muted mt-3 text-[15px] leading-relaxed text-pretty">{children}</p>}
     </div>
   );
 }
@@ -198,14 +198,14 @@ export function Landing() {
             <li key={item.id} className="flex">
               <a
                 href={`/docs/components/${item.id}`}
-                className="group border-line bg-raised/40 focus-visible:outline-cyan-soft relative flex w-full flex-col rounded-xl border p-4 transition-colors hover:border-[#353c47] hover:bg-[#14181d] focus-visible:outline-2 focus-visible:outline-offset-2 sm:p-5"
+                className="group border-line bg-raised/40 focus-visible:outline-cyan-soft hover:border-line-strong hover:bg-surface-2 relative flex w-full flex-col rounded-xl border p-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 sm:p-5"
               >
                 <span className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-[14px] font-semibold text-[#e8eaed]">{item.name}</span>
-                  <ArrowRightIcon className="size-4 text-[#5b6470] transition-[color,translate] group-hover:translate-x-0.5 group-hover:text-[#a1a9b4] motion-reduce:transition-none" />
+                  <span className="text-fg font-mono text-[14px] font-semibold">{item.name}</span>
+                  <ArrowRightIcon className="text-fg-faint group-hover:text-fg-muted size-4 transition-[color,translate] group-hover:translate-x-0.5 motion-reduce:transition-none" />
                 </span>
-                <span className="mt-2 text-[13.5px] leading-relaxed text-[#a1a9b4]">{item.description}</span>
-                <span className="mt-auto pt-3 font-mono text-[11px] text-[#8b94a0] sm:pt-4">{item.meta}</span>
+                <span className="text-fg-muted mt-2 text-[13.5px] leading-relaxed">{item.description}</span>
+                <span className="text-fg-subtle mt-auto pt-3 font-mono text-[11px] sm:pt-4">{item.meta}</span>
               </a>
             </li>
           ))}
@@ -223,9 +223,9 @@ export function Landing() {
               key={item.title}
               className="border-line flex flex-col gap-3 border-b p-5 last:border-b-0 sm:p-6 md:odd:border-r md:[&:nth-last-child(2)]:border-b-0"
             >
-              <h3 className="text-[15px] font-semibold text-[#e8eaed]">{item.title}</h3>
-              <p className="text-[13.5px] leading-relaxed text-[#a1a9b4]">{item.body}</p>
-              <pre className="border-line mt-auto rounded-lg border bg-[#101317] px-3 py-2.5 font-mono text-[12px] leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap text-[#c9d1d9]">
+              <h3 className="text-fg text-[15px] font-semibold">{item.title}</h3>
+              <p className="text-fg-muted text-[13.5px] leading-relaxed">{item.body}</p>
+              <pre className="border-line bg-code text-fg-soft mt-auto rounded-lg border px-3 py-2.5 font-mono text-[12px] leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap">
                 <code>{item.code}</code>
               </pre>
             </li>
@@ -241,7 +241,7 @@ export function Landing() {
         </SectionHeading>
         <div className="border-line mt-8 overflow-hidden rounded-xl border sm:mt-10">
           <div
-            className="border-line hidden grid-cols-[10rem_1fr_1fr] border-b bg-[#12151a] font-mono text-[12px] text-[#a1a9b4] md:grid"
+            className="border-line bg-surface text-fg-muted hidden grid-cols-[10rem_1fr_1fr] border-b font-mono text-[12px] md:grid"
             aria-hidden="true"
           >
             <span className="px-5 py-3" />
@@ -251,13 +251,13 @@ export function Landing() {
           <dl>
             {COMPARISON.map((row) => (
               <div key={row.topic} className="border-line grid border-b last:border-b-0 md:grid-cols-[10rem_1fr_1fr]">
-                <dt className="px-5 pt-4 text-[13px] font-medium text-[#e8eaed] md:py-4">{row.topic}</dt>
-                <dd className="border-line px-5 pt-2 pb-2 text-[13.5px] leading-relaxed text-[#c9d1d9] md:border-l md:py-4">
+                <dt className="text-fg px-5 pt-4 text-[13px] font-medium md:py-4">{row.topic}</dt>
+                <dd className="border-line text-fg-soft px-5 pt-2 pb-2 text-[13.5px] leading-relaxed md:border-l md:py-4">
                   <span className="text-cyan-soft mb-0.5 block font-mono text-[11px] md:sr-only">agent-ui-kit: </span>
                   {row.kit}
                 </dd>
-                <dd className="border-line px-5 pt-2 pb-4 text-[13.5px] leading-relaxed text-[#a1a9b4] md:border-l md:py-4">
-                  <span className="mb-0.5 block font-mono text-[11px] text-[#8b94a0] md:sr-only">
+                <dd className="border-line text-fg-muted px-5 pt-2 pb-4 text-[13.5px] leading-relaxed md:border-l md:py-4">
+                  <span className="text-fg-subtle mb-0.5 block font-mono text-[11px] md:sr-only">
                     assistant-ui Elements:{' '}
                   </span>
                   {row.elements}
@@ -266,19 +266,19 @@ export function Landing() {
             ))}
           </dl>
         </div>
-        <div className="mt-8 grid gap-6 text-[14px] leading-relaxed text-[#a1a9b4] md:grid-cols-2">
+        <div className="text-fg-muted mt-8 grid gap-6 text-[14px] leading-relaxed md:grid-cols-2">
           <p>
-            <span className="font-medium text-[#e8eaed]">AI Elements</span> is Vercel’s shadcn registry for AI SDK apps,
-            with the widest coverage of the message surface: conversation, prompt input, reasoning, sources, a per-call{' '}
+            <span className="text-fg font-medium">AI Elements</span> is Vercel’s shadcn registry for AI SDK apps, with
+            the widest coverage of the message surface: conversation, prompt input, reasoning, sources, a per-call{' '}
             <Code>Tool</Code> card, a <Code>Confirmation</Code> for approvals, a <Code>Context</Code> usage indicator
             and more. It targets React 19 and Tailwind v4, and is written against AI SDK 6.
           </p>
           <p>
-            <span className="font-medium text-[#e8eaed]">They compose.</span> Render the thread with either library and
-            use these components for tool parts and side panels. The README has{' '}
+            <span className="text-fg font-medium">They compose.</span> Render the thread with either library and use
+            these components for tool parts and side panels. The README has{' '}
             <a
               href={`${GITHUB_URL}#how-it-compares`}
-              className="text-cyan-soft focus-visible:outline-cyan-soft rounded-sm underline decoration-[#22d3ee]/40 underline-offset-[3px] hover:decoration-[#22d3ee] focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="text-cyan-soft focus-visible:outline-cyan-soft decoration-cyan/40 hover:decoration-cyan rounded-sm underline underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               the full comparison
               <ArrowUpRightIcon className="ml-0.5 inline size-3.5 align-[-2px]" />
@@ -289,9 +289,9 @@ export function Landing() {
       </Section>
 
       <section aria-labelledby="start-heading" className="mx-auto w-full max-w-[1320px] px-4 pb-16 sm:px-6 sm:pb-24">
-        <div className="border-line relative overflow-hidden rounded-2xl border bg-[#12151a] px-5 py-10 sm:px-10 sm:py-14">
+        <div className="border-line bg-surface relative overflow-hidden rounded-2xl border px-5 py-10 sm:px-10 sm:py-14">
           <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_260px_at_15%_0%,rgb(34_211_238/0.09),transparent_70%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_260px_at_15%_0%,var(--site-glow-cyan),transparent_70%)]"
             aria-hidden="true"
           />
           <div className="relative">

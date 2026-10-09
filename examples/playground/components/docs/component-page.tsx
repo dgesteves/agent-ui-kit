@@ -18,7 +18,7 @@ import { Preview } from './preview';
 
 function H2({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="mt-14 mb-4 scroll-mt-28 text-[22px] font-semibold tracking-[-0.015em] text-[#f1f3f5]">
+    <h2 id={id} className="text-fg-strong mt-14 mb-4 scroll-mt-28 text-[22px] font-semibold tracking-[-0.015em]">
       <a href={`#${id}`} className="heading-anchor">
         {children}
       </a>
@@ -33,7 +33,7 @@ function Inline({ children }: { children: string }) {
 
 function Kbd({ children }: { children: string }) {
   return (
-    <kbd className="inline-flex h-6 min-w-6 items-center justify-center rounded-[5px] border border-b-2 border-[#353c47] bg-[#12151a] px-1.5 font-mono text-[11.5px] text-[#c9d1d9]">
+    <kbd className="border-line-strong bg-surface text-fg-soft inline-flex h-6 min-w-6 items-center justify-center rounded-[5px] border border-b-2 px-1.5 font-mono text-[11.5px]">
       {children}
     </kbd>
   );
@@ -65,8 +65,8 @@ function Theming({ component, hooks }: { component: ComponentDoc; hooks: ReturnT
         ]
       : []),
   ].join('\n');
-  const chip = 'rounded-md border border-[#262b33] bg-[#14181d] px-1.5 py-0.5 font-mono text-[12px] text-[#e8eaed]';
-  const term = 'font-mono text-[11px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase';
+  const chip = 'rounded-md border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[12px] text-fg';
+  const term = 'font-mono text-[11px] font-medium tracking-[0.08em] text-fg-subtle uppercase';
   return (
     <>
       <div className="docs-prose">
@@ -95,12 +95,12 @@ function Theming({ component, hooks }: { component: ComponentDoc; hooks: ReturnT
                 <span key={s.attribute}>
                   <span className={chip}>{s.attribute}</span>
                   {s.slot && (
-                    <span className="ml-1.5 text-[12.5px] text-[#8b94a0]">
-                      on <code className="font-mono text-[#c9d1d9]">{s.slot}</code>
+                    <span className="text-fg-subtle ml-1.5 text-[12.5px]">
+                      on <code className="text-fg-soft font-mono">{s.slot}</code>
                     </span>
                   )}
                   {s.values && (
-                    <code className="mt-1 block font-mono text-[12.5px] [overflow-wrap:anywhere] text-[#a1a9b4]">
+                    <code className="text-fg-muted mt-1 block font-mono text-[12.5px] [overflow-wrap:anywhere]">
                       {s.values}
                     </code>
                   )}
@@ -157,11 +157,11 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
     >
       <H2 id="example">Example</H2>
       <Preview>{Demo ? <Demo /> : null}</Preview>
-      <p className="mt-3 text-[13px] text-[#8b94a0]">
+      <p className="text-fg-subtle mt-3 text-[13px]">
         Interactive, and the same on the{' '}
         <Link
           href={`/gallery#${component.galleryId}`}
-          className="text-[#c9d1d9] underline decoration-[#8b94a0]/50 underline-offset-[3px] hover:decoration-[#e8eaed]"
+          className="text-fg-soft decoration-fg-subtle/50 hover:decoration-fg underline underline-offset-[3px]"
         >
           components page
         </Link>
@@ -170,11 +170,11 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
 
       <H2 id="installation">Installation</H2>
       <ComponentInstall component={component} />
-      <p className="mt-3 text-[13.5px] leading-relaxed text-[#a1a9b4]">
+      <p className="text-fg-muted mt-3 text-[13.5px] leading-relaxed">
         The styles are once per app;{' '}
         <Link
           href="/docs/getting-started#add-the-styles"
-          className="text-cyan-soft underline decoration-[#22d3ee]/35 underline-offset-[3px]"
+          className="text-cyan-soft decoration-cyan/35 underline underline-offset-[3px]"
         >
           Getting started
         </Link>{' '}
@@ -185,17 +185,17 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
       <CodeBlock code={component.usage} language="tsx" />
 
       <H2 id="api-reference">API reference</H2>
-      <p className="text-[13.5px] leading-relaxed text-[#a1a9b4]">
+      <p className="text-fg-muted text-[13.5px] leading-relaxed">
         Generated from the types the package ships, so it matches the version you install.
       </p>
       <ApiReference component={component} />
 
       <H2 id="accessibility">Accessibility</H2>
       {component.keyboard && (
-        <div className="mb-6 overflow-hidden rounded-xl border border-[#262b33]">
+        <div className="border-line mb-6 overflow-hidden rounded-xl border">
           <table className="w-full text-left text-[13.5px]">
             <caption className="sr-only">Keyboard</caption>
-            <thead className="bg-[#12151a] text-[#e8eaed]">
+            <thead className="bg-surface text-fg">
               <tr>
                 <th scope="col" className="px-4 py-2.5 font-medium">
                   Keys
@@ -207,7 +207,7 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
             </thead>
             <tbody>
               {component.keyboard.map((row) => (
-                <tr key={row.action} className="border-t border-[#262b33]">
+                <tr key={row.action} className="border-line border-t">
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <span className="flex gap-1">
                       {row.keys.map((k) => (
@@ -215,7 +215,7 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
                       ))}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-[#c9d1d9]">
+                  <td className="text-fg-soft px-4 py-2.5">
                     <Inline>{row.action}</Inline>
                   </td>
                 </tr>

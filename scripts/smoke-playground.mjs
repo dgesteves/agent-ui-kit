@@ -168,8 +168,9 @@ try {
   check(new URL(phone.url()).pathname === '/gallery', 'phone: the menu reaches the components page', phone.url());
   await phoneContext.close();
 
-  // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and frames
-  // that switch to the light palette with no axe violations (contrast included).
+  // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and the
+  // header's theme switch, which re-themes the page and the frames, with no axe violations
+  // (contrast included) and remembered on the next visit.
   const gallery = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
   await gallery.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
   const anchors = ['agent-status', 'tool-call-timeline', 'approval-card', 'diff-review', 'run-meter', 'sources'];
@@ -181,9 +182,17 @@ try {
     snippets.some((text) => text.includes("import '@dgesteves/agent-ui-kit/styles.css';")),
     'gallery: the npm snippets import the styles',
   );
-  await gallery.getByRole('radio', { name: 'light' }).click();
+  await gallery.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: 'Light' }).click();
   const frame = await gallery.$eval('[data-shot="approval-card"]', (el) => getComputedStyle(el).backgroundColor);
-  check(frame === 'rgb(255, 255, 255)', 'gallery: the light toggle switches the frames', frame);
+  const page = await gallery.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  check(
+    frame === 'rgb(255, 255, 255)' && page === 'rgb(255, 255, 255)',
+    'gallery: the theme switch turns the page and the frames light',
+    `frame ${frame}, page ${page}`,
+  );
+  await gallery.reload({ waitUntil: 'networkidle' });
+  const remembered = await gallery.evaluate(() => document.documentElement.className);
+  check(/\blight\b/.test(remembered), 'theme: the choice is remembered, and applied before paint', remembered);
   await gallery.waitForTimeout(800);
   const require = createRequire(join(import.meta.dirname, '../packages/agent-ui-kit/package.json'));
   await gallery.addScriptTag({ content: readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8') });

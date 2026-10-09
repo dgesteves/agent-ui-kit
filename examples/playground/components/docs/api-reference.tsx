@@ -39,26 +39,26 @@ function Prop({ owner, prop }: { owner: string; prop: PropDoc }) {
       className="prop-row grid gap-x-6 gap-y-1 py-3.5 md:grid-cols-[minmax(0,12.5rem)_minmax(0,1fr)]"
     >
       <dt className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <code className="font-mono text-[13.5px] font-medium text-[#f1f3f5]">{prop.name}</code>
+        <code className="text-fg-strong font-mono text-[13.5px] font-medium">{prop.name}</code>
         {prop.required && (
-          <span className="rounded border border-[#f0468a]/40 px-1 font-mono text-[10.5px] text-[#f472a8]">
+          <span className="border-magenta/40 text-magenta-soft rounded border px-1 font-mono text-[10.5px]">
             required
           </span>
         )}
       </dt>
       <dd className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-          <code className="font-mono text-[12.5px] leading-relaxed [overflow-wrap:anywhere] text-[#67e8f9]">
+          <code className="text-cyan-soft font-mono text-[12.5px] leading-relaxed [overflow-wrap:anywhere]">
             {prop.type}
           </code>
           {prop.defaultValue && (
-            <span className="text-[12.5px] text-[#8b94a0]">
-              Default <code className="font-mono text-[#e8eaed]">{prop.defaultValue}</code>
+            <span className="text-fg-subtle text-[12.5px]">
+              Default <code className="text-fg font-mono">{prop.defaultValue}</code>
             </span>
           )}
         </div>
         {prop.values && (
-          <code className="mt-0.5 block font-mono text-[12px] leading-relaxed [overflow-wrap:anywhere] text-[#a1a9b4]">
+          <code className="text-fg-muted mt-0.5 block font-mono text-[12px] leading-relaxed [overflow-wrap:anywhere]">
             {prop.values.join(' | ')}
           </code>
         )}
@@ -71,13 +71,13 @@ function Prop({ owner, prop }: { owner: string; prop: PropDoc }) {
 function PropList({ owner, doc }: { owner: string; doc: InterfaceDoc }) {
   return (
     <>
-      <dl className="divide-y divide-[#262b33] border-y border-[#262b33]">
+      <dl className="divide-line border-line divide-y border-y">
         {doc.props.map((prop) => (
           <Prop key={prop.name} owner={owner} prop={prop} />
         ))}
       </dl>
       {doc.inherits ? (
-        <p className="mt-3 text-[13.5px] leading-relaxed text-[#a1a9b4]">
+        <p className="text-fg-muted mt-3 text-[13.5px] leading-relaxed">
           Also takes every <Code>{doc.inherits.from}</Code> prop above, except{' '}
           {doc.inherits.except.map((key, i) => (
             <span key={key}>
@@ -88,13 +88,13 @@ function PropList({ owner, doc }: { owner: string; doc: InterfaceDoc }) {
           .
         </p>
       ) : doc.element ? (
-        <p className="mt-3 text-[13.5px] leading-relaxed text-[#a1a9b4]">
-          Other props go to the root{' '}
-          <code className="font-mono text-[12.5px] text-[#e8eaed]">{`<${doc.element}>`}</code>: <Code>className</Code>{' '}
-          (merged with tailwind-merge), <Code>id</Code>, <Code>aria-*</Code>, <Code>data-*</Code> and event handlers.
+        <p className="text-fg-muted mt-3 text-[13.5px] leading-relaxed">
+          Other props go to the root <code className="text-fg font-mono text-[12.5px]">{`<${doc.element}>`}</code>:{' '}
+          <Code>className</Code> (merged with tailwind-merge), <Code>id</Code>, <Code>aria-*</Code>, <Code>data-*</Code>{' '}
+          and event handlers.
         </p>
       ) : doc.extends ? (
-        <p className="mt-3 text-[13.5px] leading-relaxed text-[#a1a9b4]">
+        <p className="text-fg-muted mt-3 text-[13.5px] leading-relaxed">
           Extends <Code>{doc.extends}</Code>.
         </p>
       ) : null}
@@ -103,12 +103,12 @@ function PropList({ owner, doc }: { owner: string; doc: InterfaceDoc }) {
 }
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="font-mono text-[12.5px] text-[#e8eaed]">{children}</code>;
+  return <code className="text-fg font-mono text-[12.5px]">{children}</code>;
 }
 
 function H3({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h3 id={id} className="mt-10 scroll-mt-28 font-mono text-[15px] font-semibold text-[#f1f3f5]">
+    <h3 id={id} className="text-fg-strong mt-10 scroll-mt-28 font-mono text-[15px] font-semibold">
       <a href={`#${id}`} className="heading-anchor">
         {children}
       </a>
@@ -116,7 +116,7 @@ function H3({ id, children }: { id: string; children: ReactNode }) {
   );
 }
 
-const sub = 'mt-6 mb-2 font-mono text-[11px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase';
+const sub = 'mt-6 mb-2 font-mono text-[11px] font-medium tracking-[0.08em] text-fg-subtle uppercase';
 
 function Entry({ entry }: { entry: ApiEntry }) {
   const id = entry.name.toLowerCase();

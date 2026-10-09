@@ -20,10 +20,10 @@ function Switch({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <label htmlFor={id} className="text-[13px] text-[#e8eaed]">
+        <label htmlFor={id} className="text-fg text-[13px]">
           {label}
         </label>
-        <p id={`${id}-hint`} className="text-xs text-[#8b94a0]">
+        <p id={`${id}-hint`} className="text-fg-subtle text-xs">
           {hint}
         </p>
       </div>
@@ -34,10 +34,10 @@ function Switch({
         aria-checked={checked}
         aria-describedby={`${id}-hint`}
         onClick={() => onChange(!checked)}
-        className="border-line focus-visible:outline-cyan-soft aria-checked:border-cyan/50 aria-checked:bg-cyan/25 relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border bg-[#1e232a] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="border-line focus-visible:outline-cyan-soft aria-checked:border-cyan/50 aria-checked:bg-cyan/25 bg-raised-2 relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <span
-          className={`inline-block size-3.5 rounded-full transition-transform motion-reduce:transition-none ${checked ? 'bg-cyan-soft translate-x-[18px]' : 'translate-x-[2px] bg-[#8b94a0]'}`}
+          className={`inline-block size-3.5 rounded-full transition-transform motion-reduce:transition-none ${checked ? 'bg-cyan-soft translate-x-[18px]' : 'bg-fg-subtle translate-x-[2px]'}`}
         />
       </button>
     </div>
@@ -74,7 +74,7 @@ export function RunControls({
   // The controls render twice (the desktop sidebar and the phone sheet), so each speed group needs its own name.
   const speedName = useId();
   const button =
-    'inline-flex h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-[#1e232a] px-3 text-[13px] font-medium text-[#e8eaed] transition-colors hover:border-[#353c47] hover:bg-[#262b33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-soft disabled:cursor-not-allowed disabled:opacity-45';
+    'inline-flex h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-raised-2 px-3 text-[13px] font-medium text-fg transition-colors hover:border-line-strong hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-soft disabled:cursor-not-allowed disabled:opacity-45';
   return (
     <div className={`flex flex-col gap-4 ${className ?? ''}`}>
       <div className="flex gap-2">
@@ -94,12 +94,12 @@ export function RunControls({
         </button>
       </div>
       <fieldset>
-        <legend className="mb-1.5 text-[13px] text-[#e8eaed]">Playback speed</legend>
-        <div className="border-line grid grid-cols-4 rounded-lg border bg-[#12151a] p-0.5">
+        <legend className="text-fg mb-1.5 text-[13px]">Playback speed</legend>
+        <div className="border-line bg-surface grid grid-cols-4 rounded-lg border p-0.5">
           {SPEEDS.map((s) => (
             <label
               key={s}
-              className="has-focus-visible:outline-cyan-soft relative flex cursor-pointer items-center justify-center rounded-md py-1 font-mono text-xs text-[#a1a9b4] transition-colors hover:text-[#e8eaed] has-checked:bg-[#262b33] has-checked:text-[#e8eaed] has-focus-visible:outline-2"
+              className="has-focus-visible:outline-cyan-soft text-fg-muted hover:text-fg has-checked:bg-line has-checked:text-fg relative flex cursor-pointer items-center justify-center rounded-md py-1 font-mono text-xs transition-colors has-focus-visible:outline-2"
             >
               <input
                 type="radio"
@@ -131,7 +131,7 @@ export function RunControls({
 }
 
 const iconButton =
-  'inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line bg-[#181c22] text-[#e8eaed] transition-colors hover:border-[#353c47] hover:bg-[#262b33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-soft disabled:cursor-not-allowed disabled:opacity-45';
+  'inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line bg-raised text-fg transition-colors hover:border-line-strong hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-soft disabled:cursor-not-allowed disabled:opacity-45';
 
 /** Phones: pause, replay and a button for the rest of the controls, next to the status pill. */
 export function CompactRunControls({
@@ -220,9 +220,9 @@ export function Sheet({
       id={id}
       aria-labelledby={`${id}-title`}
       onClose={onClose}
-      className="border-line motion-safe:open:animate-sheet-in fixed inset-x-0 top-auto bottom-0 m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 bg-[#12151a] p-0 text-[#e8eaed] backdrop:bg-black/60"
+      className="border-line motion-safe:open:animate-sheet-in bg-surface text-fg fixed inset-x-0 top-auto bottom-0 m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto overscroll-contain rounded-t-2xl border border-b-0 p-0 backdrop:bg-black/60"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between bg-[#12151a]/95 px-4 pt-3 pb-2 backdrop-blur">
+      <div className="bg-surface/95 sticky top-0 z-10 flex items-center justify-between px-4 pt-3 pb-2 backdrop-blur">
         <h2 id={`${id}-title`} className="text-[15px] font-semibold">
           {title}
         </h2>
@@ -230,7 +230,7 @@ export function Sheet({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="focus-visible:outline-cyan-soft inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-[#a1a9b4] hover:bg-[#262b33] hover:text-[#e8eaed] focus-visible:outline-2"
+          className="focus-visible:outline-cyan-soft text-fg-muted hover:bg-line hover:text-fg inline-flex size-9 cursor-pointer items-center justify-center rounded-lg focus-visible:outline-2"
         >
           <CloseIcon className="size-4" />
         </button>
@@ -252,19 +252,19 @@ export function KeyboardCard({ className = '' }: { className?: string }) {
     <section aria-labelledby="kbd-heading" className={`border-line bg-raised/40 rounded-xl border p-4 ${className}`}>
       <h2
         id="kbd-heading"
-        className="mb-3 font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"
+        className="text-fg-subtle mb-3 font-mono text-[10.5px] font-medium tracking-[0.08em] uppercase"
       >
         Keyboard
       </h2>
       <dl className="flex flex-col gap-2">
         {rows.map(([keys, label]) => (
           <div key={label} className="flex items-center justify-between gap-3 text-[13px]">
-            <dt className="text-[#a1a9b4]">{label}</dt>
+            <dt className="text-fg-muted">{label}</dt>
             <dd className="flex gap-1">
               {keys.map((k) => (
                 <kbd
                   key={k}
-                  className="inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] border border-[#353c47] bg-[#12151a] px-1 font-mono text-[11px] text-[#a1a9b4]"
+                  className="border-line-strong bg-surface text-fg-muted inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] border px-1 font-mono text-[11px]"
                 >
                   {k}
                 </kbd>

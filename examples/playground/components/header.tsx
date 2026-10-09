@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { GITHUB_URL, NPM_URL } from '@/lib/site';
 import { ArrowUpRightIcon, CloseIcon, GitHubIcon, MenuIcon } from './icons';
+import { ThemeSwitch } from './theme-switch';
 
 export function Logo() {
   return (
@@ -36,7 +37,7 @@ export function Header({
   page?: Page;
 }) {
   const link = (active: boolean) =>
-    `rounded-md px-2 py-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-cyan-soft ${active ? 'text-[#e8eaed]' : 'text-[#a1a9b4] hover:text-[#e8eaed]'}`;
+    `rounded-md px-2 py-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-cyan-soft ${active ? 'text-fg' : 'text-fg-muted hover:text-fg'}`;
   const pathname = usePathname();
   // The section's link is current on any page in it, and "page" on its own page.
   const current = (p: (typeof PAGES)[number]) =>
@@ -57,9 +58,11 @@ export function Header({
           className="focus-visible:outline-cyan-soft flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
         >
           <Logo />
-          <span className="font-mono text-[13px] font-semibold tracking-tight text-[#e8eaed]">agent-ui-kit</span>
+          <span className="text-fg font-mono text-[13px] font-semibold tracking-tight max-[359px]:sr-only">
+            agent-ui-kit
+          </span>
         </Link>
-        <span className="hidden text-[#353c47] sm:inline" aria-hidden="true">
+        <span className="text-line-strong hidden sm:inline" aria-hidden="true">
           /
         </span>
         <nav aria-label="Pages" className="hidden items-center gap-1 sm:flex">
@@ -70,9 +73,10 @@ export function Header({
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <ThemeSwitch />
           <a
             href={GITHUB_URL}
-            className="border-line focus-visible:outline-cyan-soft inline-flex size-9 items-center justify-center rounded-lg border text-[#a1a9b4] transition-colors hover:border-[#353c47] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-2 sm:size-8"
+            className="border-line focus-visible:outline-cyan-soft text-fg-muted hover:border-line-strong hover:text-fg inline-flex size-9 items-center justify-center rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 sm:size-8"
             aria-label="agent-ui-kit on GitHub"
           >
             <GitHubIcon className="size-4" />
@@ -81,7 +85,7 @@ export function Header({
           <button
             type="button"
             popoverTarget={MENU_ID}
-            className="border-line focus-visible:outline-cyan-soft inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-2 sm:hidden"
+            className="border-line focus-visible:outline-cyan-soft text-fg-muted hover:text-fg inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 sm:hidden"
             aria-label="Menu"
             aria-expanded={menuOpen}
             aria-controls={MENU_ID}
@@ -94,7 +98,7 @@ export function Header({
         id={MENU_ID}
         popover="auto"
         aria-label="Pages"
-        className="border-line bg-ink inset-x-0 top-14 bottom-auto m-0 h-auto w-full max-w-none border-0 border-b p-0 text-[#e8eaed] shadow-[0_24px_48px_rgb(0_0_0/0.5)] backdrop:bg-black/40 sm:hidden"
+        className="border-line bg-ink text-fg inset-x-0 top-14 bottom-auto m-0 h-auto w-full max-w-none border-0 border-b p-0 shadow-[0_24px_48px_var(--site-shadow)] backdrop:bg-black/40 sm:hidden"
       >
         <ul className="flex flex-col px-2 py-2">
           {PAGES.map((p) => (
@@ -103,7 +107,7 @@ export function Header({
                 href={p.href}
                 onClick={closeMenu}
                 aria-current={current(p)}
-                className="focus-visible:outline-cyan-soft flex h-12 items-center rounded-lg px-3 text-[15px] text-[#a1a9b4] hover:bg-[#181c22] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:-outline-offset-2 aria-[current]:text-[#e8eaed]"
+                className="focus-visible:outline-cyan-soft text-fg-muted hover:bg-raised hover:text-fg aria-[current]:text-fg flex h-12 items-center rounded-lg px-3 text-[15px] focus-visible:outline-2 focus-visible:-outline-offset-2"
               >
                 {p.label}
                 {page === p.page && <span className="bg-cyan ml-2 size-1.5 rounded-full" aria-hidden="true" />}
@@ -120,10 +124,10 @@ export function Header({
               <a
                 href={href}
                 onClick={closeMenu}
-                className="focus-visible:outline-cyan-soft flex h-12 items-center justify-between rounded-lg px-3 text-[15px] text-[#a1a9b4] hover:bg-[#181c22] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:-outline-offset-2"
+                className="focus-visible:outline-cyan-soft text-fg-muted hover:bg-raised hover:text-fg flex h-12 items-center justify-between rounded-lg px-3 text-[15px] focus-visible:outline-2 focus-visible:-outline-offset-2"
               >
                 {label}
-                <ArrowUpRightIcon className="size-4 text-[#8b94a0]" />
+                <ArrowUpRightIcon className="text-fg-subtle size-4" />
               </a>
             </li>
           ))}

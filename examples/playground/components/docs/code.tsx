@@ -27,7 +27,7 @@ export function CopyCodeButton() {
             () => setState('failed'),
           );
         }}
-        className="focus-visible:outline-cyan-soft absolute top-2 right-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border border-[#262b33] bg-[#14181d] text-[#a1a9b4] opacity-100 transition-[color,opacity] hover:text-[#e8eaed] focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 sm:opacity-0 sm:group-hover/code:opacity-100 pointer-coarse:opacity-100"
+        className="focus-visible:outline-cyan-soft border-line bg-surface-2 text-fg-muted hover:text-fg absolute top-2 right-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border opacity-100 transition-[color,opacity] focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 sm:opacity-0 sm:group-hover/code:opacity-100 pointer-coarse:opacity-100"
       >
         {state === 'copied' ? <CheckIcon className="text-cyan-soft size-4" /> : <CopyIcon className="size-4" />}
       </button>
@@ -88,7 +88,7 @@ export function PackageInstall({ command }: { command: string }) {
   const text = commandFor(manager, command);
   return (
     <div className="code-block">
-      <div className="flex items-center border-b border-[#262b33] px-2" role="tablist" aria-label="Package manager">
+      <div className="border-line flex items-center border-b px-2" role="tablist" aria-label="Package manager">
         {MANAGERS.map((m, i) => (
           <button
             key={m}
@@ -108,7 +108,7 @@ export function PackageInstall({ command }: { command: string }) {
               document.getElementById(`${id}-${next}`)?.focus();
             }}
             className={`focus-visible:outline-cyan-soft -mb-px cursor-pointer border-b-2 px-2.5 py-2 font-mono text-[12px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
-              manager === m ? 'border-cyan text-[#e8eaed]' : 'border-transparent text-[#8b94a0] hover:text-[#e8eaed]'
+              manager === m ? 'border-cyan text-fg' : 'text-fg-subtle hover:text-fg border-transparent'
             }`}
           >
             {m}
@@ -121,7 +121,7 @@ export function PackageInstall({ command }: { command: string }) {
         aria-labelledby={`${id}-${manager}`}
         className="flex items-start gap-2 py-1.5 pr-1.5 pl-4"
       >
-        <code className="min-w-0 flex-1 py-1.5 font-mono text-[13px] leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap text-[#e8eaed]">
+        <code className="text-fg min-w-0 flex-1 py-1.5 font-mono text-[13px] leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap">
           {text.split('/').flatMap((part, i) => (i === 0 ? [part] : ['/', <wbr key={i} />, part]))}
         </code>
         <CopyButton text={text} label={`Copy the ${manager} command`} />

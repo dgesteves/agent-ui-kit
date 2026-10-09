@@ -1,18 +1,41 @@
 @import 'tailwindcss';
 @import '@dgesteves/agent-ui-kit/tailwind.css';
+/* The kit's palette follows the OS too, and .light or .dark on <html> like the site's. */
+@import '@dgesteves/agent-ui-kit/theme.auto.css';
 
 @source '../components';
 @source '../lib';
 @source '../app';
 
-/* Brand: ink / raised / border with cyan and a sparing magenta. These match the kit's dark tokens. */
+/*
+ * The site's palette, in two themes: dark (ink, raised surfaces, cyan and a sparing magenta) and
+ * light, which takes the kit's light tokens so the components and the page around them match.
+ * The theme is a class on <html>, set before paint by the script in app/layout.tsx; the kit's own
+ * tokens switch on the same class.
+ */
+@theme inline {
+  --color-ink: var(--site-ink);
+  --color-ink-deep: var(--site-ink-deep);
+  --color-raised: var(--site-raised);
+  --color-raised-2: var(--site-raised-2);
+  --color-surface: var(--site-surface);
+  --color-surface-2: var(--site-surface-2);
+  --color-code: var(--site-code);
+  --color-line: var(--site-line);
+  --color-line-strong: var(--site-line-strong);
+  --color-fg: var(--site-fg);
+  --color-fg-strong: var(--site-fg-strong);
+  --color-fg-soft: var(--site-fg-soft);
+  --color-fg-muted: var(--site-fg-muted);
+  --color-fg-subtle: var(--site-fg-subtle);
+  --color-fg-faint: var(--site-fg-faint);
+  --color-cyan: var(--site-cyan);
+  --color-cyan-soft: var(--site-cyan-soft);
+  --color-magenta: var(--site-magenta);
+  --color-magenta-soft: var(--site-magenta-soft);
+}
+
 @theme {
-  --color-ink: #0d0f12;
-  --color-raised: #181c22;
-  --color-line: #262b33;
-  --color-cyan: #22d3ee;
-  --color-cyan-soft: #67e8f9;
-  --color-magenta: #f0468a;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --animate-sheet-in: sheet-in 0.26s cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -24,17 +47,53 @@
   }
 }
 
+:root {
+  /* Follows the OS until the page picks: .light or .dark on <html> (app/layout.tsx). */
+  color-scheme: light dark;
+  --site-ink: light-dark(#ffffff, #0d0f12);
+  --site-ink-deep: light-dark(#f6f7f9, #0b0d10);
+  --site-raised: light-dark(#f6f7f9, #181c22);
+  --site-raised-2: light-dark(#eef0f3, #1e232a);
+  --site-surface: light-dark(#f9fafb, #12151a);
+  --site-surface-2: light-dark(#f3f4f6, #14181d);
+  --site-code: light-dark(#f6f7f9, #101317);
+  --site-line: light-dark(#e2e5ea, #262b33);
+  --site-line-strong: light-dark(#cdd2d9, #353c47);
+  --site-fg: light-dark(#0d0f12, #e8eaed);
+  --site-fg-strong: light-dark(#0d0f12, #f1f3f5);
+  --site-fg-soft: light-dark(#1f2937, #c9d1d9);
+  --site-fg-muted: light-dark(#4b5563, #a1a9b4);
+  --site-fg-subtle: light-dark(#5f6875, #8b94a0);
+  --site-fg-faint: light-dark(#8b94a0, #5b6470);
+  --site-cyan: light-dark(#0e7490, #22d3ee);
+  --site-cyan-soft: light-dark(#155e75, #67e8f9);
+  --site-magenta: light-dark(#be185d, #f0468a);
+  --site-magenta-soft: light-dark(#9d174d, #f472a8);
+  --site-glow-cyan: light-dark(rgb(14 116 144 / 0.07), rgb(34 211 238 / 0.07));
+  --site-glow-magenta: light-dark(rgb(190 24 93 / 0.03), rgb(240 70 138 / 0.035));
+  --site-dot: light-dark(rgb(13 15 18 / 0.07), rgb(255 255 255 / 0.045));
+  --site-shadow: light-dark(rgb(13 15 18 / 0.12), rgb(0 0 0 / 0.5));
+  --site-scrollbar: light-dark(#cdd2d9, #2b313a);
+}
+
+.light {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
 html {
   background: var(--color-ink);
-  color-scheme: dark;
-  scrollbar-color: #2b313a transparent;
+  scrollbar-color: var(--site-scrollbar) transparent;
 }
 
 body {
   min-height: 100dvh;
   background:
-    radial-gradient(900px 420px at 18% -8%, rgb(34 211 238 / 0.07), transparent 70%),
-    radial-gradient(700px 360px at 92% 4%, rgb(240 70 138 / 0.035), transparent 70%), var(--color-ink);
+    radial-gradient(900px 420px at 18% -8%, var(--site-glow-cyan), transparent 70%),
+    radial-gradient(700px 360px at 92% 4%, var(--site-glow-magenta), transparent 70%), var(--color-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'ss01', 'cv11';
@@ -46,12 +105,12 @@ html:has(dialog:modal) {
 }
 
 ::selection {
-  background: rgb(34 211 238 / 0.28);
+  background: color-mix(in oklab, var(--color-cyan) 28%, transparent);
 }
 
 /* Subtle dot grid behind the run, faded at the edges. */
 .grid-backdrop {
-  background-image: radial-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-image: radial-gradient(var(--site-dot) 1px, transparent 1px);
   background-size: 22px 22px;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
 }
@@ -69,7 +128,7 @@ html:has(dialog:modal) {
     [data-slot='agent-status']
   ) {
   position: relative;
-  outline: 1px dashed rgb(34 211 238 / 0.5);
+  outline: 1px dashed color-mix(in oklab, var(--color-cyan) 50%, transparent);
   outline-offset: 5px;
   overflow: visible;
 }
@@ -122,7 +181,7 @@ html:has(dialog:modal) {
  * article, so the Markdown stays plain.
  */
 .docs-prose {
-  color: #c9d1d9;
+  color: var(--color-fg-soft);
   font-size: 15px;
   line-height: 1.75;
 }
@@ -130,7 +189,7 @@ html:has(dialog:modal) {
   margin-top: 1.25rem;
 }
 .docs-prose :is(h2, h3, h4) {
-  color: #f1f3f5;
+  color: var(--color-fg-strong);
   font-weight: 600;
   letter-spacing: -0.015em;
   scroll-margin-top: 7rem;
@@ -162,12 +221,12 @@ html:has(dialog:modal) {
 }
 .docs-prose .heading-anchor:hover::after {
   content: ' #';
-  color: #5b6470;
+  color: var(--color-fg-faint);
 }
 .docs-prose a:not(.heading-anchor) {
   color: var(--color-cyan-soft);
   text-decoration: underline;
-  text-decoration-color: rgb(34 211 238 / 0.35);
+  text-decoration-color: color-mix(in oklab, var(--color-cyan) 40%, transparent);
   text-underline-offset: 3px;
 }
 .docs-prose a:not(.heading-anchor):hover {
@@ -179,7 +238,7 @@ html:has(dialog:modal) {
   border-radius: 2px;
 }
 .docs-prose strong {
-  color: #f1f3f5;
+  color: var(--color-fg-strong);
   font-weight: 600;
 }
 .docs-prose :is(ul, ol) {
@@ -195,16 +254,16 @@ html:has(dialog:modal) {
   margin-top: 0.5rem;
 }
 .docs-prose li::marker {
-  color: #5b6470;
+  color: var(--color-fg-faint);
 }
 .docs-prose code:not(pre code, .code-block code) {
   padding: 0.1em 0.35em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  border: 1px solid #262b33;
+  border: 1px solid var(--color-line);
   border-radius: 5px;
-  background: #14181d;
-  color: #e8eaed;
+  background: var(--color-surface-2);
+  color: var(--color-fg);
   font-family: var(--font-mono);
   font-size: 0.86em;
   overflow-wrap: break-word;
@@ -217,15 +276,15 @@ html:has(dialog:modal) {
   padding: 0.75rem 1rem;
   border-left: 2px solid var(--color-cyan);
   border-radius: 0 8px 8px 0;
-  background: rgb(34 211 238 / 0.05);
-  color: #c9d1d9;
+  background: color-mix(in oklab, var(--color-cyan) 6%, transparent);
+  color: var(--color-fg-soft);
 }
 .docs-prose hr {
-  border-color: #262b33;
+  border-color: var(--color-line);
 }
 .docs-prose .table-wrap {
   overflow-x: auto;
-  border: 1px solid #262b33;
+  border: 1px solid var(--color-line);
   border-radius: 12px;
 }
 .docs-prose table {
@@ -237,7 +296,7 @@ html:has(dialog:modal) {
 /* Words stay whole; code spans (which may break anywhere) give way first, so tables fit a phone. */
 .docs-prose :is(th, td) {
   padding: 0.5rem 0.65rem;
-  border-bottom: 1px solid #262b33;
+  border-bottom: 1px solid var(--color-line);
   text-align: left;
   vertical-align: top;
   overflow-wrap: break-word;
@@ -248,28 +307,28 @@ html:has(dialog:modal) {
   }
 }
 .docs-prose th {
-  background: #12151a;
-  color: #e8eaed;
+  background: var(--color-surface);
+  color: var(--color-fg);
   font-weight: 500;
 }
 .docs-prose tr:last-child td {
   border-bottom: 0;
 }
 .docs-prose td:first-child {
-  color: #e8eaed;
+  color: var(--color-fg);
 }
 
 /* Code blocks: Shiki's output with the site's dark theme (the light one is in the markup too). */
 .code-block {
   overflow: hidden;
-  border: 1px solid #262b33;
+  border: 1px solid var(--color-line);
   border-radius: 12px;
-  background: #101317;
+  background: var(--color-code);
 }
 .code-title {
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid #262b33;
-  color: #a1a9b4;
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-fg-muted);
   font-family: var(--font-mono);
   font-size: 12px;
 }
@@ -293,11 +352,15 @@ html:has(dialog:modal) {
   color: var(--shiki-dark);
   font-style: var(--shiki-dark-font-style);
 }
+.light :is(.code-block, .code-block-bare) pre.shiki span {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style);
+}
 
 /* JSDoc in the API reference: compact prose. */
 .prop-doc {
   margin-top: 0.4rem;
-  color: #a1a9b4;
+  color: var(--color-fg-muted);
   font-size: 13.5px;
   line-height: 1.65;
 }
@@ -312,7 +375,7 @@ html:has(dialog:modal) {
   margin-top: 0.25rem;
 }
 .prop-doc code {
-  color: #e8eaed;
+  color: var(--color-fg);
   font-family: var(--font-mono);
   font-size: 0.92em;
   overflow-wrap: anywhere;
@@ -326,5 +389,5 @@ html:has(dialog:modal) {
   scroll-margin-top: 7rem;
 }
 .prop-row:target {
-  background: linear-gradient(90deg, rgb(34 211 238 / 0.06), transparent 60%);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--color-cyan) 7%, transparent), transparent 60%);
 }

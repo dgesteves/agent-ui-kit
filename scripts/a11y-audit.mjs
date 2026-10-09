@@ -1,5 +1,6 @@
 // Runs axe-core in real Chrome against the running playground, across the run's
-// states (approval pending, diff review, done), the gallery, the docs and a phone viewport.
+// states (approval pending, diff review, done), the gallery, the docs and a phone viewport, in the
+// dark theme and then the light one.
 // Unlike the jsdom tests, this checks color contrast with real layout.
 //
 //   pnpm --filter playground start   # :3100
@@ -77,6 +78,22 @@ await audit(page, 'docs /docs/getting-started · 390px viewport');
 await page.goto(`${BASE}/docs/components/tool-call-timeline`, { waitUntil: 'networkidle' });
 await settle(page);
 await audit(page, 'docs /docs/components/tool-call-timeline · 390px viewport');
+
+// The light theme, with a light OS: the site follows it until the reader picks.
+const light = await browser.newPage({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' });
+await light.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
+await light.waitForSelector(pending, { timeout: 60_000 });
+await settle(light);
+await audit(light, 'light · playground · approval pending');
+for (const path of ['/gallery', '/docs/getting-started', '/docs/components/diff-review']) {
+  await light.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+  await settle(light);
+  await audit(light, `light · ${path}`);
+}
+await light.setViewportSize({ width: 390, height: 844 });
+await light.goto(`${BASE}/docs/components/approval-card`, { waitUntil: 'networkidle' });
+await settle(light);
+await audit(light, 'light · /docs/components/approval-card · 390px viewport');
 await browser.close();
 
 if (failures > 0) {

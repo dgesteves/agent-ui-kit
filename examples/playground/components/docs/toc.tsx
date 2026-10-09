@@ -33,11 +33,11 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
     <nav aria-labelledby="toc-heading" className="text-[13px]">
       <p
         id="toc-heading"
-        className="mb-3 font-mono text-[10.5px] font-medium tracking-[0.08em] text-[#8b94a0] uppercase"
+        className="text-fg-subtle mb-3 font-mono text-[10.5px] font-medium tracking-[0.08em] uppercase"
       >
         On this page
       </p>
-      <ul className="flex flex-col gap-1 border-l border-[#262b33]">
+      <ul className="border-line flex flex-col gap-1 border-l">
         {headings.map((h) => (
           <li key={h.id}>
             <a
@@ -45,11 +45,7 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
               aria-current={active === h.id ? 'location' : undefined}
               className={`focus-visible:outline-cyan-soft -ml-px block border-l py-1 leading-snug transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
                 h.depth === 3 ? 'pl-6' : 'pl-3'
-              } ${
-                active === h.id
-                  ? 'border-cyan text-[#e8eaed]'
-                  : 'border-transparent text-[#8b94a0] hover:text-[#e8eaed]'
-              }`}
+              } ${active === h.id ? 'border-cyan text-fg' : 'text-fg-subtle hover:text-fg border-transparent'}`}
             >
               {h.text}
             </a>
