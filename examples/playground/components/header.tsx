@@ -1,6 +1,9 @@
 'use client';
 
-const GITHUB = 'https://github.com/dgesteves/agent-ui-kit';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { GITHUB_URL, NPM_URL } from '@/lib/site';
+import { ArrowUpRightIcon, CloseIcon, GitHubIcon, MenuIcon } from './icons';
 
 export function Logo() {
   return (
@@ -15,43 +18,60 @@ export function Logo() {
   );
 }
 
+type Page = 'playground' | 'components';
+
+const PAGES: Array<{ page: Page; href: string; label: string }> = [
+  { page: 'playground', href: '/', label: 'Playground' },
+  { page: 'components', href: '/gallery', label: 'Components' },
+];
+
+const MENU_ID = 'site-menu';
+
 export function Header({
   page = 'playground',
   mode,
   liveAvailable = false,
   onModeChange,
 }: {
-  page?: 'playground' | 'components';
+  page?: Page;
   mode?: 'mock' | 'live';
   liveAvailable?: boolean;
   onModeChange?: (mode: 'mock' | 'live') => void;
 }) {
   const link = (current: boolean) =>
     `rounded-md px-2 py-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-cyan-soft ${current ? 'text-[#e8eaed]' : 'text-[#a1a9b4] hover:text-[#e8eaed]'}`;
+  const closeMenu = () => document.getElementById(MENU_ID)?.hidePopover();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const menu = document.getElementById(MENU_ID);
+    const onToggle = (event: Event) => setMenuOpen((event as ToggleEvent).newState === 'open');
+    menu?.addEventListener('toggle', onToggle);
+    return () => menu?.removeEventListener('toggle', onToggle);
+  }, []);
   return (
     <header className="border-line/80 bg-ink/80 sticky top-0 z-40 border-b backdrop-blur-md">
       <div className="mx-auto flex h-14 w-full max-w-[1320px] items-center gap-3 px-4 sm:px-6">
-        <a
+        <Link
           href="/"
           className="focus-visible:outline-cyan-soft flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
         >
           <Logo />
           <span className="font-mono text-[13px] font-semibold tracking-tight text-[#e8eaed]">agent-ui-kit</span>
-        </a>
+        </Link>
         <span className="hidden text-[#353c47] sm:inline" aria-hidden="true">
           /
         </span>
         <nav aria-label="Pages" className="hidden items-center gap-1 sm:flex">
-          <a href="/" className={link(page === 'playground')} aria-current={page === 'playground' ? 'page' : undefined}>
-            Playground
-          </a>
-          <a
-            href="/gallery"
-            className={link(page === 'components')}
-            aria-current={page === 'components' ? 'page' : undefined}
-          >
-            Components
-          </a>
+          {PAGES.map((p) => (
+            <Link
+              key={p.page}
+              href={p.href}
+              className={link(page === p.page)}
+              aria-current={page === p.page ? 'page' : undefined}
+            >
+              {p.label}
+            </Link>
+          ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           {/* Live mode exists only when the server has a model key (OPENAI_API_KEY); otherwise there is no choice to offer. */}
@@ -72,16 +92,64 @@ export function Header({
             </div>
           )}
           <a
-            href={GITHUB}
-            className="border-line focus-visible:outline-cyan-soft inline-flex size-8 items-center justify-center rounded-lg border text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-2"
-            aria-label="Source on GitHub"
+            href={GITHUB_URL}
+            className="border-line focus-visible:outline-cyan-soft inline-flex size-9 items-center justify-center rounded-lg border text-[#a1a9b4] transition-colors hover:border-[#353c47] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-2 sm:size-8"
+            aria-label="agent-ui-kit on GitHub"
           >
-            <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true">
-              <path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.04 1.78 2.72 1.27 3.38.97.1-.75.4-1.27.74-1.56-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" />
-            </svg>
+            <GitHubIcon className="size-4" />
           </a>
+          {/* Phones: the pages move into a menu (a native popover: Escape and outside clicks close it). */}
+          <button
+            type="button"
+            popoverTarget={MENU_ID}
+            className="border-line focus-visible:outline-cyan-soft inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border text-[#a1a9b4] transition-colors hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:outline-offset-2 sm:hidden"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls={MENU_ID}
+          >
+            {menuOpen ? <CloseIcon className="size-4" /> : <MenuIcon className="size-4" />}
+          </button>
         </div>
       </div>
+      <nav
+        id={MENU_ID}
+        popover="auto"
+        aria-label="Pages"
+        className="border-line bg-ink inset-x-0 top-14 bottom-auto m-0 h-auto w-full max-w-none border-0 border-b p-0 text-[#e8eaed] shadow-[0_24px_48px_rgb(0_0_0/0.5)] backdrop:bg-black/40 sm:hidden"
+      >
+        <ul className="flex flex-col px-2 py-2">
+          {PAGES.map((p) => (
+            <li key={p.page}>
+              <Link
+                href={p.href}
+                onClick={closeMenu}
+                aria-current={page === p.page ? 'page' : undefined}
+                className="focus-visible:outline-cyan-soft flex h-12 items-center rounded-lg px-3 text-[15px] text-[#a1a9b4] hover:bg-[#181c22] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:-outline-offset-2 aria-[current=page]:text-[#e8eaed]"
+              >
+                {p.label}
+                {page === p.page && <span className="bg-cyan ml-2 size-1.5 rounded-full" aria-hidden="true" />}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <ul className="border-line mx-2 flex flex-col border-t py-2">
+          {[
+            ['GitHub', GITHUB_URL],
+            ['npm', NPM_URL],
+          ].map(([label, href]) => (
+            <li key={label}>
+              <a
+                href={href}
+                onClick={closeMenu}
+                className="focus-visible:outline-cyan-soft flex h-12 items-center justify-between rounded-lg px-3 text-[15px] text-[#a1a9b4] hover:bg-[#181c22] hover:text-[#e8eaed] focus-visible:outline-2 focus-visible:-outline-offset-2"
+              >
+                {label}
+                <ArrowUpRightIcon className="size-4 text-[#8b94a0]" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </header>
   );
 }

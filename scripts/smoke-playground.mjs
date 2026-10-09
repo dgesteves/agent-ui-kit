@@ -1,6 +1,6 @@
 // Checks the built playground: link preview metadata and llms.txt, then in Chrome what a visitor
 // sees first on a phone, what the header offers when it was built without a model key
-// (OPENAI_API_KEY, as in CI), and the gallery.
+// (OPENAI_API_KEY, as in CI), the phone menu, and the gallery.
 //
 //   pnpm build:lib && pnpm registry:build && pnpm build:playground
 //   pnpm smoke:playground   # starts the built playground on :3220, or tests BASE_URL if set
@@ -77,8 +77,29 @@ try {
 
   // On a phone the run starts on load and grows past the screen; the page must not follow it
   // (and scroll the headline away) until the reader scrolls down or starts a run.
-  const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+  const phoneContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    colorScheme: 'dark',
+    isMobile: true,
+    hasTouch: true,
+  });
+  const phone = await phoneContext.newPage();
   await phone.goto(BASE, { waitUntil: 'networkidle' });
+
+  // The first screen says what the kit is and how to get it, and shows the run's status.
+  const fold = await phone.evaluate(() =>
+    ['h1', 'aside [data-slot="agent-status"]'].map((s) => document.querySelector(s)?.getBoundingClientRect().bottom),
+  );
+  const install = phone.getByRole('button', { name: 'Copy the install command' }).first();
+  const star = phone.getByRole('link', { name: 'Star on GitHub' }).first();
+  check(
+    fold.every((bottom) => bottom !== undefined && bottom < 844) &&
+      (await install.boundingBox())?.y < 844 &&
+      (await star.boundingBox())?.y < 844,
+    'phone: headline, install command, star link and run status on the first screen',
+    JSON.stringify(fold),
+  );
+  check(!(await phone.locator('#kbd-heading').isVisible()), 'phone: no keyboard shortcuts card on a touch screen');
   await phone.waitForFunction(
     () =>
       document.querySelectorAll('[data-slot="tool-call-trigger"]').length >= 3 &&
@@ -89,7 +110,14 @@ try {
   const scrollY = await phone.evaluate(() => scrollY);
   check(scrollY === 0, 'phone: the page stays on the headline while the run streams', `scrolled to ${scrollY}px`);
   check((await phone.getByRole('radio', { name: 'Live' }).count()) === 0, 'header: no Live mode without a model key');
-  await phone.close();
+
+  // The pages stay reachable on a phone, through the menu.
+  await phone.evaluate(() => scrollTo(0, 0));
+  await phone.getByRole('button', { name: 'Menu' }).click();
+  await phone.locator('#site-menu').getByRole('link', { name: 'Components' }).click();
+  await phone.waitForURL(/\/gallery$/, { timeout: 10_000 }).catch(() => {});
+  check(new URL(phone.url()).pathname === '/gallery', 'phone: the menu reaches the components page', phone.url());
+  await phoneContext.close();
 
   // The gallery: npm snippets that bring the styles, and frames that switch to the light palette
   // with no axe violations (contrast included).
