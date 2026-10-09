@@ -1,5 +1,11 @@
 # @dgesteves/agent-ui-kit
 
+## 0.4.2
+
+### Patch Changes
+
+- [#28](https://github.com/dgesteves/agent-ui-kit/pull/28) [`13f7fec`](https://github.com/dgesteves/agent-ui-kit/commit/13f7fec472fdc01d234b15222bd4b67075a96dc3) Thanks [@dgesteves](https://github.com/dgesteves)! - The npm page now shows the repository's README, the same one as on GitHub (every component with its screenshot, AG-UI, theming and the full quickstart), instead of a shorter separate README.
+
 ## 0.4.1
 
 ### Patch Changes
