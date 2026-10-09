@@ -29,14 +29,19 @@ function registryItems(): RegistryItem[] {
 
 /** The README as plain markdown: no images or badges, and links that work outside GitHub. */
 function plain(markdown: string) {
-  return markdown
-    .replace(/<picture>[\s\S]*?<\/picture>\n*/g, '')
-    .replace(/<p align="center">[\s\S]*?<\/p>\n*/g, '')
-    .replace(/<img [^>]*>\n*/g, '')
-    .replace(/^\[!\[.*\n/gm, '')
-    .replace(/\]\(#([^)]+)\)/g, `](${REPO}#$1)`)
-    .replace(/\]\((?!https?:|mailto:)\.?\/?([^)]+)\)/g, `](${REPO}/blob/main/$1)`)
-    .replace(/\n{3,}/g, '\n\n');
+  return (
+    markdown
+      // The demo video and the image npm shows instead (see packages/agent-ui-kit/scripts/npm-readme.mjs).
+      .replace(/<!-- npm-readme:video -->[\s\S]*?<!-- npm-readme:image[\s\S]*?-->\n*/g, '')
+      .replace(/<!--[\s\S]*?-->\n*/g, '')
+      .replace(/<picture>[\s\S]*?<\/picture>\n*/g, '')
+      .replace(/<p align="center">[\s\S]*?<\/p>\n*/g, '')
+      .replace(/<img [^>]*>\n*/g, '')
+      .replace(/^\[!\[.*\n/gm, '')
+      .replace(/\]\(#([^)]+)\)/g, `](${REPO}#$1)`)
+      .replace(/\]\((?!https?:|mailto:)\.?\/?([^)]+)\)/g, `](${REPO}/blob/main/$1)`)
+      .replace(/\n{3,}/g, '\n\n')
+  );
 }
 
 /** `## Heading` sections of the README, by heading. */

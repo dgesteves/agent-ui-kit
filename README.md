@@ -14,9 +14,19 @@ Typed against AI SDK 6 and 7 `UIMessage` parts (`ai@^6.0.0 || ^7.0.102`), runs o
 
 **Any model, nothing extra to pay.** The kit calls no model, needs no API key and makes no network requests of its own: it renders what your agent streams. Your backend picks the model and holds the keys, so it works with OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, and with any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is one line in your route; the components don't change.
 
+<!-- npm-readme:video -->
+
 https://github.com/user-attachments/assets/ed4e99bc-2674-4de8-8f2d-63956ec493d6
 
 <sub>The <a href="https://agent-ui-kit-demo.vercel.app">playground</a>, driven from the keyboard: tool calls stream into the timeline, <kbd>Y</kbd> approves the install, <kbd>A</kbd>/<kbd>R</kbd> review hunks, <kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. Then the <a href="https://agent-ui-kit-demo.vercel.app/gallery#ag-ui">AG-UI demo</a>, a real <code>@ag-ui/client</code> agent that resumes once you approve.</sub>
+
+<!-- npm-readme:image
+<p align="center">
+  <a href="https://agent-ui-kit-demo.vercel.app"><img src="docs/media/run.gif" width="100%" alt="A full scripted run, driven from the keyboard: the agent plans, searches and reads files, one read fails, it asks to install a package, Y approves it, the proposed diff is reviewed with A to accept three hunks and R to reject the model change, Ctrl+Enter applies it, and the agent's final answer reflects the review and cites three sources."></a>
+</p>
+
+<sub>A full run in the <a href="https://agent-ui-kit-demo.vercel.app">playground</a>, driven from the keyboard: <kbd>Y</kbd> approves the install, <kbd>A</kbd>/<kbd>R</kbd> review hunks, <kbd>Ctrl</kbd>+<kbd>↵</kbd> applies. A 23-second demo video, with the AG-UI demo, plays in the <a href="https://github.com/dgesteves/agent-ui-kit#readme">README on GitHub</a>.</sub>
+-->
 
 ## Why it exists
 
