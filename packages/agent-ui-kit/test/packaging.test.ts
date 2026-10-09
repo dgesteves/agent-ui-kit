@@ -105,7 +105,8 @@ describe('server/client module boundaries', () => {
 const pkg = JSON.parse(readFileSync(join(src, '../package.json'), 'utf8')) as {
   peerDependencies: Record<string, string>;
 };
-const readmes = ['../README.md', '../../../README.md'].map((readme) => readFileSync(join(src, readme), 'utf8'));
+// npm publishes the repository's README (scripts/npm-readme.mjs).
+const readmes = [readFileSync(join(src, '../../../README.md'), 'utf8')];
 
 describe('ai peer range', () => {
   const range = pkg.peerDependencies.ai!;

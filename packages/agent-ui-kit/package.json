@@ -61,7 +61,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./styles.layered.css ./tailwind.css ./theme.css ./theme.auto.css"
+    "lint:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css ./styles.layered.css ./tailwind.css ./theme.css ./theme.auto.css",
+    "prepack": "node scripts/npm-readme.mjs prepack",
+    "postpack": "node scripts/npm-readme.mjs postpack"
   },
   "peerDependencies": {
     "ai": "^6.0.0 || ^7.0.102",
