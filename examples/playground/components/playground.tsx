@@ -163,13 +163,16 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
           <ReviewStep
             key={`${runId}-${part.toolCallId}`}
             files={files}
-            onSubmit={(result) =>
+            onSubmit={(result) => {
+              // The review folds into a one-line summary; follow the run on from there, rather than
+              // staying where the last hunk was, which is now past the end of the run.
+              stickRef.current = true;
               void addToolOutput({
                 tool: 'review_changes',
                 toolCallId: part.toolCallId,
                 output: toReviewOutput(result),
-              })
-            }
+              });
+            }}
           />
         );
       }
@@ -229,6 +232,16 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
   }, [messages, running]);
 
   const done = status === 'ready' && derived.state === 'done';
+  // When the run finishes, the reasoning and the reviewed diff fold away above the answer; a reader
+  // who was following stays with the end of the run rather than the sections below it.
+  useEffect(() => {
+    if (!done || !stickRef.current) return;
+    const id = setTimeout(() => {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      endRef.current?.scrollIntoView({ block: 'end', behavior: smooth ? 'smooth' : 'auto' });
+    }, 250);
+    return () => clearTimeout(id);
+  }, [done]);
   const cost = usage ? estimateCost(usage, PRICING).total : undefined;
 
   const controls = {

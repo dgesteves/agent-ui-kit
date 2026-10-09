@@ -168,6 +168,30 @@ try {
   check(new URL(phone.url()).pathname === '/gallery', 'phone: the menu reaches the components page', phone.url());
   await phoneContext.close();
 
+  // Through a whole run from the keyboard: after the review is applied, the reader stays with the
+  // run (the diff folds away above them) and sees it finish at the bottom of the screen, not
+  // scrolled past it into the sections below.
+  const run = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' });
+  await run.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
+  await run.waitForSelector('[data-slot="approval-card"][data-status="pending"]', { timeout: 60_000 });
+  await run.keyboard.press('y');
+  await run.waitForSelector('[data-slot="diff-submit"]', { timeout: 60_000 });
+  for (const key of ['a', 'a', 'a', 'r']) await run.keyboard.press(key);
+  await run.keyboard.press('Control+Enter');
+  await run.getByText('Run complete').waitFor({ timeout: 60_000 });
+  await run.waitForTimeout(1000);
+  const end = await run.evaluate(() => {
+    const box = [...document.querySelectorAll('span')].find((el) => el.textContent === 'Run complete');
+    const { top, bottom } = box.getBoundingClientRect();
+    return { top: Math.round(top), bottom: Math.round(bottom), height: innerHeight };
+  });
+  check(
+    end.top > end.height / 2 && end.bottom <= end.height,
+    'run: after the review is applied, the run fills the screen down to its end',
+    JSON.stringify(end),
+  );
+  await run.close();
+
   // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and the
   // header's theme switch, which re-themes the page and the frames, with no axe violations
   // (contrast included) and remembered on the next visit.
