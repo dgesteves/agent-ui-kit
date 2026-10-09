@@ -145,6 +145,20 @@ try {
   );
   check(violations.length === 0, 'gallery, light: no axe violations', violations.join('; '));
   await gallery.close();
+
+  // On a phone, diff hunks, code and the compact run meter scroll sideways: each must be reachable
+  // from the keyboard while it does (axe's scrollable-region-focusable, WCAG 2.1.1).
+  const narrow = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+  await narrow.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
+  await narrow.waitForTimeout(800);
+  await narrow.addScriptTag({ content: readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8') });
+  const unreachable = await narrow.evaluate(async () =>
+    (
+      await window.axe.run(document, { runOnly: ['scrollable-region-focusable'], resultTypes: ['violations'] })
+    ).violations.flatMap((v) => v.nodes.map((n) => n.target.join(' '))),
+  );
+  check(unreachable.length === 0, 'gallery, 390px: every sideways scroller is reachable', unreachable.join(', '));
+  await narrow.close();
 } finally {
   await browser.close();
   if (server) process.kill(-server.pid);

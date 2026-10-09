@@ -23,6 +23,7 @@ import {
 } from './lib/diff';
 import { mergeTokensWithSegments, TOKEN_CLASS, tokenizeLine } from './lib/highlight';
 import { useIsMac } from './lib/hooks';
+import { useScrollRegion } from './lib/scroll-region';
 import { CheckIcon, UndoIcon, XIcon } from './lib/icons';
 import { Kbd, LiveRegion } from './lib/primitives';
 import { cn, hasModifier, isPromiseLike, isTypingTarget, type HeadingLevel } from './lib/utils';
@@ -499,6 +500,7 @@ function Hunk({
   onFocus,
   onDecide,
 }: HunkProps) {
+  const codeRef = useScrollRegion<HTMLDivElement>(`Hunk ${order + 1} code, ${file.path}`);
   const lastLine = hunk.newLines > 0 ? hunk.newStart + hunk.newLines - 1 : hunk.newStart;
   const name = `Hunk ${order + 1} of ${total}, ${file.path}, lines ${hunk.newStart} to ${lastLine}, ${decision === 'pending' ? 'not reviewed' : decision}`;
   return (
@@ -575,7 +577,14 @@ function Hunk({
           </span>
         )}
       </div>
-      <div className={cn('overflow-x-auto transition-opacity', decision === 'rejected' && 'opacity-55')}>
+      {/* Long lines scroll sideways; while they do, the code is a named group the keyboard can reach. */}
+      <div
+        ref={codeRef}
+        className={cn(
+          'focus-visible:outline-aui-ring overflow-x-auto transition-opacity focus-visible:outline-2 focus-visible:-outline-offset-2',
+          decision === 'rejected' && 'opacity-55',
+        )}
+      >
         {view === 'unified' ? (
           <div className="font-aui-mono min-w-max py-1 text-[12.5px] leading-[1.6]">
             {hunk.lines.map((line, i) => (

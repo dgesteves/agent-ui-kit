@@ -81,8 +81,12 @@ function Snippet({ text, label, multiline = false }: { text: string; label: stri
   const [copied, setCopied] = useState(false);
   return (
     <div className="relative">
+      {/* A long line scrolls sideways, so the snippet is reachable from the keyboard. */}
       <pre
-        className={`bg-ink border-line overflow-x-auto rounded-lg border px-3 py-2 pr-20 font-mono text-[12px] leading-relaxed text-[#c9d1d9] ${
+        role="group"
+        aria-label={label.replace(/^Copy (the )?/, '')}
+        tabIndex={0}
+        className={`bg-ink border-line focus-visible:outline-cyan-soft overflow-x-auto rounded-lg border px-3 py-2 pr-20 font-mono text-[12px] leading-relaxed text-[#c9d1d9] focus-visible:outline-2 ${
           multiline ? '' : 'whitespace-pre'
         }`}
       >

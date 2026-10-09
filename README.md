@@ -520,6 +520,7 @@ Interrupts without a tool call are in `interrupts`, for `resolve`.
 
 - **Keyboard first.** Every action is a real button. Single-key shortcuts (Y/N, J/K/A/R/U) only fire while focus is inside the component, which keeps them compliant with WCAG 2.1.4 and out of the way of text fields. They are exposed through `aria-keyshortcuts` and described in visually hidden text. The page-wide <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>↵</kbd> approval is opt-in because it collides with most chat composers.
 - **Focus is managed, never lost.** Deciding an approval moves focus to the card instead of dropping it on `<body>`. Diff hunks use a roving tabindex, so the review is one tab stop that arrow and letter keys navigate. Tool calls follow the disclosure pattern with arrow-key movement.
+- **Scrolling content is reachable.** Code blocks, tables, command previews, diff hunks and the compact run meter scroll sideways when they don't fit. While they do, they join the tab order as named groups ("Hunk 2 code, app/api/chat/route.ts"), so the arrow keys scroll them; once everything fits, they add no tab stop.
 - **Announcements.** Tool completions and failures, approval decisions, review progress ("Hunk 2 of 4 accepted. 2 remaining.") and agent state changes go through live regions. State announcements are debounced, and only approvals and errors are assertive.
 - **Not color alone.** Every state has an icon and text, diff lines keep their +/− glyphs plus "Added:"/"Removed:" for screen readers, and risk levels are spelled out.
 - **Motion.** All animation is behind `motion-safe`, and the number tweening in `RunMeter` honours `prefers-reduced-motion`.
@@ -599,14 +600,14 @@ What each import adds to an app's JavaScript, minified and gzipped. React and Re
 | `applyHunks`, `parseFileChange` from `/core` (with jsdiff)         |  6.1 kB |
 | `Sources`                                                          |  9.9 kB |
 | `AgentStatus`                                                      | 10.5 kB |
-| `RunMeter`                                                         | 11.4 kB |
-| `ApprovalCard`                                                     | 14.1 kB |
+| `RunMeter`                                                         | 11.7 kB |
+| `ApprovalCard`                                                     | 14.4 kB |
 | `ToolCallTimeline`                                                 | 19.2 kB |
-| `DiffReview`                                                       | 28.1 kB |
-| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) | 77.4 kB |
-| Everything in the main entry                                       | 95.9 kB |
+| `DiffReview`                                                       | 28.3 kB |
+| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) | 77.7 kB |
+| Everything in the main entry                                       | 96.2 kB |
 
-`styles.css` adds 7.9 kB gzipped; with Tailwind v4, `tailwind.css` adds the tokens and your build generates only the utilities the components use. Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 63.2 kB.
+`styles.css` adds 7.9 kB gzipped; with Tailwind v4, `tailwind.css` adds the tokens and your build generates only the utilities the components use. Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 63.5 kB.
 
 ## Design decisions
 
