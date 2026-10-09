@@ -34,7 +34,7 @@ describe('the README on npm', () => {
       expect(npmReadme).not.toContain('github.com/user-attachments');
       expect(npmReadme).not.toContain('npm-readme:');
       expect(npmReadme).toContain(
-        'src="https://raw.githubusercontent.com/dgesteves/agent-ui-kit/main/docs/media/run.gif"',
+        'src="https://raw.githubusercontent.com/dgesteves/agent-ui-kit/main/docs/media/demo.webp"',
       );
       const urls = [...npmReadme.matchAll(/\]\(([^)\s]+)|\b(?:src|href)="([^"]+)"/g)].map((m) => m[1] ?? m[2] ?? '');
       expect(urls.filter((url) => !/^(https?:|mailto:|#)/.test(url))).toEqual([]);
