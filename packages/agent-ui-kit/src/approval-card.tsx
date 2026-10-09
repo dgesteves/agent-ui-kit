@@ -18,6 +18,7 @@ import {
   type ToolPart,
 } from './lib/ai';
 import { humanizeToolName } from './lib/format';
+import { useScrollRegion } from './lib/scroll-region';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
 import { useIsMac } from './lib/hooks';
@@ -95,20 +96,29 @@ const RISK: Record<RiskLevel, { label: string; badge: string; card: string; icon
   },
 };
 
+/** A long command scrolls sideways; while it does, the keyboard can reach it. */
+function CommandPreview({ command, cwd }: { command: string; cwd: string | undefined }) {
+  const scrollRef = useScrollRegion<HTMLDivElement>('Command');
+  return (
+    <div
+      ref={scrollRef}
+      className="border-aui-border bg-aui-bg/70 font-aui-mono focus-visible:outline-aui-ring overflow-x-auto rounded-lg border px-3 py-2.5 text-[13px] leading-5 focus-visible:outline-2 focus-visible:outline-offset-1"
+    >
+      {cwd && <div className="text-aui-fg-subtle mb-0.5 text-[11px]">{cwd}</div>}
+      <div className="text-aui-fg whitespace-pre">
+        <span aria-hidden="true" className="text-aui-accent-fg mr-2 select-none">
+          $
+        </span>
+        {command}
+      </div>
+    </div>
+  );
+}
+
 function DefaultPreview({ input }: { input: unknown }) {
   if (input && typeof input === 'object' && 'command' in input && typeof input.command === 'string') {
     const cwd = 'cwd' in input && typeof input.cwd === 'string' ? input.cwd : undefined;
-    return (
-      <div className="border-aui-border bg-aui-bg/70 font-aui-mono overflow-x-auto rounded-lg border px-3 py-2.5 text-[13px] leading-5">
-        {cwd && <div className="text-aui-fg-subtle mb-0.5 text-[11px]">{cwd}</div>}
-        <div className="text-aui-fg whitespace-pre">
-          <span aria-hidden="true" className="text-aui-accent-fg mr-2 select-none">
-            $
-          </span>
-          {input.command}
-        </div>
-      </div>
-    );
+    return <CommandPreview command={input.command} cwd={cwd} />;
   }
   if (input === undefined) return null;
   return <JsonView value={input} label="Arguments" collapseAfter={14} />;

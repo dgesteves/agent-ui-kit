@@ -4,6 +4,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import type { RunUsage } from './lib/ai';
 import { formatCost, formatDuration, formatTokens } from './lib/format';
 import { useAnimatedNumber } from './lib/hooks';
+import { useScrollRegion } from './lib/scroll-region';
 import { ArrowDownIcon, ArrowUpIcon } from './lib/icons';
 import { estimateCost, type ModelPricing } from './lib/usage';
 import { cn, type HeadingLevel } from './lib/utils';
@@ -57,6 +58,8 @@ export function RunMeter({
   ...props
 }: RunMeterProps) {
   const Heading = `h${headingLevel}` as const;
+  // The compact strip scrolls sideways in a narrow space; it's already a named group.
+  const stripRef = useScrollRegion<HTMLDivElement>();
   const breakdown = pricing ? estimateCost(usage, pricing) : undefined;
   const totalCost = cost ?? breakdown?.total;
   const input = usage?.inputTokens;
@@ -80,13 +83,14 @@ export function RunMeter({
     const item = 'flex items-center gap-1.5 px-2.5 first:pl-0 last:pr-0';
     return (
       <div
+        ref={stripRef}
         data-aui
         data-slot="run-meter"
         data-variant="compact"
         role="group"
         aria-label={`Run metrics${live ? ' (live)' : ''}`}
         className={cn(
-          'divide-aui-border font-aui-mono text-aui-fg-muted inline-flex w-fit max-w-full items-center divide-x overflow-x-auto text-xs whitespace-nowrap tabular-nums',
+          'divide-aui-border font-aui-mono text-aui-fg-muted focus-visible:outline-aui-ring inline-flex w-fit max-w-full items-center divide-x overflow-x-auto text-xs whitespace-nowrap tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2',
           className,
         )}
         {...props}

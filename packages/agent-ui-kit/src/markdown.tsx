@@ -1,12 +1,13 @@
 'use client';
 
-import { createContext, memo, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, memo, useContext, useMemo, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remend from 'remend';
 import { ImageIcon } from './lib/icons';
 import { getImagePolicy, isAllowedImage } from './lib/images';
 import { CodeLines, CopyButton, Img } from './lib/primitives';
+import { useScrollRegion } from './lib/scroll-region';
 import { cn } from './lib/utils';
 
 /* Minimal structural syntax-tree types, so the plugins need no @types packages. */
@@ -128,6 +129,19 @@ function textOf(node: ReactNode): string {
   return '';
 }
 
+/** A wide table scrolls sideways; while it does, the keyboard can reach it. */
+function ScrollableTable({ className, ...props }: ComponentPropsWithoutRef<'table'>) {
+  const scrollRef = useScrollRegion<HTMLDivElement>('Table');
+  return (
+    <div
+      ref={scrollRef}
+      className="border-aui-border focus-visible:outline-aui-ring my-3 overflow-x-auto rounded-lg border focus-visible:outline-2 focus-visible:outline-offset-2"
+    >
+      <table className={cn('w-full text-left text-[13px]', className)} {...props} />
+    </div>
+  );
+}
+
 function CodeBlock({ children }: { children?: ReactNode }) {
   const child = Array.isArray(children) ? children[0] : children;
   const className =
@@ -136,13 +150,17 @@ function CodeBlock({ children }: { children?: ReactNode }) {
       : '';
   const language = /language-([\w-]+)/.exec(className)?.[1] ?? 'text';
   const code = textOf(children).replace(/\n$/, '');
+  const scrollRef = useScrollRegion<HTMLPreElement>(language === 'text' ? 'Code' : `Code, ${language}`);
   return (
     <div className="group/code border-aui-border bg-aui-bg/70 relative my-3 overflow-hidden rounded-lg border">
       <div className="border-aui-border flex items-center justify-between border-b px-3 py-1">
         <span className="font-aui-mono text-aui-fg-subtle text-[11px]">{language === 'text' ? 'code' : language}</span>
         <CopyButton text={code} label="Copy code" />
       </div>
-      <pre className="font-aui-mono text-aui-fg overflow-x-auto px-3 py-2.5 text-[12.5px] leading-relaxed">
+      <pre
+        ref={scrollRef}
+        className="font-aui-mono text-aui-fg focus-visible:outline-aui-ring overflow-x-auto px-3 py-2.5 text-[12.5px] leading-relaxed focus-visible:outline-2 focus-visible:-outline-offset-2"
+      >
         <CodeLines code={code} language={normalizeLanguage(language)} />
       </pre>
     </div>
@@ -316,11 +334,7 @@ const components: Components = {
       inLink={(props as Record<string, unknown>)['data-aui-in-link'] !== undefined}
     />
   ),
-  table: ({ className, ...props }) => (
-    <div className="border-aui-border my-3 overflow-x-auto rounded-lg border">
-      <table className={cn('w-full text-left text-[13px]', className)} {...omitNode(props)} />
-    </div>
-  ),
+  table: ({ className, ...props }) => <ScrollableTable className={className} {...omitNode(props)} />,
   th: ({ className, ...props }) => (
     <th
       className={cn('border-aui-border bg-aui-surface-2 text-aui-fg border-b px-3 py-1.5 font-semibold', className)}
