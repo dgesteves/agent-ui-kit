@@ -151,3 +151,25 @@ jobs:
 
       - name: Run the quickstart in Chrome, approve the command, wait for the final answer
         run: pnpm smoke:nextjs
+
+  assistant-ui:
+    name: assistant-ui binding
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build library
+        run: pnpm build:lib
+
+      # npm pack, then the example built against the tarball with Vite: what an app installs from npm.
+      - name: Review and approve in the example from the packed package, in Chrome
+        run: pnpm smoke:assistant-ui

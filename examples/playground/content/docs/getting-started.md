@@ -16,7 +16,7 @@ The same components come two ways: as an npm package, or as source files the sha
 npm i signoff-ui ai
 ```
 
-`ai` is a peer dependency, for the message part types. The package ships ES modules with `'use client'` kept per file, a precompiled stylesheet, and `signoff-ui/core` for server code.
+`ai` is a peer dependency, for the message part types. `@assistant-ui/react` is an optional one, for `signoff-ui/assistant-ui` ([assistant-ui](/docs/chat-ui#assistant-ui)). The package ships ES modules with `'use client'` kept per file, a precompiled stylesheet, and `signoff-ui/core` for server code.
 
 ### With the shadcn CLI
 

@@ -52,6 +52,10 @@
       "types": "./dist/ag-ui.d.ts",
       "default": "./dist/ag-ui.js"
     },
+    "./assistant-ui": {
+      "types": "./dist/assistant-ui.d.ts",
+      "default": "./dist/assistant-ui.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./styles.layered.css": "./dist/styles.layered.css",
     "./tailwind.css": "./dist/tailwind.css",
@@ -71,9 +75,15 @@
     "postpack": "node scripts/npm-readme.mjs postpack"
   },
   "peerDependencies": {
+    "@assistant-ui/react": "^0.15.0",
     "ai": "^6.0.0 || ^7.0.102",
     "react": "^18.2.0 || ^19.0.0",
     "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@assistant-ui/react": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.21",
@@ -89,6 +99,7 @@
     "@ag-ui/client": "^1.0.2",
     "@ag-ui/core": "^1.0.2",
     "@arethetypeswrong/cli": "^0.18.5",
+    "@assistant-ui/react": "^0.15.26",
     "@tailwindcss/cli": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

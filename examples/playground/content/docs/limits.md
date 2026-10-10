@@ -63,4 +63,4 @@ Measured with `pnpm perf`, which CI runs on every pull request with a budget per
 
 The next work is on review and approval:
 
-- Adapters: a documented assistant-ui binding, an AI Elements recipe, an Agent Client Protocol adapter, and AG-UI sub-agents as nested timelines.
+- Adapters: an AI Elements recipe, an Agent Client Protocol adapter, and AG-UI sub-agents as nested timelines.
