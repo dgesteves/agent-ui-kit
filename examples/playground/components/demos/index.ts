@@ -9,6 +9,7 @@ import { ReasoningDemo } from './reasoning';
 import { RunMeterDemo } from './run-meter';
 import { SourcesDemo } from './sources';
 import { ToolCallTimelineDemo } from './tool-call-timeline';
+import { UseDiffReviewDemo } from './use-diff-review';
 
 /** Each component's live example, by docs slug. A page loads only the one it renders. */
 export const DEMOS: Record<string, ComponentType> = {
@@ -16,6 +17,7 @@ export const DEMOS: Record<string, ComponentType> = {
   'tool-call-timeline': ToolCallTimelineDemo,
   'approval-card': ApprovalCardDemo,
   'diff-review': DiffReviewDemo,
+  'use-diff-review': UseDiffReviewDemo,
   'run-meter': RunMeterDemo,
   'agent-status': AgentStatusDemo,
   sources: SourcesDemo,

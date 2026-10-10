@@ -24,14 +24,15 @@ const rows = [
   ['`RunMeter`', `export { RunMeter, useRunTiming } from ${index};`, 12.5],
   ['`ApprovalCard`', `export { ApprovalCard, ToolApprovalCard } from ${index};`, 15],
   ['`ToolCallTimeline`', `export { ToolCallTimeline } from ${index};`, 20.5],
-  ['`DiffReview`', `export { DiffReview } from ${index};`, 32.5],
+  ['`DiffReview`', `export { DiffReview } from ${index};`, 42.5],
+  ['`useDiffReview` (no markup)', `export { useDiffReview } from ${index};`, 15],
   [
     '`AgentMessage` (with markdown, reasoning, timeline, approvals, sources)',
     `export { AgentMessage } from ${index};`,
     82,
   ],
   ['`useAgUiAgent` (`/ag-ui`)', `export * from ${JSON.stringify(join(dist, 'ag-ui.js'))};`, 3],
-  ['Everything in the main entry', `export * from ${index};`, 101],
+  ['Everything in the main entry', `export * from ${index};`, 114.5],
 ];
 
 const overBudget = [];

@@ -1,4 +1,4 @@
-signoff-ui is a set of React components for the step where a person signs off on what an agent does: reviewing the edits it proposes, across files and hunk by hunk, and approving or denying the calls that need a person. The result goes back to the agent as something it can act on: each file with only the accepted hunks applied, or an approval with the reason for a denial. The components render the message parts the AI SDK's `useChat` already gives you, and AG-UI agents through an adapter, inside the chat UI you already have.
+signoff-ui is a set of React components for the step where a person signs off on what an agent does: reviewing the edits it proposes, across files and hunk by hunk, and approving or denying the calls that need a person. The result goes back to the agent as something it can act on: each file with only the accepted hunks applied, the hunks rejected and the reviewer's comments on lines, or an approval with the reason for a denial. The components render the message parts the AI SDK's `useChat` already gives you, and AG-UI agents through an adapter, inside the chat UI you already have.
 
 It works with any model and costs nothing extra. The kit calls no model, needs no API key and makes no network requests of its own. Your backend picks the model and holds the keys: OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, or an agent on any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is [one line in your route](/docs/getting-started#choosing-a-model); the components don't change.
 
@@ -6,7 +6,7 @@ It works with any model and costs nothing extra. The kit calls no model, needs n
 
 Coding and editing agents propose changes across several files and ask to run commands that can break things, and someone has to sign off on both. The questions a person has at that point are specific:
 
-- **What did it change, and do I accept it?** Hunk by hunk, not all or nothing, from the keyboard, with the result fed back to the agent.
+- **What did it change, and do I accept it?** Hunk by hunk or file by file, not all or nothing, with comments on lines, from the keyboard, with the result fed back to the agent.
 - **Should I let it do that?** What exactly will run, how risky it is, and a fast way to say yes, no, or no with a reason. And when a rule decided on its own, that it was a rule and not a person.
 - **What is it doing, and what did that cost?** Which calls ran, how long each took, which failed and why, and what the run cost in tokens and time.
 
@@ -16,10 +16,10 @@ The chat kits most teams use stop short of the first two: assistant-ui's reviewa
 
 For review and approval:
 
-| Export                             | What it renders                                                                                                                                                   |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DiffReview`                       | Unified or split review of edits across files, from their contents or a patch, with word-level highlights; returns each file with only the accepted hunks applied |
-| `ApprovalCard`, `ToolApprovalCard` | Human-in-the-loop approval with a preview of what will run, a risk level when given, deny with a reason, and automatic decisions shown as such                    |
+| Export                             | What it renders                                                                                                                                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DiffReview`                       | Unified or split review of edits across files, from their contents or a patch, with word-level highlights; returns each file with only the accepted hunks applied, the rejected hunks and comments on lines |
+| `ApprovalCard`, `ToolApprovalCard` | Human-in-the-loop approval with a preview of what will run, a risk level when given, deny with a reason, and automatic decisions shown as such                                                              |
 
 Supporting pieces:
 
@@ -63,7 +63,7 @@ The [playground](/) doesn't fake any of this. Its scripted agent is a `ChatTrans
 
 ## Design decisions
 
-- **Review returns code.** `DiffReview` does not stop at a decision map: `onSubmit` includes each file with only the accepted hunks applied (`applyHunks`), and unreviewed hunks are left out. That makes it a client-side tool whose result goes straight back to the model.
+- **Review returns code.** `DiffReview` does not stop at a decision map: `onSubmit` includes each file with only the accepted hunks applied (`applyHunks`), unreviewed hunks left out, plus the rejected hunks and the comments with their lines. That makes it a client-side tool whose result goes straight back to the model, through `reviewToolOutput`.
 - **Automatic is not a person.** Decisions a `toolApproval` rule makes on its own never prompt or take focus, and read "Auto-approved" or "Blocked by policy", so whoever reads the run can tell who decided.
 - **Shortcuts scoped to focus.** Global single-key shortcuts are an accessibility problem and fight with text inputs; scoping them to the component avoids both, and keeps them within WCAG 2.1.4. Critical approvals need a second press.
 - **A run, not a message.** The unit of UI is the run: many tool calls, a pause for permission, a review, a summary. Consecutive tool parts become one timeline instead of a stack of cards, and status and telemetry live outside the message.

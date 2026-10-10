@@ -15,6 +15,7 @@ import {
   RunMeter,
   deriveAgentState,
   getToolPartName,
+  reviewToolOutput,
   useRunTiming,
   type FileChange,
 } from 'signoff-ui';
@@ -45,13 +46,17 @@ export function AgentRun() {
           // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
           active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={addToolApprovalResponse}
-          // The proposed edit, reviewed hunk by hunk. The agent gets each file as you applied it.
+          // The proposed edit, reviewed hunk by hunk: the agent gets the files as applied, and your comments.
           renderTool={(part) =>
             getToolPartName(part) === 'review_changes' && part.state === 'input-available' ? (
               <DiffReview
                 files={(part.input as { files: FileChange[] }).files}
                 onSubmit={(review) =>
-                  addToolOutput({ tool: 'review_changes', toolCallId: part.toolCallId, output: review })
+                  addToolOutput({
+                    tool: 'review_changes',
+                    toolCallId: part.toolCallId,
+                    output: reviewToolOutput(review),
+                  })
                 }
               />
             ) : undefined

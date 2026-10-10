@@ -21,7 +21,14 @@ const ITEMS = [
     entry: 'diff-review.tsx',
     title: 'Diff Review',
     description:
-      'Unified/split review of agent edits across files with per-hunk accept/reject and keyboard navigation; returns each file with the accepted hunks applied.',
+      'Review agent edits across files: accept or reject hunks or whole files, comment on lines, mark files viewed, from the keyboard; returns the applied files, rejected hunks and comments.',
+  },
+  {
+    name: 'use-diff-review',
+    entry: 'use-diff-review.ts',
+    title: 'useDiffReview',
+    description:
+      'DiffReview without its markup: parsing (in a worker for large files), decisions, line comments, viewed files, context and the keyboard, for your own design system.',
   },
   {
     name: 'approval-card',
