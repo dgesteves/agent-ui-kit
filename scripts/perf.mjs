@@ -17,8 +17,10 @@ import { tmpdir } from 'node:os';
 import { dirname, extname, join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { build } from 'rolldown';
+import { runCases } from './perf/deadline.ts';
 
-// However the browser behaves, the check ends: a stuck case fails it rather than the CI job's clock.
+// Each case has two minutes, and one more try in a new browser (scripts/perf/deadline.ts). This is
+// the backstop: however the browser behaves, the check ends before the CI job's clock does.
 setTimeout(() => {
   console.error('perf: no result after 8 minutes');
   process.exit(1);
@@ -61,6 +63,7 @@ await build({
   transform: { define: { 'process.env.NODE_ENV': '"production"' } },
   output: { dir: out, format: 'esm', entryFileNames: 'harness.js', minify: true },
 });
+const LOADED = "console.log('perf: diff worker loaded');";
 // The package starts its diff worker from `new URL('./diff-worker.js', import.meta.url)`, which a
 // bundler with worker support emits on its own. Here the worker is built beside the page instead.
 const worker = join(dist, 'lib/diff-worker.js');
@@ -69,7 +72,8 @@ if (existsSync(worker)) {
     input: worker,
     platform: 'browser',
     logLevel: 'silent',
-    output: { dir: out, format: 'esm', entryFileNames: 'diff-worker.js', minify: true },
+    // Once it can answer: a case that stalls says whether its worker got this far.
+    output: { dir: out, format: 'esm', entryFileNames: 'diff-worker.js', minify: true, footer: LOADED },
   });
 }
 copyFileSync(join(dist, 'styles.css'), join(out, 'styles.css'));
@@ -94,17 +98,49 @@ const server = createServer((req, res) => {
 await new Promise((done) => server.listen(0, done));
 const base = `http://localhost:${server.address().port}`;
 
-const browser = await chromium.launch({ channel: 'chrome' });
-const results = [];
-const over = [];
-const breakdowns = [];
+/**
+ * Chrome, in a process the check can kill. Playwright's `browser.close()` waits for the browser to
+ * exit and has no timeout of its own, so a browser that stops answering would hang it.
+ */
+async function launch() {
+  const server = await chromium.launchServer({ channel: 'chrome' });
+  const browser = await chromium.connect(server.wsEndpoint());
+  const chrome = server.process();
+  return {
+    browser,
+    close: () => server.close(),
+    kill() {
+      // Its renderers too: Playwright starts Chrome as the leader of a process group.
+      try {
+        process.kill(-chrome.pid, 'SIGKILL');
+      } catch {
+        chrome.kill('SIGKILL');
+      }
+    },
+  };
+}
+
+/** What a case's page and its worker report, a line each, timed from the start of the case. */
+function record(page, log) {
+  const started = Date.now();
+  const add = (line) => log.push(`${((Date.now() - started) / 1000).toFixed(1)} s ${line}`);
+  page.on('console', (message) => add(`console.${message.type()}: ${message.text()}`));
+  page.on('pageerror', (error) => add(`pageerror: ${error.message}`));
+  page.on('crash', () => add('the page crashed'));
+  page.on('requestfailed', (request) => add(`request failed: ${request.url()} ${request.failure()?.errorText}`));
+  page.on('response', (response) => response.status() >= 400 && add(`${response.status()} for ${response.url()}`));
+  page.on('worker', (worker) => {
+    add(`worker attached: ${worker.url()}`);
+    worker.on('close', () => add(`worker closed: ${worker.url()}`));
+  });
+}
 
 /**
  * Where a case's main-thread time went, from a Chrome trace of loading it again: self time by
  * kind (script, style, layout, paint, garbage collection) and the busiest trace events. Printed
  * for a case over budget, so a CI failure says what to look at.
  */
-async function whereTimeWent(query) {
+async function whereTimeWent(browser, query) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const cdp = await page.context().newCDPSession(page);
   const events = [];
@@ -159,33 +195,50 @@ async function whereTimeWent(query) {
   return `${top(kinds, 5)}\n    busiest: ${top(names, 8)}`;
 }
 
+/** One case: its measurements, the budgets they go over, and if any, where the time went. */
+async function measure({ browser }, { label, query, budget }, log) {
+  const started = Date.now();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  page.setDefaultTimeout(90_000);
+  const errors = [];
+  record(page, log);
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto(`${base}/?${query}`, { waitUntil: 'commit' });
+  await page.waitForFunction(() => window.__perf, null, { polling: 100 });
+  const result = await page.evaluate(() => window.__perf);
+  await page.close();
+  if (errors.length || result.error)
+    throw new Error([...new Set([result.error, ...errors])].filter(Boolean).join('; '));
+  console.error(`perf: ${label} in ${((Date.now() - started) / 1000).toFixed(1)} s`);
+  const budgets = { ...budget, ...SCROLL_BUDGET };
+  const over = Object.entries(budgets)
+    .filter(([metric, limit]) => result[metric] > limit)
+    .map(([metric, limit]) => `${label}: ${metric} ${Math.round(result[metric])}, budget ${limit}`);
+  const breakdown = enforce && over.length ? `${label}: ${await whereTimeWent(browser, query)}` : undefined;
+  return { result: { label, ...result, budgets }, over, breakdown };
+}
+
+let measured;
 try {
-  for (const [label, query, budget] of CASES) {
-    const started = Date.now();
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-    page.setDefaultTimeout(90_000);
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto(`${base}/?${query}`, { waitUntil: 'commit' });
-    await page.waitForFunction(() => window.__perf, null, { polling: 100 });
-    const result = await page.evaluate(() => window.__perf);
-    await page.close();
-    if (errors.length || result.error)
-      throw new Error(`${label}: ${[result.error, ...errors].filter(Boolean).join('; ')}`);
-    console.error(`perf: ${label} in ${((Date.now() - started) / 1000).toFixed(1)} s`);
-    const budgets = { ...budget, ...SCROLL_BUDGET };
-    for (const [metric, limit] of Object.entries(budgets)) {
-      if (result[metric] > limit) over.push(`${label}: ${metric} ${Math.round(result[metric])}, budget ${limit}`);
-    }
-    results.push({ label, ...result, budgets });
-    if (enforce && over.some((line) => line.startsWith(`${label}:`)))
-      breakdowns.push(`${label}: ${await whereTimeWent(query)}`);
-  }
+  measured = await runCases(
+    CASES.map(([label, query, budget]) => ({ label, query, budget })),
+    {
+      launch,
+      run: measure,
+      // Playwright's own timeouts, and a crashed page, count as a stuck browser too: worth one more try.
+      stalled: (error) => error.name === 'TimeoutError' || /crashed/i.test(error.message),
+    },
+  );
+} catch (error) {
+  console.error(error.message);
 } finally {
-  await browser.close();
   server.close();
   rmSync(out, { recursive: true, force: true });
 }
+if (!measured) process.exit(1);
+const results = measured.map((m) => m.result);
+const over = measured.flatMap((m) => m.over);
+const breakdowns = measured.map((m) => m.breakdown).filter(Boolean);
 
 const ms = (value) => `${Math.round(value)} ms`;
 const count = (value) => value.toLocaleString('en-US');

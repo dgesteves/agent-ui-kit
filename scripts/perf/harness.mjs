@@ -5,6 +5,29 @@ import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { DiffReview } from 'signoff-ui';
 
+// Where the page got to, for scripts/perf.mjs to print if the case stalls: the console reaches it as
+// it goes, even when the page stops answering later.
+const step = (what) => console.log(`perf: ${what}`);
+
+// The diff worker DiffReview starts for a large file: whether it was created, failed or answered.
+const NativeWorker = globalThis.Worker;
+globalThis.Worker = class extends NativeWorker {
+  constructor(url, options) {
+    super(url, options);
+    step(`diff worker created from ${url}`);
+    this.addEventListener('error', (event) =>
+      step(`diff worker failed: ${event.message ?? 'its script did not load'}`),
+    );
+    this.addEventListener('messageerror', () => step('diff worker sent a message that could not be read'));
+    this.addEventListener('message', () => step('diff worker answered'), { once: true });
+  }
+
+  postMessage(...args) {
+    step('diff worker asked');
+    super.postMessage(...args);
+  }
+};
+
 const params = new URLSearchParams(location.search);
 const scenario = params.get('s') ?? 'local';
 const n = Number(params.get('n') ?? 1000);
@@ -44,6 +67,7 @@ const time = (fn) => {
 const result = {};
 const start = performance.now();
 result.mountMs = time(() => root.render(h(DiffReview, { files, view, onSubmit() {} })));
+step(`rendered in ${Math.round(result.mountMs)} ms`);
 // Ready: every file compared (none busy) and the hunks on the page.
 const hunkSelector = '[data-slot="signoff-diff-hunk"]';
 for (;;) {
@@ -55,6 +79,7 @@ for (;;) {
   await frame();
 }
 result.readyMs = performance.now() - start;
+step(`ready in ${Math.round(result.readyMs)} ms`);
 await frame();
 await frame();
 await new Promise((resolve) => setTimeout(resolve, 300));
@@ -70,6 +95,7 @@ for (let i = 0; i < 5; i++) {
   await frame();
 }
 result.keyMs = keys.sort((a, b) => a - b)[2];
+step('decided five hunks from the keyboard');
 
 // Scroll through the whole review, a screen per frame: what a reader paging down meets.
 longTasks.length = 0;
@@ -87,5 +113,6 @@ frames.sort((a, b) => a - b);
 result.scrollFrameP95Ms = frames[Math.floor(frames.length * 0.95)] ?? 0;
 result.scrollLongestTaskMs = Math.max(0, ...longTasks);
 result.domNodesAfterScroll = container.querySelectorAll('*').length;
+step(`scrolled through in ${frames.length} frames`);
 
 window.__perf = result;
