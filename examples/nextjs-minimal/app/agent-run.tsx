@@ -1,21 +1,37 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { lastAssistantMessageIsCompleteWithApprovalResponses, type LanguageModelUsage, type UIMessage } from 'ai';
+import {
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+  lastAssistantMessageIsCompleteWithToolCalls,
+  type LanguageModelUsage,
+  type UIMessage,
+} from 'ai';
 import { useState } from 'react';
-import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from 'signoff-ui';
+import {
+  AgentMessage,
+  AgentStatus,
+  DiffReview,
+  RunMeter,
+  deriveAgentState,
+  getToolPartName,
+  useRunTiming,
+  type FileChange,
+} from 'signoff-ui';
 
 type Message = UIMessage<{ usage?: LanguageModelUsage }>;
 
 export function AgentRun() {
-  const { messages, status, sendMessage, addToolApprovalResponse } = useChat<Message>({
-    // Continue the run as soon as every pending approval has an answer.
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+  const { messages, status, sendMessage, addToolOutput, addToolApprovalResponse } = useChat<Message>({
+    // Continue the run once the review is in and every approval has an answer.
+    sendAutomaticallyWhen: (chat) =>
+      lastAssistantMessageIsCompleteWithToolCalls(chat) || lastAssistantMessageIsCompleteWithApprovalResponses(chat),
   });
   const [input, setInput] = useState('');
   const last = messages.findLast((m) => m.role === 'assistant');
-  const { state, detail } = deriveAgentState({ status, message: last });
-  // A run starts with each message you send and spans its approval round trips.
+  // review_changes waits on a person, like an approval.
+  const { state, detail } = deriveAgentState({ status, message: last, pendingClientTools: ['review_changes'] });
+  // A run starts with each message you send and spans its review and approval round trips.
   const timing = useRunTiming(status, messages);
 
   return (
@@ -29,6 +45,17 @@ export function AgentRun() {
           // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
           active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={addToolApprovalResponse}
+          // The proposed edit, reviewed hunk by hunk. The agent gets each file as you applied it.
+          renderTool={(part) =>
+            getToolPartName(part) === 'review_changes' && part.state === 'input-available' ? (
+              <DiffReview
+                files={(part.input as { files: FileChange[] }).files}
+                onSubmit={(review) =>
+                  addToolOutput({ tool: 'review_changes', toolCallId: part.toolCallId, output: review })
+                }
+              />
+            ) : undefined
+          }
         />
       )}
       <RunMeter

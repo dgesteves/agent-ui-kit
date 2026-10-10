@@ -3,8 +3,9 @@ import { MockLanguageModelV4 } from 'ai/test';
 
 /*
  * A scripted model, so the example runs end to end without an API key. It reads two files (one
- * read fails), asks to run a command, which needs approval, and answers with sources once the
- * command has run. app/api/chat/route.ts executes the real tools; only the model is scripted.
+ * read fails), proposes an edit across two files for review, asks to run a command, which needs
+ * approval, and answers with sources once the command has run. app/api/chat/route.ts executes the
+ * real tools; only the model is scripted.
  */
 
 type DoStream = MockLanguageModelV4['doStream'];
@@ -33,6 +34,29 @@ const toolCall = (toolCallId: string, toolName: string, input: object): Chunk =>
   input: JSON.stringify(input),
 });
 
+const ROUTE = 'export async function POST(req: Request) {\n  // ...\n}\n';
+const LIMITED = [
+  "import { ratelimit } from '@/lib/ratelimit';",
+  '',
+  'export async function POST(req: Request) {',
+  "  const { success } = await ratelimit.limit(req.headers.get('x-forwarded-for') ?? 'anonymous');",
+  "  if (!success) return new Response('Too many requests', { status: 429 });",
+  '  // ...',
+  '}',
+  '',
+].join('\n');
+const LIMITER = [
+  "import { Ratelimit } from '@upstash/ratelimit';",
+  "import { Redis } from '@upstash/redis';",
+  '',
+  '/** 10 requests per 10 seconds per caller, sliding window. */',
+  'export const ratelimit = new Ratelimit({',
+  '  redis: Redis.fromEnv(),',
+  "  limiter: Ratelimit.slidingWindow(10, '10 s'),",
+  '});',
+  '',
+].join('\n');
+
 /** Results the model has seen so far, by tool name. */
 function toolResults(prompt: Prompt) {
   return prompt.flatMap((message) =>
@@ -42,6 +66,7 @@ function toolResults(prompt: Prompt) {
 
 function script(prompt: Prompt): Chunk[] {
   const results = toolResults(prompt);
+  const review = results.find((part) => part.toolName === 'review_changes');
   const command = results.find((part) => part.toolName === 'run_command');
 
   if (!results.some((part) => part.toolName === 'read_file')) {
@@ -56,17 +81,41 @@ function script(prompt: Prompt): Chunk[] {
     ];
   }
 
+  if (!review) {
+    return [
+      ...text('t2', 'There is no middleware, so the limit goes in the route. Here is the change, for you to review.'),
+      toolCall('call_review', 'review_changes', {
+        files: [
+          { path: 'app/api/chat/route.ts', oldContent: ROUTE, newContent: LIMITED },
+          { path: 'lib/ratelimit.ts', newContent: LIMITER },
+        ],
+      }),
+      { type: 'finish', usage: usage(5_100, 4_000, 420), finishReason: { unified: 'tool-calls', raw: undefined } },
+    ];
+  }
+
+  const applied = review.output.type === 'json' ? (review.output.value as { accepted?: number }).accepted : 0;
+  if (!applied) {
+    return [
+      ...text('t3', 'Nothing was applied, so the route stays as it is.'),
+      { type: 'finish', usage: usage(5_600, 4_800, 40), finishReason: { unified: 'stop', raw: undefined } },
+    ];
+  }
+
   if (!command) {
     return [
-      ...text('t2', 'There is no middleware, so the limit goes in the route. It needs a rate limiter.'),
-      toolCall('call_install', 'run_command', { command: 'pnpm add @upstash/ratelimit' }),
-      { type: 'finish', usage: usage(5_100, 4_000, 90), finishReason: { unified: 'tool-calls', raw: undefined } },
+      ...text(
+        't3',
+        `The ${applied === 1 ? 'hunk you accepted is' : `${applied} hunks you accepted are`} applied. The limiter needs two packages.`,
+      ),
+      toolCall('call_install', 'run_command', { command: 'pnpm add @upstash/ratelimit @upstash/redis' }),
+      { type: 'finish', usage: usage(5_900, 5_000, 90), finishReason: { unified: 'tool-calls', raw: undefined } },
     ];
   }
 
   if (command.output.type === 'execution-denied') {
     return [
-      ...text('t3', 'Understood, I will not install anything. The route stays as it is.'),
+      ...text('t4', 'Understood, I will not install anything. The edit is applied, without the package.'),
       { type: 'finish', usage: usage(5_300, 4_800, 40), finishReason: { unified: 'stop', raw: undefined } },
     ];
   }
@@ -87,9 +136,9 @@ function script(prompt: Prompt): Chunk[] {
       title: 'Next.js route handlers',
     },
     ...text(
-      't4',
+      't5',
       'Done. The route can now use a sliding window limiter [1], checked in the route handler itself [2].\n\n' +
-        '- `@upstash/ratelimit` installed\n- `app/api/chat/route.ts` should return **429** when limited',
+        '- `@upstash/ratelimit` and `@upstash/redis` installed\n- `app/api/chat/route.ts` returns **429** when limited',
     ),
     { type: 'finish', usage: usage(6_400, 5_000, 260), finishReason: { unified: 'stop', raw: undefined } },
   ];

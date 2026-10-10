@@ -20,6 +20,13 @@ const tools = {
       return { path, content };
     },
   }),
+  // No execute: the page answers it with a DiffReview, and the result holds each file as applied.
+  review_changes: tool({
+    description: 'Propose edits to files. The user reviews them hunk by hunk before anything is written.',
+    inputSchema: z.object({
+      files: z.array(z.object({ path: z.string(), oldContent: z.string().optional(), newContent: z.string() })),
+    }),
+  }),
   run_command: tool({
     description: 'Run a shell command in the repository.',
     inputSchema: z.object({ command: z.string() }),
@@ -39,8 +46,8 @@ export async function POST(req: Request) {
     stopWhen: stepCountIs(10),
   });
 
-  // Once approved, the run continues the same message in a new request whose totalUsage starts
-  // from zero, and useChat replaces metadata.usage. Add the usage the message already has
+  // After the review and the approval, the run continues the same message in a new request whose
+  // totalUsage starts from zero, and useChat replaces metadata.usage. Add the usage the message already has
   // (it comes back from the client, so it is fine for display but not for billing).
   const last = messages.at(-1);
   const previous = last?.role === 'assistant' ? last.metadata?.usage : undefined;
