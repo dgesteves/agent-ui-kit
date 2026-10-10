@@ -1,4 +1,4 @@
-import { addUsage } from '@dgesteves/agent-ui-kit/core';
+import { addUsage } from 'signoff-ui/core';
 import { convertToModelMessages, stepCountIs, streamText, tool, type LanguageModelUsage, type UIMessage } from 'ai';
 import { z } from 'zod';
 import { mockModel } from '@/lib/mock-model';

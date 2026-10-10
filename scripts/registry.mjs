@@ -2,7 +2,7 @@
 //
 // Each item is self-contained: it lists the component file plus every file it
 // imports (transitively), so it installs correctly by URL, from a local file,
-// or straight from GitHub (`npx shadcn add dgesteves/agent-ui-kit/<item>`),
+// or straight from GitHub (`npx shadcn add dgesteves/signoff-ui/<item>`),
 // without cross-item registryDependencies. Shared files are identical across
 // items, so installing a second component skips them.
 //
@@ -12,8 +12,8 @@ import { dirname, join, posix, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const src = join(root, 'packages/agent-ui-kit/src');
-const TARGET_DIR = 'components/agent-ui';
+const src = join(root, 'packages/signoff-ui/src');
+const TARGET_DIR = 'components/signoff-ui';
 
 const ITEMS = [
   {
@@ -188,8 +188,8 @@ const cssVars = { theme: { ...themeInline, ...animations }, light, dark };
 
 const registry = {
   $schema: 'https://ui.shadcn.com/schema/registry.json',
-  name: 'agent-ui-kit',
-  homepage: 'https://github.com/dgesteves/agent-ui-kit',
+  name: 'signoff-ui',
+  homepage: 'https://github.com/dgesteves/signoff-ui',
   items: ITEMS.map((item) => {
     const files = closure(item.entry);
     const deps = new Set();

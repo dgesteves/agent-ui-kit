@@ -18,7 +18,7 @@ import {
   type FileChange,
   type HunkDecision,
   type ToolPart,
-} from '@dgesteves/agent-ui-kit';
+} from 'signoff-ui';
 import { useChat } from '@ai-sdk/react';
 import {
   DefaultChatTransport,
@@ -473,7 +473,7 @@ function ReviewStep({ files, onSubmit }: { files: FileChange[]; onSubmit: (resul
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Put the reviewer on the first hunk so J/K/A/R work immediately.
-    const first = ref.current?.querySelector<HTMLElement>('[data-slot="diff-hunk"]');
+    const first = ref.current?.querySelector<HTMLElement>('[data-slot="signoff-diff-hunk"]');
     first?.focus({ preventScroll: true });
   }, []);
   return (
@@ -544,7 +544,7 @@ function PreparingChanges() {
       role="status"
     >
       <span className="bg-raised-2 relative h-1 w-24 overflow-hidden rounded-full" aria-hidden="true">
-        <span className="bg-cyan motion-safe:animate-aui-indeterminate absolute inset-y-0 w-1/3 rounded-full" />
+        <span className="bg-cyan motion-safe:animate-signoff-indeterminate absolute inset-y-0 w-1/3 rounded-full" />
       </span>
       Preparing changes…
     </div>

@@ -1,6 +1,6 @@
 import { OG_SIZE, ogImage } from '@/lib/og';
 
-export const alt = 'agent-ui-kit: every component in isolation';
+export const alt = 'signoff-ui: every component in isolation';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 

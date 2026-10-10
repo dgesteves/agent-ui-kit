@@ -38,7 +38,7 @@ function parseDuration(text) {
 
 /** The run meter's time to first token and active time, from the sentence it gives screen readers. */
 async function runTotal(page) {
-  const summary = await page.locator('[data-slot="run-meter"] .sr-only').innerText();
+  const summary = await page.locator('[data-slot="signoff-run-meter"] .sr-only').innerText();
   const ttft = /time to first token ([^,]+)/.exec(summary)?.[1];
   const total = /total ([^,]+)$/.exec(summary)?.[1];
   if (!total) throw new Error(`The run meter shows no active time: ${summary}`);
@@ -56,17 +56,17 @@ try {
   await page.getByRole('textbox', { name: 'Message the agent' }).fill('Add rate limiting to the chat route');
   await page.getByRole('button', { name: 'Send' }).click();
 
-  const pending = page.locator('[data-slot="approval-card"][data-status="pending"]');
+  const pending = page.locator('[data-slot="signoff-approval-card"][data-status="pending"]');
   await pending.waitFor({ timeout: 30_000 });
   // The failed read shows its real error, not the AI SDK's default "An error occurred.".
   await page.getByText("ENOENT: no such file or directory, open 'middleware.ts'", { exact: true }).waitFor();
-  await page.locator('[data-slot="agent-status"][data-state="awaiting-approval"]').waitFor();
+  await page.locator('[data-slot="signoff-agent-status"][data-state="awaiting-approval"]').waitFor();
 
   await pending.getByRole('button', { name: /^Approve/ }).click();
   await page.getByText('sliding window limiter').waitFor({ timeout: 30_000 });
-  await page.locator('[data-slot="agent-status"][data-state="done"]').waitFor();
+  await page.locator('[data-slot="signoff-agent-status"][data-state="done"]').waitFor();
   await page.getByRole('list', { name: 'Sources' }).waitFor();
-  const meter = await page.locator('[data-slot="run-meter"]').innerText();
+  const meter = await page.locator('[data-slot="signoff-run-meter"]').innerText();
   if (!/15\.7k/.test(meter)) throw new Error(`The run meter does not show the run's 15.7k input tokens:\n${meter}`);
   console.log('pass  quickstart: tool calls, a failed tool, approval, resumed run, sources, run meter');
 
@@ -74,7 +74,7 @@ try {
   const first = await runTotal(page);
   await page.getByRole('textbox', { name: 'Message the agent' }).fill('Thanks. Anything else?');
   await page.getByRole('button', { name: 'Send' }).click();
-  const done = page.locator('[data-slot="agent-status"][data-state="done"]');
+  const done = page.locator('[data-slot="signoff-agent-status"][data-state="done"]');
   await done.waitFor({ state: 'detached' });
   await done.waitFor({ timeout: 30_000 });
   const second = await runTotal(page);
@@ -86,7 +86,7 @@ try {
   );
 
   await page.goto(`${BASE}/static`, { waitUntil: 'networkidle' });
-  await page.locator('[data-slot="diff-review"]').waitFor();
+  await page.locator('[data-slot="signoff-diff-review"]').waitFor();
   console.log('pass  prerendered page (cacheComponents)');
 
   if (errors.length > 0) throw new Error(`Page errors:\n  ${errors.join('\n  ')}`);

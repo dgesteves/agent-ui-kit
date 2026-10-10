@@ -1,6 +1,6 @@
 'use client';
 
-import { RunMeter } from '@dgesteves/agent-ui-kit';
+import { RunMeter } from 'signoff-ui';
 import { PRICING } from '@/lib/scenario';
 
 const USAGE = {
@@ -16,7 +16,7 @@ export function RunMeterDemo() {
     <div className="@container">
       <div className="grid items-start gap-6 @3xl:grid-cols-[minmax(0,22rem)_1fr]">
         <figure>
-          <figcaption className="text-aui-fg-subtle mb-2 font-mono text-[11px]">
+          <figcaption className="text-signoff-fg-subtle mb-2 font-mono text-[11px]">
             variant=&quot;expanded&quot;
           </figcaption>
           <RunMeter
@@ -29,7 +29,9 @@ export function RunMeterDemo() {
           />
         </figure>
         <figure className="min-w-0">
-          <figcaption className="text-aui-fg-subtle mb-2 font-mono text-[11px]">variant=&quot;compact&quot;</figcaption>
+          <figcaption className="text-signoff-fg-subtle mb-2 font-mono text-[11px]">
+            variant=&quot;compact&quot;
+          </figcaption>
           {/* A size smaller in a phone-width frame, so the strip fits without scrolling. */}
           <RunMeter
             usage={USAGE}
@@ -38,11 +40,11 @@ export function RunMeterDemo() {
             durationMs={21_800}
             className="@max-sm:text-[11px] @max-sm:[&>span]:px-1.5"
           />
-          <p className="text-aui-fg-muted mt-4 max-w-sm text-[13px] leading-relaxed">
-            Pass <code className="text-aui-fg font-mono text-[12px]">totalUsage</code> from{' '}
-            <code className="text-aui-fg font-mono text-[12px]">streamText</code> through message metadata, and timing
-            from <code className="text-aui-fg font-mono text-[12px]">useRunTiming(status, messages)</code>. Cost is an
-            estimate from the pricing you supply.
+          <p className="text-signoff-fg-muted mt-4 max-w-sm text-[13px] leading-relaxed">
+            Pass <code className="text-signoff-fg font-mono text-[12px]">totalUsage</code> from{' '}
+            <code className="text-signoff-fg font-mono text-[12px]">streamText</code> through message metadata, and
+            timing from <code className="text-signoff-fg font-mono text-[12px]">useRunTiming(status, messages)</code>.
+            Cost is an estimate from the pricing you supply.
           </p>
         </figure>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Markdown } from '@dgesteves/agent-ui-kit';
+import { Markdown } from 'signoff-ui';
 import { ReplayButton, useStream } from './use-stream';
 
 const TEXT = `The limiter belongs at the **top of the handler**, before \`streamText\` opens the stream:
@@ -22,7 +22,7 @@ export function MarkdownDemo() {
   const { text, streaming, start } = useStream(TEXT);
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-aui-fg text-[14px] leading-relaxed">
+      <div className="text-signoff-fg text-[14px] leading-relaxed">
         <Markdown streaming={streaming}>{text}</Markdown>
       </div>
       <div>

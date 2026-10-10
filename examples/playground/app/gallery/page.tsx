@@ -10,9 +10,9 @@ import { componentHref, getComponent } from '@/lib/components';
 import { pageMetadata } from '@/lib/metadata';
 
 export const metadata = pageMetadata({
-  title: 'Components · agent-ui-kit',
+  title: 'Components · signoff-ui',
   description:
-    'Every agent-ui-kit component in isolation: status, tool call timeline, approval card, diff review, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
+    'Every signoff-ui component in isolation: status, tool call timeline, approval card, diff review, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
   path: '/gallery',
 });
 
@@ -92,7 +92,7 @@ function Section({ id, slug, heading, description }: (typeof SECTIONS)[number]) 
   const Demo = slug ? DEMOS[slug] : ThemingDemo;
   const docs = component ? componentHref(component.slug) : '/docs/getting-started#theming';
   const frame: ReactNode = (
-    <div data-shot={id} className="border-aui-border bg-aui-bg rounded-2xl border p-3 sm:p-6">
+    <div data-shot={id} className="border-signoff-border bg-signoff-bg rounded-2xl border p-3 sm:p-6">
       {Demo ? <Demo /> : null}
     </div>
   );

@@ -53,7 +53,7 @@ jobs:
         run: node scripts/coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY"
 
       - name: Package exports (publint, attw)
-        run: pnpm --filter @dgesteves/agent-ui-kit lint:package
+        run: pnpm --filter signoff-ui lint:package
 
       - name: styles.css in Chrome, next to a global reset and in a Tailwind v3 build
         run: pnpm smoke:styles
@@ -90,7 +90,7 @@ jobs:
 
       # Latest first: once 6.0.0 is installed, `pnpm add ai@^6` keeps it, since it satisfies ^6.
       - name: Install the latest and the oldest AI SDK 6 in turn, typecheck the library, run the tests
-        working-directory: packages/agent-ui-kit
+        working-directory: packages/signoff-ui
         run: |
           for version in ^6 6.0.0; do
             pnpm add --save-dev "ai@$version"
@@ -115,7 +115,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Install React 18, typecheck the library, run the tests
-        working-directory: packages/agent-ui-kit
+        working-directory: packages/signoff-ui
         run: |
           pnpm add --save-dev react@^18.2.0 react-dom@^18.2.0 @types/react@^18 @types/react-dom@^18
           node -e "console.log('react', require('react/package.json').version)"

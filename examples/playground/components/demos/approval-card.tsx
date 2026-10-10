@@ -1,6 +1,6 @@
 'use client';
 
-import { ApprovalCard } from '@dgesteves/agent-ui-kit';
+import { ApprovalCard } from 'signoff-ui';
 import { useState } from 'react';
 
 export function ApprovalCardDemo() {
@@ -29,7 +29,7 @@ export function ApprovalCardDemo() {
             setStatus('pending');
             setReason(undefined);
           }}
-          className="text-aui-fg-muted hover:text-aui-fg focus-visible:outline-aui-ring mt-3 cursor-pointer rounded-sm text-xs underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring mt-3 cursor-pointer rounded-sm text-xs underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           Reset
         </button>

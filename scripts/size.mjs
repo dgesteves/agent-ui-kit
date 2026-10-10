@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { build } from 'rolldown';
 
-const dist = join(import.meta.dirname, '../packages/agent-ui-kit/dist');
+const dist = join(import.meta.dirname, '../packages/signoff-ui/dist');
 const index = JSON.stringify(join(dist, 'index.js'));
 const core = JSON.stringify(join(dist, 'core.js'));
 const rows = [
@@ -39,7 +39,7 @@ const rows = [
 ];
 
 const overBudget = [];
-const dir = mkdtempSync(join(tmpdir(), 'aui-size-'));
+const dir = mkdtempSync(join(tmpdir(), 'signoff-size-'));
 try {
   console.log('| Import | Minified | Gzipped | Budget |\n| --- | --: | --: | --: |');
   for (const [label, source, budget] of rows) {

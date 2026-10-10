@@ -1,5 +1,5 @@
 ---
-'@dgesteves/agent-ui-kit': minor
+'signoff-ui': minor
 ---
 
 A stopped run no longer reads "Done". `deriveAgentState` returns a new `stopped` state when the run has ended (`ready`) with work unfinished in the message, which is what `stop()` leaves behind: text or reasoning still streaming, or a tool call still preparing, running or with partial output. `AgentStatus` shows it as "Stopped" with a stop glyph, and announces it politely. `AgentMessage` with `active={false}` also ends text and reasoning that were left streaming, so a stopped answer loses its caret and its "Thinking" label.

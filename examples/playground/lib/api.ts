@@ -11,7 +11,7 @@ import ts from 'typescript';
 
 // `next build` runs in examples/playground; the library is built first (pnpm build:lib). Everything
 // here runs while pages prerender, so the file reads are kept out of the server bundle's tracing.
-const KIT = join(process.cwd(), '../../packages/agent-ui-kit');
+const KIT = join(process.cwd(), '../../packages/signoff-ui');
 const DIST = join(KIT, 'dist');
 const ENTRIES = ['index.d.ts', 'ag-ui.d.ts'];
 
@@ -79,7 +79,7 @@ function load() {
 
 function exported(name: string) {
   const symbol = load().exports.get(name);
-  if (!symbol) throw new Error(`@dgesteves/agent-ui-kit exports no ${name}`);
+  if (!symbol) throw new Error(`signoff-ui exports no ${name}`);
   return symbol;
 }
 
@@ -231,29 +231,29 @@ export function getStylingHooks(file: string) {
   const slots = [...new Set([...source.matchAll(/data-slot="([a-z-]+)"/g)].map((m) => m[1]!))];
   // The slot each state attribute sits on: the last data-slot written before it, in the same tag.
   const slotOf: Record<string, string> = {};
-  for (const match of source.matchAll(/\b(data-(?!slot\b|aui)[a-z-]+)=[{"]/g)) {
+  for (const match of source.matchAll(/\b(data-(?!slot\b|signoff)[a-z-]+)=[{"]/g)) {
     const before = source.slice(Math.max(0, match.index - 400), match.index);
     const tag = before.slice(before.lastIndexOf('<'));
     const slot = [...tag.matchAll(/data-slot="([a-z-]+)"/g)].at(-1)?.[1];
     if (slot && !slotOf[match[1]!]) slotOf[match[1]!] = slot;
   }
-  const states = [...new Set([...source.matchAll(/\b(data-(?!slot\b|aui)[a-z-]+)=[{"]/g)].map((m) => m[1]!))];
+  const states = [...new Set([...source.matchAll(/\b(data-(?!slot\b|signoff)[a-z-]+)=[{"]/g)].map((m) => m[1]!))];
   const tokens = new Set<string>();
   for (const [, name] of source.matchAll(
-    /\b(?:bg|text|border|outline|from|to|via|divide|ring|fill|stroke|decoration|shadow)-aui-([a-z0-9-]+)/g,
+    /\b(?:bg|text|border|outline|from|to|via|divide|ring|fill|stroke|decoration|shadow)-signoff-([a-z0-9-]+)/g,
   )) {
-    tokens.add(TOKEN_ALIASES[name!] ?? `--aui-${name}`);
+    tokens.add(TOKEN_ALIASES[name!] ?? `--signoff-${name}`);
   }
-  if (/\brounded-aui\b/.test(source)) tokens.add('--aui-radius');
-  if (/\bfont-aui-sans\b/.test(source)) tokens.add('--aui-font-sans');
-  if (/\bfont-aui-mono\b/.test(source)) tokens.add('--aui-font-mono');
+  if (/\brounded-signoff\b/.test(source)) tokens.add('--signoff-radius');
+  if (/\bfont-signoff-sans\b/.test(source)) tokens.add('--signoff-font-sans');
+  if (/\bfont-signoff-mono\b/.test(source)) tokens.add('--signoff-font-mono');
   return { slots, states, slotOf, tokens: [...tokens].sort() };
 }
 
 // Utility names that don't match their variable one to one (lib/styles/tokens.css).
 const TOKEN_ALIASES: Record<string, string> = {
-  add: '--aui-add-bg',
-  del: '--aui-del-bg',
+  add: '--signoff-add-bg',
+  del: '--signoff-del-bg',
 };
 
 export type TypeDoc = ({ kind: 'interface' } & InterfaceDoc) | ({ kind: 'alias' } & AliasDoc);

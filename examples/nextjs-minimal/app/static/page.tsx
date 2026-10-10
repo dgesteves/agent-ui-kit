@@ -1,12 +1,4 @@
-import {
-  AgentMessage,
-  AgentStatus,
-  ApprovalCard,
-  DiffReview,
-  RunMeter,
-  Sources,
-  ToolCallTimeline,
-} from '@dgesteves/agent-ui-kit';
+import { AgentMessage, AgentStatus, ApprovalCard, DiffReview, RunMeter, Sources, ToolCallTimeline } from 'signoff-ui';
 import type { UIMessage } from 'ai';
 
 /*
@@ -49,7 +41,7 @@ const message: UIMessage = {
 
 export default function StaticPage() {
   return (
-    <div className="bg-aui-bg text-aui-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
+    <div className="bg-signoff-bg text-signoff-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
       <AgentStatus state="done" elapsedMs={4_210} />
       <AgentMessage message={message} active={false} />
       <ToolCallTimeline parts={message.parts} active={false} />

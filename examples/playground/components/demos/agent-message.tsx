@@ -1,6 +1,6 @@
 'use client';
 
-import { AgentMessage } from '@dgesteves/agent-ui-kit';
+import { AgentMessage } from 'signoff-ui';
 import { message } from '@/lib/demo-data';
 import { toolMeta } from '@/lib/tools';
 

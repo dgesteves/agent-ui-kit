@@ -59,7 +59,7 @@ const KIT: Array<{ name: string; id: string; description: ReactNode; meta: strin
     id: 'use-ag-ui-agent',
     description:
       'Runs any AG-UI agent and hands the same components its messages, status and usage. Interrupts become approvals.',
-    meta: '@dgesteves/agent-ui-kit/ag-ui',
+    meta: 'signoff-ui/ag-ui',
   },
 ];
 
@@ -82,12 +82,12 @@ const WORKS_WITH: Array<{ title: string; body: ReactNode; code: string }> = [
         become approval cards.
       </>
     ),
-    code: "import { useAgUiAgent } from '@dgesteves/agent-ui-kit/ag-ui';",
+    code: "import { useAgUiAgent } from 'signoff-ui/ag-ui';",
   },
   {
     title: 'npm or shadcn',
     body: <>Install the package, or copy a component’s source into your app with the shadcn CLI and make it yours.</>,
-    code: 'npx shadcn@latest add @agent-ui-kit/diff-review',
+    code: 'npx shadcn@latest add @signoff-ui/diff-review',
   },
   {
     title: 'Tailwind v4 or plain CSS',
@@ -96,7 +96,7 @@ const WORKS_WITH: Array<{ title: string; body: ReactNode; code: string }> = [
         A Tailwind v4 entry, or a precompiled stylesheet scoped to the components for Tailwind v3 or no Tailwind at all.
       </>
     ),
-    code: "import '@dgesteves/agent-ui-kit/styles.css';",
+    code: "import 'signoff-ui/styles.css';",
   },
 ];
 
@@ -246,7 +246,7 @@ export function Landing() {
             aria-hidden="true"
           >
             <span className="px-5 py-3" />
-            <span className="text-cyan-soft border-line border-l px-5 py-3">agent-ui-kit</span>
+            <span className="text-cyan-soft border-line border-l px-5 py-3">signoff-ui</span>
             <span className="border-line border-l px-5 py-3">assistant-ui Elements</span>
           </div>
           <dl>
@@ -254,7 +254,7 @@ export function Landing() {
               <div key={row.topic} className="border-line grid border-b last:border-b-0 md:grid-cols-[10rem_1fr_1fr]">
                 <dt className="text-fg px-5 pt-4 text-[13px] font-medium md:py-4">{row.topic}</dt>
                 <dd className="border-line text-fg-soft px-5 pt-2 pb-2 text-[13.5px] leading-relaxed md:border-l md:py-4">
-                  <span className="text-cyan-soft mb-0.5 block font-mono text-[11px] md:sr-only">agent-ui-kit: </span>
+                  <span className="text-cyan-soft mb-0.5 block font-mono text-[11px] md:sr-only">signoff-ui: </span>
                   {row.kit}
                 </dd>
                 <dd className="border-line text-fg-muted px-5 pt-2 pb-4 text-[13.5px] leading-relaxed md:border-l md:py-4">

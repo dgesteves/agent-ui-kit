@@ -1,6 +1,6 @@
 'use client';
 
-import { Sources } from '@dgesteves/agent-ui-kit';
+import { Sources } from 'signoff-ui';
 import { sources } from '@/lib/demo-data';
 
 export function SourcesDemo() {

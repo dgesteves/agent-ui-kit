@@ -5,7 +5,7 @@
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
-export const THEME_KEY = 'aui-theme';
+export const THEME_KEY = 'signoff-theme';
 
 /**
  * Runs in <head> before the page paints, so a stored or OS preference never flashes the other

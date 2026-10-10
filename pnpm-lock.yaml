@@ -188,7 +188,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@dgesteves/agent-ui-kit': workspace:*
+  signoff-ui: workspace:*
 
 importers:
 
@@ -254,9 +254,6 @@ importers:
       '@ai-sdk/react':
         specifier: ^4.0.131
         version: 4.0.131(react@19.3.0)(zod@4.6.5)
-      '@dgesteves/agent-ui-kit':
-        specifier: workspace:*
-        version: link:../../packages/agent-ui-kit
       ai:
         specifier: ^7.0.128
         version: 7.0.128(zod@4.6.5)
@@ -269,6 +266,9 @@ importers:
       react-dom:
         specifier: ^19.3.0
         version: 19.3.0(react@19.3.0)
+      signoff-ui:
+        specifier: workspace:*
+        version: link:../../packages/signoff-ui
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -306,9 +306,6 @@ importers:
       '@ai-sdk/react':
         specifier: ^4.0.131
         version: 4.0.131(react@19.3.0)(zod@4.6.5)
-      '@dgesteves/agent-ui-kit':
-        specifier: workspace:*
-        version: link:../../packages/agent-ui-kit
       ai:
         specifier: ^7.0.128
         version: 7.0.128(zod@4.6.5)
@@ -336,6 +333,9 @@ importers:
       shiki:
         specifier: ^4.5.0
         version: 4.5.0
+      signoff-ui:
+        specifier: workspace:*
+        version: link:../../packages/signoff-ui
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -359,7 +359,7 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
-  packages/agent-ui-kit:
+  packages/signoff-ui:
     dependencies:
       '@radix-ui/react-collapsible':
         specifier: ^1.1.21

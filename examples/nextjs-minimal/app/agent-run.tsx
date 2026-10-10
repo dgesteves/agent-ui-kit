@@ -3,7 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type LanguageModelUsage, type UIMessage } from 'ai';
 import { useState } from 'react';
-import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from '@dgesteves/agent-ui-kit';
+import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from 'signoff-ui';
 
 type Message = UIMessage<{ usage?: LanguageModelUsage }>;
 
@@ -20,7 +20,7 @@ export function AgentRun() {
 
   return (
     // The kit's own background and text colors, so it reads well on any page. Add `dark` for the dark theme.
-    <div className="bg-aui-bg text-aui-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
+    <div className="bg-signoff-bg text-signoff-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
       <AgentStatus state={state} detail={detail} elapsedMs={timing.activeMs} />
       {last && (
         <AgentMessage
@@ -51,12 +51,12 @@ export function AgentRun() {
           placeholder="Ask the agent to change something"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          className="border-aui-border bg-aui-surface flex-1 rounded-lg border px-3 py-2 text-sm"
+          className="border-signoff-border bg-signoff-surface flex-1 rounded-lg border px-3 py-2 text-sm"
         />
         <button
           type="submit"
           disabled={status !== 'ready' && status !== 'error'}
-          className="bg-aui-accent text-aui-on-accent rounded-lg px-4 text-sm font-medium disabled:opacity-50"
+          className="bg-signoff-accent text-signoff-on-accent rounded-lg px-4 text-sm font-medium disabled:opacity-50"
         >
           Send
         </button>

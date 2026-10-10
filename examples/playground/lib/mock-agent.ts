@@ -1,4 +1,4 @@
-import type { RunUsage } from '@dgesteves/agent-ui-kit';
+import type { RunUsage } from 'signoff-ui';
 import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai';
 import {
   AFTER_DENY,

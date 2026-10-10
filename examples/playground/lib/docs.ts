@@ -27,7 +27,7 @@ export const GUIDES: DocPage[] = [
     slug: 'introduction',
     href: '/docs',
     title: 'Introduction',
-    description: 'What agent-ui-kit is, why it exists, and how it reads an agent run.',
+    description: 'What signoff-ui is, why it exists, and how it reads an agent run.',
   },
   {
     slug: 'getting-started',

@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const doc = getGuide((await params).slug);
   if (!doc) return {};
   return pageMetadata({
-    title: `${doc.title} · agent-ui-kit docs`,
+    title: `${doc.title} · signoff-ui docs`,
     description: doc.description,
     path: doc.href,
     markdownPath: `${doc.href}.md`,

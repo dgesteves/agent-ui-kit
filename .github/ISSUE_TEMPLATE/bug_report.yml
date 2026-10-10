@@ -30,7 +30,7 @@ body:
   - type: input
     id: kit
     attributes:
-      label: '@dgesteves/agent-ui-kit version (or the date you added the registry item)'
+      label: 'signoff-ui version (or the date you added the registry item)'
     validations:
       required: true
   - type: input

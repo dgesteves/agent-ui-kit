@@ -8,15 +8,15 @@ export function installSnippets(component: ComponentDoc) {
   const extra = component.packages?.length ? ` ${component.packages.join(' ')}` : '';
   return {
     npm: {
-      command: `npm i @dgesteves/agent-ui-kit ai${extra}`,
+      command: `npm i signoff-ui ai${extra}`,
       code: [
         component.imports.npm,
-        `// Once per app (with Tailwind v4: @import '@dgesteves/agent-ui-kit/tailwind.css'; in your CSS)`,
-        `import '@dgesteves/agent-ui-kit/styles.css';`,
+        `// Once per app (with Tailwind v4: @import 'signoff-ui/tailwind.css'; in your CSS)`,
+        `import 'signoff-ui/styles.css';`,
       ].join('\n'),
     },
     shadcn: {
-      command: `npx shadcn@latest add @agent-ui-kit/${component.item}${extra ? `\nnpm i${extra}` : ''}`,
+      command: `npx shadcn@latest add @signoff-ui/${component.item}${extra ? `\nnpm i${extra}` : ''}`,
       code: component.imports.shadcn,
     },
   };

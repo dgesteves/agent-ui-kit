@@ -19,4 +19,4 @@ body:
     attributes:
       label: Checked
       options:
-        - label: The [roadmap](https://github.com/dgesteves/agent-ui-kit#roadmap) and existing issues do not cover it
+        - label: The [roadmap](https://github.com/dgesteves/signoff-ui#roadmap) and existing issues do not cover it

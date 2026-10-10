@@ -61,7 +61,7 @@ function commandFor(manager: Manager, npm: string) {
 }
 
 // The chosen package manager, shared by every install block on the page and remembered.
-const STORAGE_KEY = 'aui-package-manager';
+const STORAGE_KEY = 'signoff-package-manager';
 const listeners = new Set<() => void>();
 let current: Manager | undefined;
 function readManager(): Manager {

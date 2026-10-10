@@ -3,7 +3,7 @@ import { OG_SIZE, ogImage } from '@/lib/og';
 
 const doc = getGuide('introduction')!;
 
-export const alt = `agent-ui-kit docs: ${doc.title}`;
+export const alt = `signoff-ui docs: ${doc.title}`;
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 

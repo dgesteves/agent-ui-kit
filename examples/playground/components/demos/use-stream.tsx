@@ -38,7 +38,7 @@ export function ReplayButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="border-aui-border text-aui-fg-muted hover:text-aui-fg focus-visible:outline-aui-ring inline-flex h-7 cursor-pointer items-center rounded-md border px-2.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-50"
+      className="border-signoff-border text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring inline-flex h-7 cursor-pointer items-center rounded-md border px-2.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-50"
     >
       {children}
     </button>

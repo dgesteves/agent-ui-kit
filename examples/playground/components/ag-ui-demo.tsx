@@ -2,8 +2,8 @@
 
 import { AbstractAgent, type BaseEvent, type RunAgentInput } from '@ag-ui/client';
 import { EventType } from '@ag-ui/core';
-import { AgentMessage, AgentStatus, RunMeter, deriveAgentState } from '@dgesteves/agent-ui-kit';
-import { useAgUiAgent } from '@dgesteves/agent-ui-kit/ag-ui';
+import { AgentMessage, AgentStatus, RunMeter, deriveAgentState } from 'signoff-ui';
+import { useAgUiAgent } from 'signoff-ui/ag-ui';
 import { useState } from 'react';
 import { Observable } from 'rxjs';
 import { FINDINGS, PRICING, REDIS, SEARCH_CODE_OUTPUT } from '@/lib/scenario';
@@ -184,7 +184,7 @@ function Run({ onReset }: { onReset: () => void }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         {prompt ? (
-          <p className="bg-aui-surface text-aui-fg rounded-lg px-3 py-1.5 text-[13px]">{PROMPT}</p>
+          <p className="bg-signoff-surface text-signoff-fg rounded-lg px-3 py-1.5 text-[13px]">{PROMPT}</p>
         ) : (
           <button
             type="button"
@@ -192,7 +192,7 @@ function Run({ onReset }: { onReset: () => void }) {
               agent.addMessage({ id: 'u1', role: 'user', content: PROMPT });
               void agent.runAgent();
             }}
-            className="bg-aui-accent text-aui-on-accent rounded-lg px-3 py-1.5 text-[13px] font-medium hover:opacity-90"
+            className="bg-signoff-accent text-signoff-on-accent rounded-lg px-3 py-1.5 text-[13px] font-medium hover:opacity-90"
           >
             Run the AG-UI agent
           </button>
@@ -202,7 +202,7 @@ function Run({ onReset }: { onReset: () => void }) {
           <button
             type="button"
             onClick={onReset}
-            className="border-aui-border text-aui-fg-muted hover:text-aui-fg ml-auto rounded-lg border px-3 py-1.5 font-mono text-xs"
+            className="border-signoff-border text-signoff-fg-muted hover:text-signoff-fg ml-auto rounded-lg border px-3 py-1.5 font-mono text-xs"
           >
             Reset
           </button>

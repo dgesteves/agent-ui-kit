@@ -3,7 +3,7 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 
 /*
  * Syntax highlighting for the docs, at build time: pages ship highlighted HTML and no highlighter.
- * Two themes made from the kit's own code tokens (--aui-code-*), output as CSS variables
+ * Two themes made from the kit's own code tokens (--signoff-code-*), output as CSS variables
  * (--shiki-dark, --shiki-light), so code follows the site's palette like the components do.
  */
 
@@ -50,7 +50,7 @@ function theme(name: string, type: 'dark' | 'light', c: Record<string, string>):
   };
 }
 
-const dark = theme('aui-dark', 'dark', {
+const dark = theme('signoff-dark', 'dark', {
   bg: '#101317',
   fg: '#e8eaed',
   keyword: '#67e8f9',
@@ -64,7 +64,7 @@ const dark = theme('aui-dark', 'dark', {
   property: '#c9d1d9',
 });
 
-const light = theme('aui-light', 'light', {
+const light = theme('signoff-light', 'light', {
   bg: '#f6f7f9',
   fg: '#0d0f12',
   keyword: '#155e75',
@@ -120,7 +120,7 @@ export async function highlight(code: string, language: string | undefined) {
   const h = await getHighlighter();
   return h.codeToHtml(code, {
     lang,
-    themes: { dark: 'aui-dark', light: 'aui-light' },
+    themes: { dark: 'signoff-dark', light: 'signoff-light' },
     defaultColor: false,
   });
 }

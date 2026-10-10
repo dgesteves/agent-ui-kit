@@ -1,6 +1,6 @@
 'use client';
 
-import { DiffReview } from '@dgesteves/agent-ui-kit';
+import { DiffReview } from 'signoff-ui';
 import { RATELIMIT_UPSTASH, ROUTE_NEW, ROUTE_OLD } from '@/lib/scenario';
 
 const FILES = [

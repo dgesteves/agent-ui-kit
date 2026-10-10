@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const pkg = join(import.meta.dirname, '../packages/agent-ui-kit');
+const pkg = join(import.meta.dirname, '../packages/signoff-ui');
 const file = join(pkg, 'coverage/coverage-summary.json');
 if (!existsSync(file)) {
   console.log('## Test coverage\n\nNo coverage report: the test run did not finish.');

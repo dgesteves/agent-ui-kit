@@ -1,17 +1,17 @@
-[AG-UI](https://docs.ag-ui.com) is the open protocol that LangGraph, CrewAI, Mastra, Pydantic AI and other agent frameworks use to stream runs to a frontend. `@dgesteves/agent-ui-kit/ag-ui` turns an AG-UI agent into the same message parts the AI SDK produces, so every component works with it unchanged, approvals included.
+[AG-UI](https://docs.ag-ui.com) is the open protocol that LangGraph, CrewAI, Mastra, Pydantic AI and other agent frameworks use to stream runs to a frontend. `signoff-ui/ag-ui` turns an AG-UI agent into the same message parts the AI SDK produces, so every component works with it unchanged, approvals included.
 
 Want to see it first? The [components page](/gallery#ag-ui) runs a real `@ag-ui/client` agent replaying a LangGraph-style run, with an interrupt you can approve or deny.
 
 ## Install
 
 ```package-install
-npm i @dgesteves/agent-ui-kit ai @ag-ui/client
+npm i signoff-ui ai @ag-ui/client
 ```
 
 `ai` is there for the message part types only. A custom agent, an `AbstractAgent` whose `run()` returns an RxJS `Observable`, needs `rxjs` too, at the version `@ag-ui/client` uses (`rxjs@7.8.1` for 1.0). Add the styles as in [Getting started](/docs/getting-started#add-the-styles). With the shadcn CLI, the adapter is the `ag-ui` item:
 
 ```package-install
-npx shadcn@latest add @agent-ui-kit/ag-ui
+npx shadcn@latest add @signoff-ui/ag-ui
 ```
 
 ## Render an agent
@@ -22,8 +22,8 @@ npx shadcn@latest add @agent-ui-kit/ag-ui
 'use client';
 
 import { HttpAgent } from '@ag-ui/client';
-import { AgentMessage, AgentStatus, RunMeter, deriveAgentState } from '@dgesteves/agent-ui-kit';
-import { useAgUiAgent } from '@dgesteves/agent-ui-kit/ag-ui';
+import { AgentMessage, AgentStatus, RunMeter, deriveAgentState } from 'signoff-ui';
+import { useAgUiAgent } from 'signoff-ui/ag-ui';
 
 const agent = new HttpAgent({ url: '/api/agent' });
 
