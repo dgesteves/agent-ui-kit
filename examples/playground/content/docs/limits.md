@@ -31,11 +31,11 @@ Measured with `pnpm size`, which bundles each import from the built package with
 
 | Case                             | First render |  Ready | Longest task | DOM elements | Keypress |
 | -------------------------------- | -----------: | -----: | -----------: | -----------: | -------: |
-| Local edits, 1,000 lines         |        50 ms |  50 ms |        63 ms |        4,111 |   1.6 ms |
-| Local edits, 5,000 lines         |        61 ms |  61 ms |        75 ms |        3,887 |   2.0 ms |
-| Full rewrite, 2,000 lines        |        16 ms | 246 ms |         none |        3,815 |   0.7 ms |
-| Full rewrite, 5,000 lines        |        17 ms | 265 ms |        51 ms |        4,055 |   0.7 ms |
-| Full rewrite, 5,000 lines, split |        17 ms | 277 ms |        62 ms |        7,304 |   0.6 ms |
+| Local edits, 1,000 lines         |        56 ms |  56 ms |        69 ms |        4,442 |   3.4 ms |
+| Local edits, 5,000 lines         |        77 ms |  78 ms |        93 ms |        5,305 |   6.4 ms |
+| Full rewrite, 2,000 lines        |        16 ms | 241 ms |         none |        3,833 |   0.9 ms |
+| Full rewrite, 5,000 lines        |        17 ms | 265 ms |        53 ms |        4,073 |   0.9 ms |
+| Full rewrite, 5,000 lines, split |        17 ms | 283 ms |        68 ms |        7,322 |   1.2 ms |
 
 Measured with `pnpm perf`, which CI runs on every pull request with a budget per case, several times these numbers so shared runners pass. Before these changes a 5,000-line rewrite blocked the page for 3.3 s, left 260,000 elements and took 77 ms per keypress. Three things keep it fast:
 
