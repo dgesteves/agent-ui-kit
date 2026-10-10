@@ -28,6 +28,16 @@
           "target": "components/signoff-ui/lib/ai.ts"
         },
         {
+          "path": "packages/signoff-ui/src/lib/diff-async.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/diff-async.ts"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/diff-worker.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/diff-worker.ts"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/diff.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/diff.ts"

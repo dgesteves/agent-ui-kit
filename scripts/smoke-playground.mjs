@@ -270,6 +270,39 @@ try {
   check(violations.length === 0, 'gallery, light: no axe violations', violations.join('; '));
   await gallery.close();
 
+  // A 5,000-line rewrite: Next.js emits the package's diff worker, the page keeps responding while
+  // the worker diffs it, the review says it fell back to one replacing hunk, and only the rows near
+  // the screen are in the DOM, with no axe violations.
+  const large = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+  await large.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
+  const workers = [];
+  large.on('worker', (worker) => workers.push(worker.url()));
+  await large.evaluate(() => {
+    window.__longTasks = [];
+    new PerformanceObserver((list) => window.__longTasks.push(...list.getEntries().map((e) => e.duration))).observe({
+      type: 'longtask',
+    });
+  });
+  await large.getByRole('button', { name: 'A 5,000-line rewrite' }).click();
+  const review = large.getByRole('region', { name: 'Review a regenerated schema' });
+  await review.getByText('Too many changes to compare line by line').waitFor({ timeout: 30_000 });
+  await large.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 30_000 });
+  const busiest = await large.evaluate(() => Math.max(0, ...window.__longTasks));
+  const nodes = await review.evaluate((el) => el.querySelectorAll('*').length);
+  check(
+    workers.length > 0 && busiest < 400 && nodes < 20_000,
+    'gallery: a 5,000-line rewrite is diffed in a worker, and renders what is near the screen',
+    `workers ${JSON.stringify(workers)}, longest task ${Math.round(busiest)} ms, ${nodes} elements`,
+  );
+  await large.addScriptTag({ content: readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8') });
+  const largeViolations = await large.evaluate(async () =>
+    (await window.axe.run('[data-slot="signoff-diff-review"]', { resultTypes: ['violations'] })).violations.map(
+      (v) => v.id,
+    ),
+  );
+  check(largeViolations.length === 0, 'gallery: the large review has no axe violations', largeViolations.join(', '));
+  await large.close();
+
   // On a phone, diff hunks, code and the compact run meter scroll sideways: each must be reachable
   // from the keyboard while it does (axe's scrollable-region-focusable, WCAG 2.1.1).
   const narrow = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });

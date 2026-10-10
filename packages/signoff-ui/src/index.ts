@@ -9,7 +9,7 @@ export {
   type ToolApprovalCardProps,
   type ToolApprovalResponse,
 } from './approval-card';
-export { DiffReview, type DiffReviewProps, type DiffViewMode } from './diff-review';
+export { DiffReview, type DiffReviewProps, type DiffViewMode, type DiffWorkerFactory } from './diff-review';
 export { Markdown, type MarkdownProps } from './markdown';
 export { Reasoning, type ReasoningProps } from './reasoning';
 export { RunMeter, type RunMeterProps } from './run-meter';

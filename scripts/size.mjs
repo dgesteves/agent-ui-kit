@@ -18,17 +18,13 @@ const index = JSON.stringify(join(dist, 'index.js'));
 const core = JSON.stringify(join(dist, 'core.js'));
 const rows = [
   ['`addUsage`, `estimateCost` (`/core`, for a route)', `export { addUsage, estimateCost } from ${core};`, 0.5],
-  [
-    '`applyHunks`, `parseFileChange` (`/core`, with jsdiff)',
-    `export { applyHunks, parseFileChange } from ${core};`,
-    6.5,
-  ],
+  ['`applyHunks`, `parseFileChange` (`/core`, with jsdiff)', `export { applyHunks, parseFileChange } from ${core};`, 7],
   ['`Sources`', `export { Sources } from ${index};`, 10.5],
   ['`AgentStatus`', `export { AgentStatus, deriveAgentState } from ${index};`, 11],
   ['`RunMeter`', `export { RunMeter, useRunTiming } from ${index};`, 12.5],
   ['`ApprovalCard`', `export { ApprovalCard, ToolApprovalCard } from ${index};`, 15],
   ['`ToolCallTimeline`', `export { ToolCallTimeline } from ${index};`, 20.5],
-  ['`DiffReview`', `export { DiffReview } from ${index};`, 30],
+  ['`DiffReview`', `export { DiffReview } from ${index};`, 32.5],
   [
     '`AgentMessage` (with markdown, reasoning, timeline, approvals, sources)',
     `export { AgentMessage } from ${index};`,

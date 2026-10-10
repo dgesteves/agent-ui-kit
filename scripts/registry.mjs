@@ -86,11 +86,18 @@ const ITEMS = [
 
 const read = (file) => readFileSync(file, 'utf8');
 
-/** Relative imports of a source file, resolved to files under src/. */
+/**
+ * Relative imports of a source file, resolved to files under src/. Workers started by URL
+ * (`new URL('./diff-worker.ts', import.meta.url)`) count too: the app's bundler needs the file.
+ */
 function localImports(file) {
   const code = read(join(src, file));
   const out = [];
-  for (const m of code.matchAll(/from\s+'(\.[^']+)'/g)) {
+  const specifiers = [
+    ...code.matchAll(/from\s+'(\.[^']+)'/g),
+    ...code.matchAll(/new URL\('(\.[^']+?)(?:\.tsx?)?', import\.meta\.url\)/g),
+  ];
+  for (const m of specifiers) {
     const base = posix.normalize(posix.join(posix.dirname(file), m[1]));
     for (const ext of ['.ts', '.tsx']) {
       try {

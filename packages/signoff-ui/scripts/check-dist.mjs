@@ -1,5 +1,6 @@
 // Verifies what the build ships beyond the modules' directives:
 //   - every sourceMappingURL in dist/ points to a file that is shipped;
+//   - every worker started with `new URL(…, import.meta.url)` is a shipped .js module;
 //   - styles.css has no @layer (Tailwind v3 rejects it, and layered rules lose to any host reset);
 //   - styles.css styles only the kit's elements, and leaves the app's theme alone:
 //     - apart from the --signoff-* tokens on :root and the theme classes, every rule is scoped with
@@ -29,6 +30,14 @@ for (const file of files(dist)) {
   const map = /\/\/# sourceMappingURL=(\S+)\s*$/.exec(readFileSync(file, 'utf8'))?.[1];
   if (map && !existsSync(join(dirname(file), map)))
     problems.push(`${relative(root, file)}: points to ${map}, which is not shipped`);
+}
+
+// Workers started by URL (the diff worker) name a module that is shipped, as JavaScript.
+for (const file of files(dist).filter((f) => f.endsWith('.js'))) {
+  for (const [, url] of readFileSync(file, 'utf8').matchAll(/new URL\(["']([^"']+)["'], import\.meta\.url\)/g)) {
+    if (!url.endsWith('.js') || !existsSync(join(dirname(file), url)))
+      problems.push(`${relative(root, file)}: starts ${url}, which is not a shipped module`);
+  }
 }
 
 const THEME_SELECTORS = new Set([':root', '.light', '[data-theme=light]', '.dark', '[data-theme=dark]']);

@@ -86,8 +86,14 @@ export const COMPONENTS: ComponentDoc[] = [
       'Every shortcut is also a button: "Accept hunk 2", "Reject hunk 2" and "Reset hunk 2" with `aria-pressed`, the layout toggle and Apply. Shortcuts only work while focus is inside the review.',
       'Progress is announced: "Hunk 2 of 4 accepted. 2 remaining."',
       'Changed lines keep their + and − glyphs and are read as "Added:" or "Removed:", so cyan and magenta never carry the meaning alone.',
+      'A long review renders only the rows near the screen. The rest keep their place as visually hidden text, read in the same order with the same "Added:" and "Removed:", and every hunk stays rendered, so its name, focus and J and K never depend on scrolling.',
+      'A file still being diffed reads "Comparing changes…" and is `aria-busy`; the review itself is not, so its announcements go out meanwhile. A file past `maxEditLength` says it is shown as one replacing hunk.',
     ],
-    stateTypes: { 'data-decision': 'HunkDecision' },
+    stateTypes: {
+      'data-decision': 'HunkDecision',
+      'data-fallback': "'replace', for a file past maxEditLength",
+      'data-rendered': 'set while the rows are rendered, near the screen',
+    },
   },
   {
     slug: 'approval-card',

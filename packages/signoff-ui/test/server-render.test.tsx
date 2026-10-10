@@ -48,6 +48,10 @@ const cases: Array<[string, ReactElement]> = [
   ['AgentMessage', <AgentMessage key="5" message={assistant(parts)} streaming onToolApproval={() => {}} />],
   ['ApprovalCard', <ApprovalCard key="6" toolName="run_command" input={{ command: 'pnpm i' }} risk="high" />],
   ['DiffReview', <DiffReview key="7" files={[{ path: 'route.ts', oldContent: ROUTE_OLD, newContent: ROUTE_NEW }]} />],
+  [
+    'DiffReview, a file too large to diff while rendering',
+    <DiffReview key="7b" files={[{ path: 'big.ts', oldContent: 'a\n'.repeat(400), newContent: 'b\n'.repeat(400) }]} />,
+  ],
   ['RunMeter', <RunMeter key="8" usage={{ inputTokens: 1_000, outputTokens: 200 }} variant="expanded" live />],
   ['Sources', <Sources key="9" sources={[source]} />],
   [

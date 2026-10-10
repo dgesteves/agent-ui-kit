@@ -23,7 +23,7 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
     slug: 'diff-review',
     heading: '<DiffReview />',
     description:
-      'Accept or reject agent edits hunk by hunk, across files, unified or split. Returns each file with the accepted hunks applied.',
+      'Accept or reject agent edits hunk by hunk, across files, unified or split. Returns each file with the accepted hunks applied. Large files are diffed in a worker and render only what is near the screen.',
   },
   {
     id: 'approval-card',
