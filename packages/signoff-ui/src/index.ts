@@ -4,11 +4,25 @@ export { AgentMessage, type AgentMessageProps } from './agent-message';
 export { AgentStatus, AgentStatusDot, type AgentStatusProps } from './agent-status';
 export {
   ApprovalCard,
+  approvalRequestOf,
+  ToolApprovalBatch,
   ToolApprovalCard,
   type ApprovalCardProps,
+  type ApprovalChoice,
+  type ToolApprovalBatchProps,
   type ToolApprovalCardProps,
   type ToolApprovalResponse,
 } from './approval-card';
+export {
+  memoryRuleStorage,
+  useApprovalPolicy,
+  webStorageRules,
+  type ApprovalAuditEvent,
+  type ApprovalOutcome,
+  type ApprovalPolicy,
+  type ApprovalRuleStorage,
+  type UseApprovalPolicyOptions,
+} from './use-approval-policy';
 export { DiffReview, type DiffReviewProps, type DiffViewMode } from './diff-review';
 export { Markdown, type MarkdownProps } from './markdown';
 export { Reasoning, type ReasoningProps } from './reasoning';

@@ -3,6 +3,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
@@ -17,15 +18,32 @@ import {
   type ApprovalStatus,
   type ToolPart,
 } from './lib/ai';
-import { humanizeToolName } from './lib/format';
+import { humanizeToolName, safeStringify } from './lib/format';
+import { describeRule, evaluateRules, suggestArgs, type ApprovalDecision, type ApprovalRequest } from './lib/policy';
 import { useScrollRegion } from './lib/scroll-region';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
 import { useIsMac } from './lib/hooks';
 import { cn, hasModifier, isPromiseLike, isTypingTarget, type HeadingLevel } from './lib/utils';
 import type { RiskLevel, ToolMeta } from './tool-call-timeline';
+import type { ApprovalOutcome, ApprovalPolicy } from './use-approval-policy';
 
 export type { ApprovalStatus, RiskLevel };
+export type { ApprovalDecision } from './lib/policy';
+
+/** A decision as the card makes it: what was chosen, and what goes with it. */
+export interface ApprovalChoice {
+  decision: ApprovalDecision;
+  /** The denial's reason, when the person gave one. */
+  reason?: string | undefined;
+  /** The arguments to run with, when the person edited them (`editable`). */
+  input?: unknown;
+  /**
+   * For a session or always decision: the argument patterns its rule covers, or `undefined` for
+   * every call of the tool ("Any arguments").
+   */
+  args?: Record<string, string> | undefined;
+}
 
 export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'section'>, 'title' | 'children' | 'part'> {
   /** Name of the tool or action that needs approval. */
@@ -55,11 +73,36 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
    * the card reads "Auto-approved" or "Blocked by policy" instead of "Approved" or "Denied".
    */
   automatic?: boolean;
-  /** Fires once per decision: see `status`. May return a promise. */
+  /**
+   * How the resolved decision was made, to say so: `allow-session` reads "Approved for this
+   * session", `deny-always` "Always denied", and so on.
+   */
+  decision?: ApprovalDecision | undefined;
+  /** The rule that decided, in words, shown once resolved: "Allowed by your rule: …". */
+  decidedByRule?: string | undefined;
+  /**
+   * The choices to offer, from `allow-once`, `allow-session`, `allow-always`, `deny-once` and
+   * `deny-always`. Default: Approve and Deny, once. Session and always decisions come to `onDecide`
+   * with the arguments their rule covers.
+   */
+  decisions?: readonly ApprovalDecision[] | undefined;
+  /**
+   * Every decision with what goes with it: its scope, the reason, edited arguments and the rule's
+   * argument patterns. When you pass it, `onApprove` and `onDeny` are not called. May return a promise.
+   */
+  onDecide?: ((choice: ApprovalChoice) => void | PromiseLike<void>) | undefined;
+  /** Fires once per decision: see `status`. May return a promise. Not called with `onDecide`. */
   onApprove?: () => void | PromiseLike<void>;
-  /** Fires once per decision: see `status`. May return a promise. */
+  /** Fires once per decision: see `status`. May return a promise. Not called with `onDecide`. */
   onDeny?: (reason?: string) => void | PromiseLike<void>;
-  /** Y / N shortcuts while focus is inside the card. Default `true`. */
+  /**
+   * Let the person edit the arguments before approving: a form for an object of strings, numbers
+   * and booleans, JSON otherwise. The edited input comes to `onDecide`. Default `false`.
+   */
+  editable?: boolean;
+  /** The argument patterns a session or always rule starts with. Default: from the input. */
+  ruleArgs?: Record<string, string> | undefined;
+  /** Y / N shortcuts while focus is inside the card (and S, A, Shift+N when offered). Default `true`. */
   shortcuts?: boolean;
   /** Also approve with ⌘/Ctrl+Enter from anywhere on the page while pending. Default `false`. */
   globalShortcut?: boolean;
@@ -105,6 +148,33 @@ const RISK: Record<RiskLevel, { label: string; badge: string; card: string; icon
   },
 };
 
+/** The buttons for each decision: label, key, and how it looks. */
+const CHOICE: Record<ApprovalDecision, { label: string; key: string; keys: string }> = {
+  'allow-once': { label: 'Approve', key: 'Y', keys: 'Y' },
+  'allow-session': { label: 'For this session', key: 'S', keys: 'S' },
+  'allow-always': { label: 'Always', key: 'A', keys: 'A' },
+  'deny-once': { label: 'Deny', key: 'N', keys: 'N' },
+  'deny-always': { label: 'Always deny', key: '⇧N', keys: 'Shift+N' },
+};
+
+/** Styling hooks for the buttons; the once buttons keep the names they always had. */
+const SLOT: Record<ApprovalDecision, string> = {
+  'allow-once': 'signoff-approval-approve',
+  'allow-session': 'signoff-approval-session',
+  'allow-always': 'signoff-approval-always',
+  'deny-once': 'signoff-approval-deny',
+  'deny-always': 'signoff-approval-deny-always',
+};
+
+/** What a resolved card says of a decision a person made. */
+const RESOLVED: Record<ApprovalDecision, string> = {
+  'allow-once': 'Approved',
+  'allow-session': 'Approved for this session',
+  'allow-always': 'Always approved',
+  'deny-once': 'Denied',
+  'deny-always': 'Always denied',
+};
+
 /** A long command scrolls sideways; while it does, the keyboard can reach it. */
 function CommandPreview({ command, cwd }: { command: string; cwd: string | undefined }) {
   const scrollRef = useScrollRegion<HTMLDivElement>('Command');
@@ -133,12 +203,145 @@ function DefaultPreview({ input }: { input: unknown }) {
   return <JsonView value={input} label="Arguments" collapseAfter={14} />;
 }
 
+/** An object of strings, numbers and booleans, edited as a form; anything else is edited as JSON. */
+function isFlatRecord(value: unknown): value is Record<string, string | number | boolean> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  return (
+    entries.length > 0 &&
+    entries.length <= 12 &&
+    entries.every(([, v]) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
+  );
+}
+
+const sameValue = (a: unknown, b: unknown) => safeStringify(a) === safeStringify(b);
+
+const field =
+  'border-signoff-border-strong bg-signoff-bg text-signoff-fg placeholder:text-signoff-fg-subtle focus-visible:outline-signoff-ring w-full rounded-lg border px-3 py-2 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-0';
+
+/** The arguments, editable: a field per argument for a flat object, JSON for anything else. */
+function ArgumentsEditor({
+  original,
+  value,
+  onChange,
+  idPrefix,
+}: {
+  original: unknown;
+  value: EditorValue;
+  onChange: (value: EditorValue) => void;
+  idPrefix: string;
+}) {
+  if (value.kind === 'form') {
+    const record = value.record;
+    return (
+      <fieldset className="flex flex-col gap-2.5">
+        <legend className="text-signoff-fg-muted mb-1 text-xs font-medium">Arguments</legend>
+        {Object.entries(record).map(([key, v]) => {
+          const id = `${idPrefix}-arg-${key}`;
+          const kind = typeof (original as Record<string, unknown>)[key];
+          if (kind === 'boolean') {
+            return (
+              <label key={key} htmlFor={id} className="text-signoff-fg flex items-center gap-2 text-[13px]">
+                <input
+                  id={id}
+                  type="checkbox"
+                  checked={v === true}
+                  onChange={(e) => onChange({ kind: 'form', record: { ...record, [key]: e.target.checked } })}
+                  className="accent-signoff-accent focus-visible:outline-signoff-ring size-3.5 focus-visible:outline-2 focus-visible:outline-offset-2"
+                />
+                <span className="font-signoff-mono">{key}</span>
+              </label>
+            );
+          }
+          const text = String(v);
+          const long = kind === 'string' && (text.includes('\n') || text.length > 80);
+          return (
+            <div key={key} className="flex flex-col gap-1">
+              <label htmlFor={id} className="font-signoff-mono text-signoff-fg-muted text-[11px]">
+                {key}
+              </label>
+              {long ? (
+                <textarea
+                  id={id}
+                  rows={3}
+                  value={text}
+                  onChange={(e) => onChange({ kind: 'form', record: { ...record, [key]: e.target.value } })}
+                  className={cn(field, 'font-signoff-mono resize-y')}
+                />
+              ) : (
+                <input
+                  id={id}
+                  type={kind === 'number' ? 'number' : 'text'}
+                  value={text}
+                  onChange={(e) =>
+                    onChange({
+                      kind: 'form',
+                      record: { ...record, [key]: kind === 'number' ? Number(e.target.value) : e.target.value },
+                    })
+                  }
+                  className={cn(field, 'font-signoff-mono')}
+                />
+              )}
+            </div>
+          );
+        })}
+      </fieldset>
+    );
+  }
+  const errorId = `${idPrefix}-json-error`;
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={`${idPrefix}-json`} className="text-signoff-fg-muted text-xs font-medium">
+        Arguments, as JSON
+      </label>
+      <textarea
+        id={`${idPrefix}-json`}
+        rows={Math.min(14, Math.max(4, value.text.split('\n').length))}
+        value={value.text}
+        spellCheck={false}
+        aria-invalid={value.error ? true : undefined}
+        aria-describedby={value.error ? errorId : undefined}
+        onChange={(e) => onChange(parseJson(e.target.value))}
+        className={cn(field, 'font-signoff-mono resize-y text-xs leading-5')}
+      />
+      {value.error && (
+        <p id={errorId} className="text-signoff-hot-fg text-xs">
+          Not valid JSON: {value.error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+type EditorValue =
+  | { kind: 'form'; record: Record<string, string | number | boolean> }
+  | { kind: 'json'; text: string; parsed?: unknown; error?: string | undefined };
+
+function parseJson(text: string): EditorValue {
+  try {
+    return { kind: 'json', text, parsed: JSON.parse(text) as unknown };
+  } catch (error) {
+    return { kind: 'json', text, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+function editorFor(input: unknown): EditorValue {
+  return isFlatRecord(input) ? { kind: 'form', record: { ...input } } : parseJson(safeStringify(input ?? {}));
+}
+
+/** The editor's arguments, or `undefined` while the JSON does not parse. */
+function editorInput(value: EditorValue): { ok: true; input: unknown } | { ok: false } {
+  if (value.kind === 'form') return { ok: true, input: value.record };
+  return value.error ? { ok: false } : { ok: true, input: value.parsed };
+}
+
 /** How long a decision stays in the live region: long enough to be read, then gone from the card. */
 const ANNOUNCEMENT_MS = 3000;
 
 /**
  * Human-in-the-loop approval for a pending agent action. Shows what will run,
- * how risky it is, and lets the user approve or deny by mouse or keyboard.
+ * how risky it is, and lets the user approve or deny by mouse or keyboard, once,
+ * for the session or always, with the arguments edited first when `editable`.
  * Critical actions require a second confirming press.
  *
  * The card is a group named by its title, not a landmark, so a run with many approvals doesn't
@@ -154,8 +357,14 @@ export function ApprovalCard({
   status = 'pending',
   reason,
   automatic = false,
+  decision: resolvedDecision,
+  decidedByRule,
+  decisions: offered = DEFAULT_DECISIONS,
+  onDecide,
   onApprove,
   onDeny,
+  editable = false,
+  ruleArgs,
   shortcuts = true,
   globalShortcut = false,
   autoFocus = false,
@@ -175,16 +384,30 @@ export function ApprovalCard({
   const reasonId = `${ids}-reason`;
   const cardRef = useRef<HTMLElement>(null);
   const reasonRef = useRef<HTMLTextAreaElement>(null);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState<ApprovalDecision>();
   const [reasonOpen, setReasonOpen] = useState(false);
   const [reasonText, setReasonText] = useState('');
   const [announcement, setAnnouncement] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [edited, setEdited] = useState<EditorValue>(() => editorFor(input));
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = status === 'pending';
   const r = risk ? RISK[risk] : UNRATED;
   const heading = title ?? humanizeToolName(toolName);
   const mac = useIsMac();
   const mod = mac ? '⌘' : 'Ctrl';
+  const has = (d: ApprovalDecision) => offered.includes(d);
+  const remembers = has('allow-session') || has('allow-always') || has('deny-always');
+
+  // The arguments a decision runs with: the edited ones, once valid and different.
+  const editedInput = editable && editing ? editorInput(edited) : undefined;
+  const invalid = editedInput?.ok === false;
+  const finalInput = editedInput?.ok && !sameValue(editedInput.input, input) ? editedInput.input : undefined;
+
+  // The rule's scope, suggested from the arguments the call will run with.
+  const suggested = useMemo(() => ruleArgs ?? suggestArgs(finalInput ?? input), [ruleArgs, finalInput, input]);
+  const [scope, setScope] = useState<{ any: boolean; args: Record<string, string> } | undefined>();
+  const scopeArgs = scope ?? { any: !suggested, args: suggested ?? {} };
 
   // One decision per pending period, so a double click cannot send two (see `status`).
   const decided = useRef(false);
@@ -209,28 +432,36 @@ export function ApprovalCard({
     }
   };
 
-  const approve = () => {
-    if (!pending || decided.current) return;
-    if (risk === 'critical' && !confirming) {
-      setConfirming(true);
+  const choose = (decision: ApprovalDecision, withReason?: string) => {
+    if (!pending || decided.current || !has(decision)) return;
+    const approving = decision.startsWith('allow');
+    if (approving && invalid) {
+      setAnnouncement('The arguments are not valid JSON.');
+      return;
+    }
+    if (approving && risk === 'critical' && confirming !== decision) {
+      setConfirming(decision);
       setAnnouncement('Critical action. Press approve again to confirm.');
       clearTimeout(confirmTimer.current);
-      confirmTimer.current = setTimeout(() => setConfirming(false), 4000);
+      confirmTimer.current = setTimeout(() => setConfirming(undefined), 4000);
       return;
     }
     clearTimeout(confirmTimer.current);
-    setAnnouncement('Approved');
+    setConfirming(undefined);
+    setAnnouncement(RESOLVED[decision]);
     cardRef.current?.focus();
-    decide(() => onApprove?.());
+    const why = withReason?.trim() ? withReason.trim() : undefined;
+    const lasting = decision !== 'allow-once' && decision !== 'deny-once';
+    const choice: ApprovalChoice = {
+      decision,
+      ...(why ? { reason: why } : {}),
+      ...(approving && finalInput !== undefined ? { input: finalInput } : {}),
+      ...(lasting && !scopeArgs.any ? { args: { ...scopeArgs.args } } : {}),
+    };
+    decide(() => (onDecide ? onDecide(choice) : approving ? onApprove?.() : onDeny?.(why)));
   };
-
-  const deny = (withReason?: string) => {
-    if (!pending || decided.current) return;
-    setAnnouncement('Denied');
-    cardRef.current?.focus();
-    const reason = withReason?.trim() ? withReason.trim() : undefined;
-    decide(() => onDeny?.(reason));
-  };
+  const approve = () => choose('allow-once');
+  const deny = (withReason?: string) => choose('deny-once', withReason);
 
   const openReason = () => setReasonOpen(true);
   useEffect(() => {
@@ -276,16 +507,89 @@ export function ApprovalCard({
       approve();
       return;
     }
-    if (isTypingTarget(event.target) || hasModifier(event) || event.shiftKey) return;
+    if (isTypingTarget(event.target) || hasModifier(event)) return;
     const key = event.key.toLowerCase();
-    if (key === 'y') {
+    if (event.shiftKey) {
+      if (key === 'n' && has('deny-always')) {
+        event.preventDefault();
+        choose('deny-always', reasonOpen ? reasonText : undefined);
+      }
+      return;
+    }
+    const byKey: Record<string, ApprovalDecision> = {
+      y: 'allow-once',
+      s: 'allow-session',
+      a: 'allow-always',
+      n: 'deny-once',
+    };
+    const decision = byKey[key];
+    if (decision && has(decision)) {
       event.preventDefault();
-      approve();
-    } else if (key === 'n') {
-      event.preventDefault();
-      deny();
+      choose(decision);
     }
   };
+
+  const keyHint = [
+    has('allow-once') && 'Y to approve',
+    has('allow-session') && 'S to approve for this session',
+    has('allow-always') && 'A to always approve',
+    has('deny-once') && 'N to deny',
+    has('deny-always') && 'Shift N to always deny',
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const resolvedText = decidedByRule
+    ? status === 'approved'
+      ? 'Allowed by your rule'
+      : 'Denied by your rule'
+    : automatic
+      ? status === 'approved'
+        ? 'Auto-approved'
+        : 'Blocked by policy'
+      : resolvedDecision && resolvedDecision.startsWith(status === 'approved' ? 'allow' : 'deny')
+        ? RESOLVED[resolvedDecision]
+        : status === 'approved'
+          ? 'Approved'
+          : 'Denied';
+
+  const secondary =
+    'border-signoff-border-strong bg-signoff-surface-2 text-signoff-fg hover:border-signoff-fg-subtle hover:bg-signoff-bg focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60';
+  const primary = (armed: boolean) =>
+    cn(
+      'focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-semibold transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60',
+      armed
+        ? 'bg-signoff-hot text-signoff-on-hot hover:bg-signoff-hot/90'
+        : 'bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 shadow-[0_0_0_1px_color-mix(in_oklab,var(--signoff-accent)_40%,transparent),0_6px_20px_-8px_var(--signoff-accent)]',
+    );
+  const choiceButton = (decision: ApprovalDecision, label: string, className: string) => (
+    <button
+      key={decision}
+      type="button"
+      data-slot={SLOT[decision]}
+      data-decision={decision}
+      aria-keyshortcuts={
+        shortcuts
+          ? decision === 'allow-once'
+            ? `Y ${mac ? 'Meta' : 'Control'}+Enter`
+            : CHOICE[decision].keys
+          : undefined
+      }
+      aria-disabled={decision.startsWith('allow') && invalid ? true : undefined}
+      onClick={() => choose(decision, decision.startsWith('deny') && reasonOpen ? reasonText : undefined)}
+      className={className}
+    >
+      {confirming === decision ? 'Confirm approval' : label}
+      {shortcuts && (
+        <Kbd
+          aria-hidden="true"
+          className={decision === 'allow-once' ? 'border-current/25 bg-transparent text-current/80' : undefined}
+        >
+          {CHOICE[decision].key}
+        </Kbd>
+      )}
+    </button>
+  );
 
   return (
     // Shortcuts are scoped to focus within the card (WCAG 2.1.4); the actions themselves are real buttons.
@@ -360,12 +664,49 @@ export function ApprovalCard({
               </div>
             </div>
 
-            {preview === undefined || preview === null ? (
+            {editing ? (
+              <ArgumentsEditor original={input} value={edited} onChange={setEdited} idPrefix={ids} />
+            ) : preview === undefined || preview === null ? (
               <DefaultPreview input={input} />
             ) : (
               <div data-signoff-slot className="contents">
                 {preview}
               </div>
+            )}
+            {editable && input !== undefined && (
+              <div className="-mt-1.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-expanded={editing}
+                  onClick={() => setEditing((open) => !open)}
+                  className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-1 py-0.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
+                >
+                  {editing ? 'Done editing' : 'Edit arguments'}
+                </button>
+                {editing && finalInput !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => setEdited(editorFor(input))}
+                    className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-1 py-0.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
+                  >
+                    Undo edits
+                  </button>
+                )}
+                {finalInput !== undefined && (
+                  <span className="text-signoff-warn-fg text-xs">Edited: approving runs the new arguments.</span>
+                )}
+              </div>
+            )}
+
+            {remembers && (
+              <RuleScope
+                toolName={toolName}
+                scope={scopeArgs}
+                onChange={setScope}
+                idPrefix={ids}
+                // Arguments the call has, to narrow the rule to.
+                available={suggested}
+              />
             )}
 
             {reasonOpen && (
@@ -392,7 +733,7 @@ export function ApprovalCard({
                     }
                   }}
                   placeholder={reasonPlaceholder}
-                  className="border-signoff-border-strong bg-signoff-bg text-signoff-fg placeholder:text-signoff-fg-subtle focus-visible:outline-signoff-ring w-full resize-none rounded-lg border px-3 py-2 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-0"
+                  className={cn(field, 'resize-none')}
                 />
               </div>
             )}
@@ -400,7 +741,9 @@ export function ApprovalCard({
             <div className="flex flex-wrap items-center gap-2">
               {shortcuts && (
                 <p id={hintId} className="text-signoff-fg-subtle mr-auto hidden items-center gap-1.5 text-xs sm:flex">
-                  <span className="sr-only">Keyboard: press Y to approve, N to deny, or {mod} Enter to approve.</span>
+                  <span className="sr-only">
+                    Keyboard: press {keyHint}, or {mod} Enter to approve.
+                  </span>
                   <span aria-hidden="true" className="flex items-center gap-1.5">
                     <Kbd>{mod}</Kbd>
                     <Kbd>↵</Kbd>
@@ -418,64 +761,101 @@ export function ApprovalCard({
                     Deny with feedback
                   </button>
                 )}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    data-slot="signoff-approval-deny"
-                    aria-keyshortcuts={shortcuts ? 'N' : undefined}
-                    onClick={() => deny(reasonOpen ? reasonText : undefined)}
-                    className="border-signoff-border-strong bg-signoff-surface-2 text-signoff-fg hover:border-signoff-fg-subtle hover:bg-signoff-bg focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-                  >
-                    {reasonOpen ? 'Send denial' : denyLabel}
-                    {shortcuts && !reasonOpen && <Kbd aria-hidden="true">N</Kbd>}
-                  </button>
-                  <button
-                    type="button"
-                    data-slot="signoff-approval-approve"
-                    aria-keyshortcuts={shortcuts ? `Y ${mac ? 'Meta' : 'Control'}+Enter` : undefined}
-                    onClick={approve}
-                    className={cn(
-                      'focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-semibold transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2',
-                      confirming
-                        ? 'bg-signoff-hot text-signoff-on-hot hover:bg-signoff-hot/90'
-                        : 'bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 shadow-[0_0_0_1px_color-mix(in_oklab,var(--signoff-accent)_40%,transparent),0_6px_20px_-8px_var(--signoff-accent)]',
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {has('deny-always') && choiceButton('deny-always', 'Always deny', secondary)}
+                  {has('deny-once') && choiceButton('deny-once', reasonOpen ? 'Send denial' : denyLabel, secondary)}
+                  {has('allow-session') &&
+                    choiceButton(
+                      'allow-session',
+                      'For this session',
+                      confirming === 'allow-session' ? primary(true) : secondary,
                     )}
-                  >
-                    {confirming ? 'Confirm approval' : approveLabel}
-                    {shortcuts && (
-                      <Kbd aria-hidden="true" className="border-current/25 bg-transparent text-current/80">
-                        Y
-                      </Kbd>
-                    )}
-                  </button>
+                  {has('allow-always') &&
+                    choiceButton('allow-always', 'Always', confirming === 'allow-always' ? primary(true) : secondary)}
+                  {has('allow-once') && choiceButton('allow-once', approveLabel, primary(confirming === 'allow-once'))}
                 </div>
               </div>
             </div>
           </div>
         </>
       ) : (
-        <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px]">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3.5 py-2.5 text-[13px]">
           {status === 'approved' ? (
             <CheckIcon size={15} className="text-signoff-accent-fg shrink-0" />
           ) : (
             <BanIcon size={15} className="text-signoff-hot-fg shrink-0" />
           )}
-          <span className="text-signoff-fg font-semibold">
-            {status === 'approved'
-              ? automatic
-                ? 'Auto-approved'
-                : 'Approved'
-              : automatic
-                ? 'Blocked by policy'
-                : 'Denied'}
-          </span>
+          <span className="text-signoff-fg font-semibold">{resolvedText}</span>
           <Heading id={titleId} className="text-signoff-fg-muted min-w-0 truncate">
             {heading}
           </Heading>
+          {decidedByRule && <span className="text-signoff-fg-subtle min-w-0 truncate">· {decidedByRule}</span>}
           {reason && <span className="text-signoff-fg-subtle min-w-0 truncate">· {reason}</span>}
         </div>
       )}
     </section>
+  );
+}
+
+const DEFAULT_DECISIONS: readonly ApprovalDecision[] = ['allow-once', 'deny-once'];
+
+/** Which calls a session or always decision covers: the tool, narrowed to argument patterns or not. */
+function RuleScope({
+  toolName,
+  scope,
+  onChange,
+  available,
+  idPrefix,
+}: {
+  toolName: string;
+  scope: { any: boolean; args: Record<string, string> };
+  onChange: (scope: { any: boolean; args: Record<string, string> }) => void;
+  available: Record<string, string> | undefined;
+  idPrefix: string;
+}) {
+  const names = Object.keys(available ?? scope.args);
+  return (
+    <fieldset className="border-signoff-border bg-signoff-bg/40 flex flex-col gap-2 rounded-lg border px-3 py-2.5">
+      <legend className="sr-only">Calls a lasting decision covers</legend>
+      <p className="text-signoff-fg-muted text-xs">
+        Remembered for <span className="font-signoff-mono text-signoff-fg">{toolName}</span>
+        {scope.any ? ' with any arguments.' : ' calls where:'}
+      </p>
+      {!scope.any &&
+        names.map((name) => {
+          const id = `${idPrefix}-rule-${name}`;
+          return (
+            <div key={name} className="flex items-center gap-2">
+              <label htmlFor={id} className="font-signoff-mono text-signoff-fg-muted shrink-0 text-[11px]">
+                {name} matches
+              </label>
+              <input
+                id={id}
+                type="text"
+                value={scope.args[name] ?? ''}
+                onChange={(e) => onChange({ ...scope, args: { ...scope.args, [name]: e.target.value } })}
+                className={cn(field, 'font-signoff-mono py-1 text-xs')}
+              />
+            </div>
+          );
+        })}
+      {names.length > 0 && (
+        <label className="text-signoff-fg-muted flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={scope.any}
+            onChange={(e) => onChange({ ...scope, any: e.target.checked })}
+            className="accent-signoff-accent focus-visible:outline-signoff-ring size-3.5 focus-visible:outline-2 focus-visible:outline-offset-2"
+          />
+          Any arguments
+        </label>
+      )}
+      {!scope.any && (
+        <p className="text-signoff-fg-subtle text-[11px]">
+          * matches any text but shell operators (; &amp; | &gt; &lt; and backticks); ** matches anything.
+        </p>
+      )}
+    </fieldset>
   );
 }
 
@@ -487,25 +867,101 @@ export interface ToolApprovalResponse {
 
 export interface ToolApprovalCardProps extends Omit<
   ApprovalCardProps,
-  'toolName' | 'input' | 'status' | 'onApprove' | 'onDeny' | 'reason' | 'automatic'
+  | 'toolName'
+  | 'input'
+  | 'status'
+  | 'onApprove'
+  | 'onDeny'
+  | 'onDecide'
+  | 'reason'
+  | 'automatic'
+  | 'decision'
+  | 'decidedByRule'
 > {
   part: ToolPart;
   /** Matches `useChat().addToolApprovalResponse`, so you can pass it directly. */
   onRespond: (response: ToolApprovalResponse) => void | PromiseLike<void>;
   meta?: ToolMeta | undefined;
+  /**
+   * Approval rules from `useApprovalPolicy`. The card then offers once, this session and always
+   * (unless `decisions` says otherwise), answers a request a rule already decides without asking,
+   * and records every decision.
+   */
+  policy?: ApprovalPolicy | undefined;
+  /**
+   * Apply edited arguments before the approval goes out; the card offers editing only with it.
+   * With AI SDK 7: `(id, input) => setMessages((m) => setToolInput(m, id, input))`. With
+   * `useAgUiAgent`: its `editInput`.
+   */
+  onEditInput?: ((toolCallId: string, input: unknown) => void) | undefined;
+}
+
+const ALL_DECISIONS: readonly ApprovalDecision[] = [
+  'allow-once',
+  'allow-session',
+  'allow-always',
+  'deny-once',
+  'deny-always',
+];
+
+/** The request a tool part makes, for a policy. */
+export function approvalRequestOf(part: ToolPart): ApprovalRequest | undefined {
+  if (!part.approval) return undefined;
+  return { id: part.approval.id, toolName: getToolPartName(part), input: part.input, toolCallId: part.toolCallId };
 }
 
 /**
  * `ApprovalCard` bound to an AI SDK tool part in the approval flow. Renders nothing for parts without
  * one, or while a policy's automatic decision is still arriving: nobody needs to act on it.
  */
-export function ToolApprovalCard({ part, onRespond, meta, risk, description, title, ...props }: ToolApprovalCardProps) {
+export function ToolApprovalCard({
+  part,
+  onRespond,
+  meta,
+  risk,
+  description,
+  title,
+  policy,
+  onEditInput,
+  decisions,
+  editable,
+  ...props
+}: ToolApprovalCardProps) {
   const status = getApprovalStatus(part);
-  if (!status || !part.approval) return null;
+  const request = approvalRequestOf(part);
+  // A rule decides this request: answer it from the policy, once, without asking anyone.
+  const ruled =
+    !!policy && status === 'pending' && !!request && !!evaluateRules(policy.rules, request.toolName, request.input);
+  const answered = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!ruled || !request || !policy?.ready || answered.current === request.id) return;
+    const outcome = policy.answer(request);
+    if (!outcome) return;
+    answered.current = request.id;
+    void onRespond(toResponse(outcome));
+  });
+  if (!status || !part.approval || !request) return null;
   const automatic = isAutomaticApproval(part.approval);
   if (automatic && status === 'pending') return null;
+  if (ruled) return null;
   const approvalId = part.approval.id;
   const resolvedRisk = risk ?? (typeof meta?.risk === 'function' ? meta.risk(part.input) : meta?.risk);
+  const outcome = status === 'pending' ? undefined : policy?.outcomeOf(approvalId);
+  const send = (choice: ApprovalChoice) => {
+    if (choice.input !== undefined) onEditInput?.(part.toolCallId, choice.input);
+    if (policy) {
+      const recorded = policy.decide(request, choice.decision, {
+        reason: choice.reason,
+        input: choice.input,
+        args: choice.args,
+      });
+      return onRespond(toResponse(recorded));
+    }
+    const approved = choice.decision.startsWith('allow');
+    return onRespond(
+      choice.reason ? { id: approvalId, approved, reason: choice.reason } : { id: approvalId, approved },
+    );
+  };
   return (
     <ApprovalCard
       toolName={getToolPartName(part)}
@@ -516,11 +972,117 @@ export function ToolApprovalCard({ part, onRespond, meta, risk, description, tit
       status={status}
       reason={part.approval.reason}
       automatic={automatic}
-      onApprove={() => onRespond({ id: approvalId, approved: true })}
-      onDeny={(reason) =>
-        onRespond(reason ? { id: approvalId, approved: false, reason } : { id: approvalId, approved: false })
-      }
+      decision={outcome?.decision}
+      decidedByRule={outcome?.by === 'rule' && outcome.rule ? describeRule(outcome.rule) : undefined}
+      decisions={decisions ?? (policy ? ALL_DECISIONS : undefined)}
+      // Editing only where an edit can be applied: never silently dropped on the way to the agent.
+      editable={!!onEditInput && (editable ?? true)}
+      onDecide={send}
       {...props}
     />
+  );
+}
+
+function toResponse(outcome: ApprovalOutcome): ToolApprovalResponse {
+  return outcome.reason
+    ? { id: outcome.id, approved: outcome.approved, reason: outcome.reason }
+    : { id: outcome.id, approved: outcome.approved };
+}
+
+export interface ToolApprovalBatchProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
+  /** Tool parts; those waiting on a person count. */
+  parts: readonly ToolPart[];
+  onRespond: (response: ToolApprovalResponse) => void | PromiseLike<void>;
+  policy?: ApprovalPolicy | undefined;
+  tools?: Record<string, ToolMeta> | undefined;
+  /** Shown from this many waiting approvals. Default 2. */
+  min?: number;
+}
+
+/**
+ * "Approve all" and "Deny all" for the approvals a run is waiting on together, such as parallel
+ * calls. Each is answered once, as Approve or Deny on its own card would; with a critical one among
+ * them, Approve all asks for a second press.
+ */
+export function ToolApprovalBatch({
+  parts,
+  onRespond,
+  policy,
+  tools,
+  min = 2,
+  className,
+  ...props
+}: ToolApprovalBatchProps) {
+  const [confirming, setConfirming] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const waiting = parts.filter((part) => {
+    const request = approvalRequestOf(part);
+    return (
+      request &&
+      getApprovalStatus(part) === 'pending' &&
+      !isAutomaticApproval(part.approval) &&
+      !(policy && evaluateRules(policy.rules, request.toolName, request.input))
+    );
+  });
+  if (waiting.length < min) return null;
+  const critical = waiting.some((part) => {
+    const meta = tools?.[getToolPartName(part)];
+    return (typeof meta?.risk === 'function' ? meta.risk(part.input) : meta?.risk) === 'critical';
+  });
+  const answerAll = (decision: 'allow-once' | 'deny-once') => {
+    if (decision === 'allow-once' && critical && !confirming) {
+      setConfirming(true);
+      setAnnouncement('One of them is critical. Press Approve all again to confirm.');
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setConfirming(false), 4000);
+      return;
+    }
+    setConfirming(false);
+    for (const part of waiting) {
+      const request = approvalRequestOf(part)!;
+      const outcome = policy?.decide(request, decision);
+      void onRespond(outcome ? toResponse(outcome) : { id: request.id, approved: decision === 'allow-once' });
+    }
+    setAnnouncement(`${waiting.length} approvals ${decision === 'allow-once' ? 'approved' : 'denied'}.`);
+  };
+  return (
+    <div
+      data-signoff
+      data-slot="signoff-approval-batch"
+      role="group"
+      aria-label="Approvals waiting"
+      className={cn(
+        'rounded-signoff border-signoff-warn/40 bg-signoff-surface font-signoff-sans text-signoff-fg flex flex-wrap items-center gap-x-3 gap-y-2 border px-3.5 py-2.5 text-[13px]',
+        className,
+      )}
+      {...props}
+    >
+      <LiveRegion>{announcement}</LiveRegion>
+      <ShieldIcon size={15} className="text-signoff-warn-fg shrink-0" />
+      <span className="text-signoff-fg font-medium">{waiting.length} approvals are waiting.</span>
+      <span className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => answerAll('deny-once')}
+          className="border-signoff-border-strong text-signoff-fg hover:bg-signoff-surface-2 focus-visible:outline-signoff-ring inline-flex h-7 cursor-pointer items-center rounded-lg border px-2.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          Deny all
+        </button>
+        <button
+          type="button"
+          onClick={() => answerAll('allow-once')}
+          className={cn(
+            'focus-visible:outline-signoff-ring inline-flex h-7 cursor-pointer items-center rounded-lg px-2.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2',
+            confirming
+              ? 'bg-signoff-hot text-signoff-on-hot hover:bg-signoff-hot/90'
+              : 'bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90',
+          )}
+        >
+          {confirming ? 'Confirm approve all' : 'Approve all'}
+        </button>
+      </span>
+    </div>
   );
 }
