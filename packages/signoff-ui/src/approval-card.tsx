@@ -953,6 +953,8 @@ export function ToolApprovalCard({
   const outcome = status === 'pending' ? undefined : policy?.outcomeOf(approvalId);
   const send = (choice: ApprovalChoice) => {
     if (choice.input !== undefined) onEditInput?.(part.toolCallId, choice.input);
+    // Answered by a person: the rule this decision adds must not answer it again while it reads pending.
+    answered.current = approvalId;
     if (policy) {
       const recorded = policy.decide(request, choice.decision, {
         reason: choice.reason,
