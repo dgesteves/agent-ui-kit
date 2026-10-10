@@ -23,7 +23,7 @@ export function pageMetadata({
       canonical: path,
       ...(markdownPath ? { types: { 'text/markdown': markdownPath } } : {}),
     },
-    openGraph: { type: 'website', siteName: 'agent-ui-kit', title, description, url: path },
+    openGraph: { type: 'website', siteName: 'signoff-ui', title, description, url: path },
     twitter: { card: 'summary_large_image', title, description },
   };
 }

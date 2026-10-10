@@ -1,6 +1,6 @@
 'use client';
 
-import { AgentStatus } from '@dgesteves/agent-ui-kit';
+import { AgentStatus } from 'signoff-ui';
 
 export function AgentStatusDemo() {
   return (

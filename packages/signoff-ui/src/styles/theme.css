@@ -1,0 +1,99 @@
+/*
+ * signoff-ui design tokens.
+ *
+ * Plain CSS custom properties: override any of them on :root, on .dark,
+ * or on any ancestor element to re-theme a subtree. Light is the default;
+ * `.dark` (or [data-theme="dark"]) switches to the dark palette, and `.light`
+ * (or [data-theme="light"]) back. theme.auto.css follows the OS setting.
+ *
+ * The fonts are the app's own when it defines --font-sans and --font-mono
+ * (shadcn/ui and Tailwind v4 apps do), then Geist when loaded, then the system's.
+ */
+:root,
+.light,
+[data-theme='light'] {
+  --signoff-bg: #ffffff;
+  --signoff-surface: #f6f7f9;
+  --signoff-surface-2: #eef0f3;
+  --signoff-border: #e2e5ea;
+  --signoff-border-strong: #cdd2d9;
+
+  --signoff-fg: #0d0f12;
+  --signoff-fg-muted: #4b5563;
+  --signoff-fg-subtle: #5f6875;
+
+  --signoff-accent: #0e7490;
+  --signoff-accent-fg: #155e75;
+  --signoff-on-accent: #ffffff;
+
+  --signoff-hot: #be185d;
+  --signoff-hot-fg: #9d174d;
+  --signoff-on-hot: #ffffff;
+
+  --signoff-warn: #b45309;
+  --signoff-warn-fg: #92400e;
+
+  --signoff-ring: #0e7490;
+
+  --signoff-add-bg: rgb(8 145 178 / 0.08);
+  --signoff-add-strong: rgb(8 145 178 / 0.16);
+  --signoff-del-bg: rgb(190 24 93 / 0.07);
+  --signoff-del-strong: rgb(190 24 93 / 0.14);
+
+  /* Data marks (validated: in-band lightness, CVD ΔE ≥ 8 against --signoff-surface). */
+  --signoff-chart-input: #0891b2;
+  --signoff-chart-output: #db2777;
+
+  --signoff-code-keyword: #155e75;
+  --signoff-code-string: #9a3412;
+  --signoff-code-number: #9d174d;
+  --signoff-code-comment: #525b67;
+  --signoff-code-punctuation: #4b5563;
+
+  --signoff-radius: 0.75rem;
+  --signoff-font-sans: var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif));
+  --signoff-font-mono: var(
+    --font-mono,
+    var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace)
+  );
+}
+
+.dark,
+[data-theme='dark'] {
+  --signoff-bg: #0d0f12;
+  --signoff-surface: #181c22;
+  --signoff-surface-2: #1e232a;
+  --signoff-border: #262b33;
+  --signoff-border-strong: #353c47;
+
+  --signoff-fg: #e8eaed;
+  --signoff-fg-muted: #a1a9b4;
+  --signoff-fg-subtle: #8b94a0;
+
+  --signoff-accent: #22d3ee;
+  --signoff-accent-fg: #67e8f9;
+  --signoff-on-accent: #0d0f12;
+
+  --signoff-hot: #f0468a;
+  --signoff-hot-fg: #f472a8;
+  --signoff-on-hot: #0d0f12;
+
+  --signoff-warn: #fbbf24;
+  --signoff-warn-fg: #fcd34d;
+
+  --signoff-ring: #67e8f9;
+
+  --signoff-add-bg: rgb(34 211 238 / 0.08);
+  --signoff-add-strong: rgb(34 211 238 / 0.14);
+  --signoff-del-bg: rgb(240 70 138 / 0.08);
+  --signoff-del-strong: rgb(240 70 138 / 0.26);
+
+  --signoff-chart-input: #11a2bc;
+  --signoff-chart-output: #f0468a;
+
+  --signoff-code-keyword: #67e8f9;
+  --signoff-code-string: #f5c27a;
+  --signoff-code-number: #f9a8d4;
+  --signoff-code-comment: #a1a9b4;
+  --signoff-code-punctuation: #a1a9b4;
+}

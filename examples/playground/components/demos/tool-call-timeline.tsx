@@ -1,6 +1,6 @@
 'use client';
 
-import { ToolCallTimeline } from '@dgesteves/agent-ui-kit';
+import { ToolCallTimeline } from 'signoff-ui';
 import { timelineParts, timelineTimings } from '@/lib/demo-data';
 import { toolMeta } from '@/lib/tools';
 

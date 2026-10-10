@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
  */
 export function Preview({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-aui-bg text-aui-fg border-line overflow-hidden rounded-xl border p-4 sm:p-6">{children}</div>
+    <div className="bg-signoff-bg text-signoff-fg border-line overflow-hidden rounded-xl border p-4 sm:p-6">
+      {children}
+    </div>
   );
 }

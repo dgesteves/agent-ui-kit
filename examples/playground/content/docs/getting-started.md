@@ -13,20 +13,30 @@ The same components come two ways: as an npm package, or as source files the sha
 ### From npm
 
 ```package-install
-npm i @dgesteves/agent-ui-kit ai
+npm i signoff-ui ai
 ```
 
-`ai` is a peer dependency, for the message part types. The package ships ES modules with `'use client'` kept per file, a precompiled stylesheet, and `@dgesteves/agent-ui-kit/core` for server code.
+`ai` is a peer dependency, for the message part types. The package ships ES modules with `'use client'` kept per file, a precompiled stylesheet, and `signoff-ui/core` for server code.
 
 ### With the shadcn CLI
 
 ```package-install
-npx shadcn@latest add @agent-ui-kit/agent-message
+npx shadcn@latest add @signoff-ui/agent-message
 ```
 
-`@agent-ui-kit` is in the [shadcn registry directory](https://ui.shadcn.com/docs/directory), so the CLI finds it and adds it to your `components.json` on first use. Each item brings the component, the helpers it imports, its npm dependencies and the theme tokens, which `shadcn add` writes into your CSS. Files land in `components/agent-ui/`.
+If the CLI doesn't know the `@signoff-ui` namespace yet, add it to your `components.json` once:
 
-The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`) or straight from the repository (`dgesteves/agent-ui-kit/agent-message`).
+```json title="components.json"
+{
+  "registries": {
+    "@signoff-ui": "https://agent-ui-kit-demo.vercel.app/r/{name}.json"
+  }
+}
+```
+
+Each item brings the component, the helpers it imports, its npm dependencies and the theme tokens, which `shadcn add` writes into your CSS. Files land in `components/signoff-ui/`.
+
+The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL, with no setup (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from the repository (`dgesteves/signoff-ui/agent-message`).
 
 ### Which one
 
@@ -35,7 +45,7 @@ The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-revi
 | Updates              | `npm update`                            | Run `shadcn add` again and merge your edits |
 | Styles               | Tailwind v4, Tailwind v3 or no Tailwind | Tailwind v4, like any current shadcn/ui app |
 | Changing a component | `className`, tokens and `data-*` hooks  | Edit the source                             |
-| Imports              | `@dgesteves/agent-ui-kit`               | `@/components/agent-ui/...`                 |
+| Imports              | `signoff-ui`                            | `@/components/signoff-ui/...`               |
 
 Start with npm if you want updates and don't plan to fork the components. Use the registry if you'd rather own the code, or your app already follows the shadcn/ui conventions.
 
@@ -47,28 +57,28 @@ Once per app. Skip this if you installed with the shadcn CLI, which already wrot
 
 ```css title="app/globals.css"
 @import 'tailwindcss';
-@import '@dgesteves/agent-ui-kit/tailwind.css';
+@import 'signoff-ui/tailwind.css';
 ```
 
 **Tailwind v3, or no Tailwind.** Import the precompiled stylesheet: only the utilities the kit uses, and no global reset.
 
 ```ts title="app/layout.tsx"
-import '@dgesteves/agent-ui-kit/styles.css';
+import 'signoff-ui/styles.css';
 ```
 
-`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` can't strip the components' spacing. Every rule is scoped to the components' own elements, so it doesn't restyle your app; import it after your global CSS. If your app orders its CSS with layers, use `styles.layered.css`, the same stylesheet in `@layer theme, base, utilities`.
+`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` can't strip the components' spacing. Every rule is scoped to the components' own elements, so it doesn't restyle your app; import it after your global CSS. That holds inside the components too: what `renderTool`, `renderData`, `renderOutput` and a custom approval `preview` return is your content, in a `data-signoff-slot` element the kit's rules don't reach, so your CSS styles it (it still inherits the component's text color and font). Components you render there are styled as usual. The stylesheet also sets none of your theme's variables (`--spacing`, `--text-*`, `--font-*`): its utilities have the kit's values written in and read only the `--signoff-*` tokens. If your app orders its CSS with layers, use `styles.layered.css`, the same stylesheet in `@layer theme, base, utilities`.
 
-**Dark mode.** Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette. To follow the OS setting instead, also import `@dgesteves/agent-ui-kit/theme.auto.css`; `class="light"` on `<html>` still forces light.
+**Dark mode.** Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette. To follow the OS setting instead, also import `signoff-ui/theme.auto.css`; `class="light"` on `<html>` still forces light.
 
 ## Render a run
 
-A Next.js App Router app with AI SDK 7: a client component, a page and a route. [The quickstart, running](https://github.com/dgesteves/agent-ui-kit/tree/main/examples/nextjs-minimal) is this section as an app against a scripted model, so it needs no API key.
+A Next.js App Router app with AI SDK 7: a client component, a page and a route. [The quickstart, running](https://github.com/dgesteves/signoff-ui/tree/main/examples/nextjs-minimal) is this section as an app against a scripted model, so it needs no API key.
 
 ```package-install
-npm i @dgesteves/agent-ui-kit ai @ai-sdk/react @ai-sdk/openai zod
+npm i signoff-ui ai @ai-sdk/react @ai-sdk/openai zod
 ```
 
-The client renders the last assistant message, its status and its cost, with a minimal composer. The wrapper paints the kit's own background and text colors (`bg-aui-bg text-aui-fg`), so the run reads well whatever your page's colors are. Without Tailwind, give it `background: var(--aui-bg); color: var(--aui-fg)` instead.
+The client renders the last assistant message, its status and its cost, with a minimal composer. The wrapper paints the kit's own background and text colors (`bg-signoff-bg text-signoff-fg`), so the run reads well whatever your page's colors are. Without Tailwind, give it `background: var(--signoff-bg); color: var(--signoff-fg)` instead.
 
 ```tsx title="app/agent-run.tsx"
 'use client';
@@ -76,7 +86,7 @@ The client renders the last assistant message, its status and its cost, with a m
 import { useChat } from '@ai-sdk/react';
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type LanguageModelUsage, type UIMessage } from 'ai';
 import { useState } from 'react';
-import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from '@dgesteves/agent-ui-kit';
+import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from 'signoff-ui';
 
 type Message = UIMessage<{ usage?: LanguageModelUsage }>;
 
@@ -92,7 +102,7 @@ export function AgentRun() {
   const timing = useRunTiming(status, messages);
 
   return (
-    <div className="bg-aui-bg text-aui-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
+    <div className="bg-signoff-bg text-signoff-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
       <AgentStatus state={state} detail={detail} elapsedMs={timing.activeMs} />
       {last && (
         <AgentMessage
@@ -123,12 +133,12 @@ export function AgentRun() {
           placeholder="Ask the agent to change something"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          className="border-aui-border bg-aui-surface flex-1 rounded-lg border px-3 py-2 text-sm"
+          className="border-signoff-border bg-signoff-surface flex-1 rounded-lg border px-3 py-2 text-sm"
         />
         <button
           type="submit"
           disabled={status !== 'ready' && status !== 'error'}
-          className="bg-aui-accent text-aui-on-accent rounded-lg px-4 text-sm font-medium disabled:opacity-50"
+          className="bg-signoff-accent text-signoff-on-accent rounded-lg px-4 text-sm font-medium disabled:opacity-50"
         >
           Send
         </button>
@@ -157,7 +167,7 @@ On the server, give the model tools, ask for approval before the risky one, and 
 
 ```ts title="app/api/chat/route.ts"
 import { openai } from '@ai-sdk/openai';
-import { addUsage } from '@dgesteves/agent-ui-kit/core';
+import { addUsage } from 'signoff-ui/core';
 import { convertToModelMessages, stepCountIs, streamText, tool, type LanguageModelUsage, type UIMessage } from 'ai';
 import { z } from 'zod';
 
@@ -284,10 +294,10 @@ The rest of the walkthrough is the same. CI typechecks the library and runs its 
 
 ## Next.js
 
-**Server Components.** Components and hooks are client modules with their own `'use client'` directive (except `Sources`, which has no state and renders on the server too), so a Server Component can render any of them. The pure helpers aren't, so Server Components and Route Handlers can call them. Import those from `@dgesteves/agent-ui-kit/core`, which has no React:
+**Server Components.** Components and hooks are client modules with their own `'use client'` directive (except `Sources`, which has no state and renders on the server too), so a Server Component can render any of them. The pure helpers aren't, so Server Components and Route Handlers can call them. Import those from `signoff-ui/core`, which has no React:
 
 ```ts title="app/api/review/route.ts"
-import { applyHunks, parseFileChange } from '@dgesteves/agent-ui-kit/core';
+import { applyHunks, parseFileChange } from 'signoff-ui/core';
 ```
 
 **`cacheComponents`.** Nothing in the kit reads the clock or a random number while rendering on the server, so pages that render it prerender with `cacheComponents` on. Live durations render after hydration, so server and client markup match. `useChat` is the exception, as above: wrap the component that calls it in `<Suspense>`.
@@ -304,59 +314,59 @@ Every color, radius and font is a CSS variable. Override them on `:root`, on `.d
 
 ```css title="app/globals.css"
 :root {
-  --aui-accent: #7c3aed; /* fills: buttons, running state, focus */
-  --aui-accent-fg: #6d28d9; /* accent text */
-  --aui-hot: #c2410c; /* attention: approvals, errors, deletions */
-  --aui-radius: 6px;
-  --aui-font-sans: var(--font-inter);
+  --signoff-accent: #7c3aed; /* fills: buttons, running state, focus */
+  --signoff-accent-fg: #6d28d9; /* accent text */
+  --signoff-hot: #c2410c; /* attention: approvals, errors, deletions */
+  --signoff-radius: 6px;
+  --signoff-font-sans: var(--font-inter);
 }
 ```
 
-| Tokens                                                                  | Purpose                          |
-| ----------------------------------------------------------------------- | -------------------------------- |
-| `--aui-bg`, `--aui-surface`, `--aui-surface-2`, `--aui-border(-strong)` | Surfaces and lines               |
-| `--aui-fg`, `--aui-fg-muted`, `--aui-fg-subtle`                         | Text, all AA on every surface    |
-| `--aui-accent`, `--aui-accent-fg`, `--aui-on-accent`, `--aui-ring`      | Activity, primary actions, focus |
-| `--aui-hot`, `--aui-hot-fg`, `--aui-on-hot`, `--aui-warn(-fg)`          | Attention, risk, errors          |
-| `--aui-add-bg`, `--aui-add-strong`, `--aui-del-bg`, `--aui-del-strong`  | Diff lines and word highlights   |
-| `--aui-chart-input`, `--aui-chart-output`                               | The token bar                    |
-| `--aui-code-*`                                                          | Syntax tinting                   |
-| `--aui-radius`, `--aui-font-sans`, `--aui-font-mono`                    | Shape and type                   |
+| Tokens                                                                                  | Purpose                          |
+| --------------------------------------------------------------------------------------- | -------------------------------- |
+| `--signoff-bg`, `--signoff-surface`, `--signoff-surface-2`, `--signoff-border(-strong)` | Surfaces and lines               |
+| `--signoff-fg`, `--signoff-fg-muted`, `--signoff-fg-subtle`                             | Text, all AA on every surface    |
+| `--signoff-accent`, `--signoff-accent-fg`, `--signoff-on-accent`, `--signoff-ring`      | Activity, primary actions, focus |
+| `--signoff-hot`, `--signoff-hot-fg`, `--signoff-on-hot`, `--signoff-warn(-fg)`          | Attention, risk, errors          |
+| `--signoff-add-bg`, `--signoff-add-strong`, `--signoff-del-bg`, `--signoff-del-strong`  | Diff lines and word highlights   |
+| `--signoff-chart-input`, `--signoff-chart-output`                                       | The token bar                    |
+| `--signoff-code-*`                                                                      | Syntax tinting                   |
+| `--signoff-radius`, `--signoff-font-sans`, `--signoff-font-mono`                        | Shape and type                   |
 
 The fonts are your app's `--font-sans` and `--font-mono` when it defines them, as shadcn/ui and Tailwind v4 apps do, then Geist when `geist` is loaded, then the system's.
 
-Messages, timelines and sources have no background of their own: they sit on your page and take their text color from the kit's palette. If the page's background doesn't match the kit's theme (a dark page with the light palette, say), give their container `bg-aui-bg text-aui-fg`, as the walkthrough does. Cards, the status pill and the meter paint their own surfaces.
+Messages, timelines and sources have no background of their own: they sit on your page and take their text color from the kit's palette. If the page's background doesn't match the kit's theme (a dark page with the light palette, say), give their container `bg-signoff-bg text-signoff-fg`, as the walkthrough does. Cards, the status pill and the meter paint their own surfaces.
 
 **In a shadcn/ui app**, point the kit at your tokens so it looks native. Add this after the kit's tokens; one block covers both themes, since your tokens switch with `.dark`:
 
 ```css title="app/globals.css"
 :root,
 .dark {
-  --aui-bg: var(--background);
-  --aui-surface: var(--card);
-  --aui-surface-2: var(--muted);
-  --aui-border: var(--border);
-  --aui-border-strong: var(--input);
-  --aui-fg: var(--foreground);
-  --aui-fg-muted: var(--muted-foreground);
-  --aui-fg-subtle: var(--muted-foreground);
-  --aui-accent: var(--primary);
-  --aui-accent-fg: var(--primary);
-  --aui-on-accent: var(--primary-foreground);
-  --aui-ring: var(--ring);
-  --aui-hot: var(--destructive);
-  --aui-hot-fg: var(--destructive);
-  --aui-radius: var(--radius);
+  --signoff-bg: var(--background);
+  --signoff-surface: var(--card);
+  --signoff-surface-2: var(--muted);
+  --signoff-border: var(--border);
+  --signoff-border-strong: var(--input);
+  --signoff-fg: var(--foreground);
+  --signoff-fg-muted: var(--muted-foreground);
+  --signoff-fg-subtle: var(--muted-foreground);
+  --signoff-accent: var(--primary);
+  --signoff-accent-fg: var(--primary);
+  --signoff-on-accent: var(--primary-foreground);
+  --signoff-ring: var(--ring);
+  --signoff-hot: var(--destructive);
+  --signoff-hot-fg: var(--destructive);
+  --signoff-radius: var(--radius);
 }
 ```
 
 Diff and chart colors keep the kit's cyan and magenta, which your palette may not tell apart as well. The kit's contrast test covers its own palette, so check text contrast with yours.
 
-**Styling hooks.** Components accept `className`, merged with `tailwind-merge`, and expose `data-slot` (such as `data-slot="approval-card"`) and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) to target from your CSS:
+**Styling hooks.** Components accept `className`, merged with `tailwind-merge`, and expose `data-signoff` on their root, `data-slot` (such as `data-slot="signoff-approval-card"`) and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) to target from your CSS:
 
 ```css
-[data-slot='approval-card'][data-risk='critical'] {
-  outline: 2px solid var(--aui-hot);
+[data-slot='signoff-approval-card'][data-risk='critical'] {
+  outline: 2px solid var(--signoff-hot);
 }
 ```
 

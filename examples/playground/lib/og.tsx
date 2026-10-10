@@ -55,7 +55,7 @@ export function ogImage({
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <Logo />
-        <span style={{ fontFamily: 'Geist Mono', fontSize: 26, fontWeight: 500, color: '#e8eaed' }}>agent-ui-kit</span>
+        <span style={{ fontFamily: 'Geist Mono', fontSize: 26, fontWeight: 500, color: '#e8eaed' }}>signoff-ui</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto' }}>
         <span style={{ fontFamily: 'Geist Mono', fontSize: 24, color: '#67e8f9', letterSpacing: 1 }}>{eyebrow}</span>

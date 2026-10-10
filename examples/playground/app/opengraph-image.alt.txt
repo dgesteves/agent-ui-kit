@@ -1,1 +1,1 @@
-The agent-ui-kit playground mid-run: the headline, Accessible React components for agent runs, an install command, Get started and Star on GitHub, and beside them the run's status, playback controls and run meter; below, a tool call timeline with a failed read.
+The signoff-ui playground mid-run: the headline, Accessible React components for agent runs, an install command, Get started and Star on GitHub, and beside them the run's status, playback controls and run meter; below, a tool call timeline with a failed read.

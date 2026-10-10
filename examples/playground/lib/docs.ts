@@ -27,7 +27,7 @@ export const GUIDES: DocPage[] = [
     slug: 'introduction',
     href: '/docs',
     title: 'Introduction',
-    description: 'What agent-ui-kit is, why it exists, and how it reads an agent run.',
+    description: 'What signoff-ui is, why it exists, and how it reads an agent run.',
   },
   {
     slug: 'getting-started',
@@ -42,6 +42,13 @@ export const GUIDES: DocPage[] = [
     title: 'AG-UI agents',
     description:
       'Render LangGraph, CrewAI, Mastra and other AG-UI agents with the same components, interrupts included, through useAgUiAgent.',
+  },
+  {
+    slug: 'migrating-from-agent-ui-kit',
+    href: '/docs/migrating-from-agent-ui-kit',
+    title: 'Migrating from @dgesteves/agent-ui-kit',
+    description:
+      'The package is now signoff-ui: swap it, rename the CSS variables, classes and attributes with one command, and what changed in styles.css.',
   },
 ];
 

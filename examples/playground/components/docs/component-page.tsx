@@ -54,13 +54,13 @@ function Theming({ component, hooks }: { component: ComponentDoc; hooks: ReturnT
   const example = [
     `/* Only this component, and only inside .settings-panel */`,
     `.settings-panel [data-slot='${slot}'] {`,
-    `  --aui-radius: 4px;`,
+    `  --signoff-radius: 4px;`,
     `}`,
     ...(state && value
       ? [
           '',
           `[data-slot='${stateSlot}'][${state.attribute}='${value}'] {`,
-          `  outline: 1px solid var(--aui-accent);`,
+          `  outline: 1px solid var(--signoff-accent);`,
           `}`,
         ]
       : []),

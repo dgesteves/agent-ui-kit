@@ -12,7 +12,7 @@ export function Footer() {
         <div>
           <div className="flex items-center gap-2.5">
             <Logo />
-            <span className="text-fg font-mono text-[13px] font-semibold tracking-tight">agent-ui-kit</span>
+            <span className="text-fg font-mono text-[13px] font-semibold tracking-tight">signoff-ui</span>
           </div>
           <p className="text-fg-subtle mt-3 max-w-xs text-[13px] leading-relaxed">
             Accessible React components for agent runs. MIT licensed, by{' '}
@@ -49,7 +49,7 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <a href={`${GITHUB_URL}/blob/main/packages/agent-ui-kit/CHANGELOG.md`} className={link}>
+              <a href={`${GITHUB_URL}/blob/main/packages/signoff-ui/CHANGELOG.md`} className={link}>
                 Changelog
               </a>
             </li>

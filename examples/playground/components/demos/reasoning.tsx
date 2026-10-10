@@ -1,6 +1,6 @@
 'use client';
 
-import { Reasoning } from '@dgesteves/agent-ui-kit';
+import { Reasoning } from 'signoff-ui';
 import { ReplayButton, useStream } from './use-stream';
 
 const TEXT =

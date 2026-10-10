@@ -4,7 +4,7 @@ packages:
 # examples/nextjs-minimal asks for the latest published kit, so it also runs on its own (copied out
 # of the repository, or on StackBlitz); in the workspace it builds against the local source.
 overrides:
-  '@dgesteves/agent-ui-kit': 'workspace:*'
+  'signoff-ui': 'workspace:*'
 allowBuilds:
   '@parcel/watcher': false
   unrs-resolver: false

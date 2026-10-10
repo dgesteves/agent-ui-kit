@@ -5,7 +5,7 @@ import { THEME_SCRIPT } from '@/lib/theme';
 import { GeistMono } from './fonts';
 import './globals.css';
 
-const title = 'agent-ui-kit: accessible React components for agent runs';
+const title = 'signoff-ui: accessible React components for agent runs';
 const description =
   'Tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry, for AI SDK 6 & 7 and AG-UI agents (LangGraph, CrewAI, Mastra). Watch a scripted agent run, no API key needed.';
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: '/' },
-  openGraph: { type: 'website', siteName: 'agent-ui-kit', title, description, url: '/' },
+  openGraph: { type: 'website', siteName: 'signoff-ui', title, description, url: '/' },
   twitter: { card: 'summary_large_image', title, description },
 };
 

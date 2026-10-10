@@ -1,6 +1,6 @@
 # Security
 
-Report a vulnerability privately, through [GitHub's private vulnerability reporting](https://github.com/dgesteves/agent-ui-kit/security/advisories/new), not in a public issue. Include the version of `@dgesteves/agent-ui-kit` (or the registry item), the component, and a reproduction.
+Report a vulnerability privately, through [GitHub's private vulnerability reporting](https://github.com/dgesteves/signoff-ui/security/advisories/new), not in a public issue. Include the version of `signoff-ui` (or the registry item), the component, and a reproduction.
 
 Fixes ship in the latest release only. The components render model output, so these count as vulnerabilities:
 

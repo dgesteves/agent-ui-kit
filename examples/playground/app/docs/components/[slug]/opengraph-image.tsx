@@ -1,7 +1,7 @@
 import { COMPONENTS, getComponent } from '@/lib/components';
 import { OG_SIZE, ogImage } from '@/lib/og';
 
-export const alt = 'An agent-ui-kit component';
+export const alt = 'An signoff-ui component';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 

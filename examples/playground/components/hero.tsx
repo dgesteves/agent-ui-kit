@@ -1,4 +1,4 @@
-import kit from '@dgesteves/agent-ui-kit/package.json';
+import kit from 'signoff-ui/package.json';
 import Link from 'next/link';
 import { GET_STARTED_URL, GITHUB_URL, INSTALL_COMMAND } from '@/lib/site';
 import { CommandLine } from './copy-button';

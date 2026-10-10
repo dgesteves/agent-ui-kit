@@ -28,7 +28,7 @@ export interface ComponentDoc {
   galleryId: string;
   /** The shadcn registry item. */
   item: string;
-  /** The source file under packages/agent-ui-kit/src, for its styling hooks. */
+  /** The source file under packages/signoff-ui/src, for its styling hooks. */
   file: string;
   api: ApiEntry[];
   /** Types its props refer to, listed after the props. */
@@ -44,8 +44,8 @@ export interface ComponentDoc {
   stateTypes?: Record<string, string>;
 }
 
-const npm = (names: string, from = '@dgesteves/agent-ui-kit') => `import { ${names} } from '${from}';`;
-const shadcn = (names: string, file: string) => `import { ${names} } from '@/components/agent-ui/${file}';`;
+const npm = (names: string, from = 'signoff-ui') => `import { ${names} } from '${from}';`;
+const shadcn = (names: string, file: string) => `import { ${names} } from '@/components/signoff-ui/${file}';`;
 
 export const COMPONENTS: ComponentDoc[] = [
   {
@@ -235,7 +235,7 @@ const last = messages.findLast((m) => m.role === 'assistant');
     types: ['ModelPricing', 'RunUsage'],
     imports: {
       npm: npm('RunMeter, useRunTiming'),
-      shadcn: `${shadcn('RunMeter', 'run-meter')}\nimport { useRunTiming } from '@/components/agent-ui/lib/hooks';`,
+      shadcn: `${shadcn('RunMeter', 'run-meter')}\nimport { useRunTiming } from '@/components/signoff-ui/lib/hooks';`,
     },
     usage: `// A run starts with each user message and spans its approval round trips.
 const timing = useRunTiming(status, messages);
@@ -271,7 +271,7 @@ const timing = useRunTiming(status, messages);
     types: ['AgentState'],
     imports: {
       npm: npm('AgentStatus, deriveAgentState'),
-      shadcn: `${shadcn('AgentStatus', 'agent-status')}\nimport { deriveAgentState } from '@/components/agent-ui/lib/ai';`,
+      shadcn: `${shadcn('AgentStatus', 'agent-status')}\nimport { deriveAgentState } from '@/components/signoff-ui/lib/ai';`,
     },
     usage: `const last = messages.findLast((m) => m.role === 'assistant');
 // Waiting on a person (an approval, or a client-side tool in pendingClientTools) wins over "working".
@@ -304,7 +304,7 @@ const { state, detail } = deriveAgentState({
     types: ['SourceItem'],
     imports: {
       npm: npm('Sources, getSourceParts'),
-      shadcn: `${shadcn('Sources', 'sources')}\nimport { getSourceParts } from '@/components/agent-ui/lib/ai';`,
+      shadcn: `${shadcn('Sources', 'sources')}\nimport { getSourceParts } from '@/components/signoff-ui/lib/ai';`,
     },
     usage: `// Send them from the server with toUIMessageStreamResponse({ sendSources: true }).
 <Sources sources={getSourceParts(message.parts)} variant="cards" />`,
@@ -365,7 +365,7 @@ const { state, detail } = deriveAgentState({
     api: [{ name: 'useAgUiAgent', parameters: 'AgUiAgentLike', returns: 'UseAgUiAgentResult' }],
     types: ['AgUiInterrupt', 'AgUiApprovalResponse', 'AgUiResumeEntry'],
     imports: {
-      npm: npm('useAgUiAgent', '@dgesteves/agent-ui-kit/ag-ui'),
+      npm: npm('useAgUiAgent', 'signoff-ui/ag-ui'),
       shadcn: shadcn('useAgUiAgent', 'use-ag-ui-agent'),
     },
     packages: ['@ag-ui/client'],

@@ -1,7 +1,7 @@
 @import 'tailwindcss';
-@import '@dgesteves/agent-ui-kit/tailwind.css';
+@import 'signoff-ui/tailwind.css';
 /* The kit's palette follows the OS too, and .light or .dark on <html> like the site's. */
-@import '@dgesteves/agent-ui-kit/theme.auto.css';
+@import 'signoff-ui/theme.auto.css';
 
 @source '../components';
 @source '../lib';
@@ -118,21 +118,21 @@ html:has(dialog:modal) {
 /* "Inspect components": outline each kit component and label it with its export name. */
 [data-inspect]
   :is(
-    [data-slot='agent-message'],
-    [data-slot='reasoning'],
-    [data-slot='tool-call-timeline'],
-    [data-slot='approval-card'],
-    [data-slot='diff-review'],
-    [data-slot='sources'],
-    [data-slot='run-meter'],
-    [data-slot='agent-status']
+    [data-slot='signoff-agent-message'],
+    [data-slot='signoff-reasoning'],
+    [data-slot='signoff-tool-call-timeline'],
+    [data-slot='signoff-approval-card'],
+    [data-slot='signoff-diff-review'],
+    [data-slot='signoff-sources'],
+    [data-slot='signoff-run-meter'],
+    [data-slot='signoff-agent-status']
   ) {
   position: relative;
   outline: 1px dashed color-mix(in oklab, var(--color-cyan) 50%, transparent);
   outline-offset: 5px;
   overflow: visible;
 }
-[data-inspect] :is([data-slot='approval-card'], [data-slot='diff-review']) {
+[data-inspect] :is([data-slot='signoff-approval-card'], [data-slot='signoff-diff-review']) {
   overflow: visible;
 }
 [data-inspect] [data-slot]::after {
@@ -148,31 +148,31 @@ html:has(dialog:modal) {
   font: 600 10.5px/1.5 var(--font-mono);
   pointer-events: none;
 }
-[data-inspect] [data-slot='agent-message']::after {
+[data-inspect] [data-slot='signoff-agent-message']::after {
   content: '<AgentMessage>';
   right: auto;
   left: -5px;
 }
-[data-inspect] [data-slot='reasoning']::after {
+[data-inspect] [data-slot='signoff-reasoning']::after {
   content: '<Reasoning>';
 }
-[data-inspect] [data-slot='tool-call-timeline']::after {
+[data-inspect] [data-slot='signoff-tool-call-timeline']::after {
   content: '<ToolCallTimeline>';
 }
-[data-inspect] [data-slot='approval-card']::after {
+[data-inspect] [data-slot='signoff-approval-card']::after {
   content: '<ApprovalCard>';
   background: var(--color-magenta);
 }
-[data-inspect] [data-slot='diff-review']::after {
+[data-inspect] [data-slot='signoff-diff-review']::after {
   content: '<DiffReview>';
 }
-[data-inspect] [data-slot='sources']::after {
+[data-inspect] [data-slot='signoff-sources']::after {
   content: '<Sources>';
 }
-[data-inspect] [data-slot='run-meter']::after {
+[data-inspect] [data-slot='signoff-run-meter']::after {
   content: '<RunMeter>';
 }
-[data-inspect] [data-slot='agent-status']::after {
+[data-inspect] [data-slot='signoff-agent-status']::after {
   content: '<AgentStatus>';
 }
 

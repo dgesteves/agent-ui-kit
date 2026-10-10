@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { addUsage } from '@dgesteves/agent-ui-kit/core';
+import { addUsage } from 'signoff-ui/core';
 import { convertToModelMessages, stepCountIs, streamText, tool } from 'ai';
 import { z } from 'zod';
 import type { AgentUIMessage } from '@/lib/mock-agent';

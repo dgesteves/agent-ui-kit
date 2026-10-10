@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.131",
-    "@dgesteves/agent-ui-kit": "latest",
+    "signoff-ui": "latest",
     "ai": "^7.0.128",
     "next": "^16.4.0",
     "react": "^19.3.0",

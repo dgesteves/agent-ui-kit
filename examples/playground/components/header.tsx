@@ -59,7 +59,7 @@ export function Header({
         >
           <Logo />
           <span className="text-fg font-mono text-[13px] font-semibold tracking-tight max-[359px]:sr-only">
-            agent-ui-kit
+            signoff-ui
           </span>
         </Link>
         <span className="text-line-strong hidden sm:inline" aria-hidden="true">
@@ -77,7 +77,7 @@ export function Header({
           <a
             href={GITHUB_URL}
             className="border-line focus-visible:outline-cyan-soft text-fg-muted hover:border-line-strong hover:text-fg inline-flex size-9 items-center justify-center rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 sm:size-8"
-            aria-label="agent-ui-kit on GitHub"
+            aria-label="signoff-ui on GitHub"
           >
             <GitHubIcon className="size-4" />
           </a>

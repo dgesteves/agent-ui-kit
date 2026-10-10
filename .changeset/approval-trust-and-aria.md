@@ -1,5 +1,5 @@
 ---
-'@dgesteves/agent-ui-kit': minor
+'signoff-ui': minor
 ---
 
 Approval cards claim only what you told them, and read better with a screen reader.

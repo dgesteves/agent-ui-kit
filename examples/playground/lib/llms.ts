@@ -9,7 +9,7 @@ import { GUIDES } from './docs';
  */
 
 const SITE = 'https://agent-ui-kit-demo.vercel.app';
-const REPO = 'https://github.com/dgesteves/agent-ui-kit';
+const REPO = 'https://github.com/dgesteves/signoff-ui';
 // `next build` runs in examples/playground.
 const root = join(process.cwd(), '../..');
 
@@ -31,7 +31,7 @@ function registryItems(): RegistryItem[] {
 function plain(markdown: string) {
   return (
     markdown
-      // The demo video and the image npm shows instead (see packages/agent-ui-kit/scripts/npm-readme.mjs).
+      // The demo video and the image npm shows instead (see packages/signoff-ui/scripts/npm-readme.mjs).
       .replace(/<!-- npm-readme:video -->[\s\S]*?<!-- npm-readme:image[\s\S]*?-->\n*/g, '')
       .replace(/<!--[\s\S]*?-->\n*/g, '')
       .replace(/<picture>[\s\S]*?<\/picture>\n*/g, '')
@@ -91,7 +91,7 @@ export function llmsTxt() {
       return `- ${heading.trim()}: ${firstSentence(text)}`;
     });
   return [
-    '# agent-ui-kit',
+    '# signoff-ui',
     '',
     `> ${lead}`,
     '',
@@ -115,8 +115,8 @@ export function llmsTxt() {
     '',
     `- [Playground](${SITE}): a scripted agent run with replay and keyboard controls`,
     `- [Component gallery](${SITE}/gallery): every component in isolation, with install snippets`,
-    `- [npm package](https://www.npmjs.com/package/@dgesteves/agent-ui-kit)`,
-    `- [Changelog](${REPO}/blob/main/packages/agent-ui-kit/CHANGELOG.md)`,
+    `- [npm package](https://www.npmjs.com/package/signoff-ui)`,
+    `- [Changelog](${REPO}/blob/main/packages/signoff-ui/CHANGELOG.md)`,
     '',
   ].join('\n');
 }
@@ -125,7 +125,7 @@ export function llmsFullTxt() {
   const markdown = plain(readme());
   const items = registryItems().map(
     (item) =>
-      `- \`${item.name}\` (${item.title}): ${item.description} \`npx shadcn@latest add @agent-ui-kit/${item.name}\``,
+      `- \`${item.name}\` (${item.title}): ${item.description} \`npx shadcn@latest add @signoff-ui/${item.name}\``,
   );
   return [markdown.trimEnd(), '', '## shadcn registry items', '', ...items, ''].join('\n');
 }

@@ -1,4 +1,4 @@
-import type { ToolPart } from '@dgesteves/agent-ui-kit';
+import type { ToolPart } from 'signoff-ui';
 import type { UIMessage } from 'ai';
 import { ROUTE_OLD, WEB_RESULTS } from './scenario';
 

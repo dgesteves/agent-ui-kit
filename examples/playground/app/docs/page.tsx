@@ -5,7 +5,7 @@ import { pageMetadata } from '@/lib/metadata';
 const doc = getGuide('introduction')!;
 
 export const metadata = pageMetadata({
-  title: `${doc.title} · agent-ui-kit docs`,
+  title: `${doc.title} · signoff-ui docs`,
   description: doc.description,
   path: doc.href,
   markdownPath: '/docs.md',

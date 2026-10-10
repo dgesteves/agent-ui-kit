@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "agent-ui-kit",
-  "homepage": "https://github.com/dgesteves/agent-ui-kit",
+  "name": "signoff-ui",
+  "homepage": "https://github.com/dgesteves/signoff-ui",
   "items": [
     {
       "name": "agent-status",
@@ -16,154 +16,154 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/agent-status.tsx",
+          "path": "packages/signoff-ui/src/agent-status.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/agent-status.tsx"
+          "target": "components/signoff-ui/agent-status.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -171,7 +171,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -181,17 +181,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -201,7 +201,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -211,7 +211,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -221,7 +221,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -245,154 +245,154 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/tool-call-timeline.tsx",
+          "path": "packages/signoff-ui/src/tool-call-timeline.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/tool-call-timeline.tsx"
+          "target": "components/signoff-ui/tool-call-timeline.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -400,7 +400,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -410,17 +410,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -430,7 +430,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -440,7 +440,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -450,7 +450,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -474,164 +474,164 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/approval-card.tsx",
+          "path": "packages/signoff-ui/src/approval-card.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/approval-card.tsx"
+          "target": "components/signoff-ui/approval-card.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/scroll-region.ts",
+          "path": "packages/signoff-ui/src/lib/scroll-region.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/scroll-region.ts"
+          "target": "components/signoff-ui/lib/scroll-region.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/tool-call-timeline.tsx",
+          "path": "packages/signoff-ui/src/tool-call-timeline.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/tool-call-timeline.tsx"
+          "target": "components/signoff-ui/tool-call-timeline.tsx"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -639,7 +639,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -649,17 +649,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -669,7 +669,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -679,7 +679,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -689,7 +689,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -714,164 +714,164 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/diff-review.tsx",
+          "path": "packages/signoff-ui/src/diff-review.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/diff-review.tsx"
+          "target": "components/signoff-ui/diff-review.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/diff.ts",
+          "path": "packages/signoff-ui/src/lib/diff.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/diff.ts"
+          "target": "components/signoff-ui/lib/diff.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/scroll-region.ts",
+          "path": "packages/signoff-ui/src/lib/scroll-region.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/scroll-region.ts"
+          "target": "components/signoff-ui/lib/scroll-region.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -879,7 +879,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -889,17 +889,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -909,7 +909,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -919,7 +919,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -929,7 +929,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -952,154 +952,154 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/run-meter.tsx",
+          "path": "packages/signoff-ui/src/run-meter.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/run-meter.tsx"
+          "target": "components/signoff-ui/run-meter.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/scroll-region.ts",
+          "path": "packages/signoff-ui/src/lib/scroll-region.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/scroll-region.ts"
+          "target": "components/signoff-ui/lib/scroll-region.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/usage.ts",
+          "path": "packages/signoff-ui/src/lib/usage.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/usage.ts"
+          "target": "components/signoff-ui/lib/usage.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -1107,7 +1107,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -1117,17 +1117,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -1137,7 +1137,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -1147,7 +1147,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -1157,7 +1157,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -1180,139 +1180,139 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/sources.tsx",
+          "path": "packages/signoff-ui/src/sources.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/sources.tsx"
+          "target": "components/signoff-ui/sources.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -1320,7 +1320,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -1330,17 +1330,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -1350,7 +1350,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -1360,7 +1360,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -1370,7 +1370,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -1395,154 +1395,154 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/markdown.tsx",
+          "path": "packages/signoff-ui/src/markdown.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/markdown.tsx"
+          "target": "components/signoff-ui/markdown.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/images.ts",
+          "path": "packages/signoff-ui/src/lib/images.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/images.ts"
+          "target": "components/signoff-ui/lib/images.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/scroll-region.ts",
+          "path": "packages/signoff-ui/src/lib/scroll-region.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/scroll-region.ts"
+          "target": "components/signoff-ui/lib/scroll-region.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -1550,7 +1550,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -1560,17 +1560,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -1580,7 +1580,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -1590,7 +1590,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -1600,7 +1600,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -1627,169 +1627,169 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/reasoning.tsx",
+          "path": "packages/signoff-ui/src/reasoning.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/reasoning.tsx"
+          "target": "components/signoff-ui/reasoning.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/images.ts",
+          "path": "packages/signoff-ui/src/lib/images.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/images.ts"
+          "target": "components/signoff-ui/lib/images.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/scroll-region.ts",
+          "path": "packages/signoff-ui/src/lib/scroll-region.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/scroll-region.ts"
+          "target": "components/signoff-ui/lib/scroll-region.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/markdown.tsx",
+          "path": "packages/signoff-ui/src/markdown.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/markdown.tsx"
+          "target": "components/signoff-ui/markdown.tsx"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -1797,7 +1797,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -1807,17 +1807,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -1827,7 +1827,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -1837,7 +1837,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -1847,7 +1847,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -1874,189 +1874,189 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/agent-message.tsx",
+          "path": "packages/signoff-ui/src/agent-message.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/agent-message.tsx"
+          "target": "components/signoff-ui/agent-message.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/approval-card.tsx",
+          "path": "packages/signoff-ui/src/approval-card.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/approval-card.tsx"
+          "target": "components/signoff-ui/approval-card.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/format.ts",
+          "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/format.ts"
+          "target": "components/signoff-ui/lib/format.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/highlight.ts",
+          "path": "packages/signoff-ui/src/lib/highlight.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/highlight.ts"
+          "target": "components/signoff-ui/lib/highlight.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/hooks.ts",
+          "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/hooks.ts"
+          "target": "components/signoff-ui/lib/hooks.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/icons.tsx",
+          "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/icons.tsx"
+          "target": "components/signoff-ui/lib/icons.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/images.ts",
+          "path": "packages/signoff-ui/src/lib/images.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/images.ts"
+          "target": "components/signoff-ui/lib/images.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/primitives.tsx",
+          "path": "packages/signoff-ui/src/lib/primitives.tsx",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/primitives.tsx"
+          "target": "components/signoff-ui/lib/primitives.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/scroll-region.ts",
+          "path": "packages/signoff-ui/src/lib/scroll-region.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/scroll-region.ts"
+          "target": "components/signoff-ui/lib/scroll-region.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/utils.ts",
+          "path": "packages/signoff-ui/src/lib/utils.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/utils.ts"
+          "target": "components/signoff-ui/lib/utils.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/markdown.tsx",
+          "path": "packages/signoff-ui/src/markdown.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/markdown.tsx"
+          "target": "components/signoff-ui/markdown.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/reasoning.tsx",
+          "path": "packages/signoff-ui/src/reasoning.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/reasoning.tsx"
+          "target": "components/signoff-ui/reasoning.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/sources.tsx",
+          "path": "packages/signoff-ui/src/sources.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/sources.tsx"
+          "target": "components/signoff-ui/sources.tsx"
         },
         {
-          "path": "packages/agent-ui-kit/src/tool-call-timeline.tsx",
+          "path": "packages/signoff-ui/src/tool-call-timeline.tsx",
           "type": "registry:component",
-          "target": "components/agent-ui/tool-call-timeline.tsx"
+          "target": "components/signoff-ui/tool-call-timeline.tsx"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -2064,7 +2064,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -2074,17 +2074,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -2094,7 +2094,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -2104,7 +2104,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -2114,7 +2114,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },
@@ -2135,134 +2135,134 @@
       ],
       "files": [
         {
-          "path": "packages/agent-ui-kit/src/use-ag-ui-agent.ts",
+          "path": "packages/signoff-ui/src/use-ag-ui-agent.ts",
           "type": "registry:component",
-          "target": "components/agent-ui/use-ag-ui-agent.ts"
+          "target": "components/signoff-ui/use-ag-ui-agent.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ag-ui.ts",
+          "path": "packages/signoff-ui/src/lib/ag-ui.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ag-ui.ts"
+          "target": "components/signoff-ui/lib/ag-ui.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/ai.ts",
+          "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/ai.ts"
+          "target": "components/signoff-ui/lib/ai.ts"
         },
         {
-          "path": "packages/agent-ui-kit/src/lib/usage.ts",
+          "path": "packages/signoff-ui/src/lib/usage.ts",
           "type": "registry:lib",
-          "target": "components/agent-ui/lib/usage.ts"
+          "target": "components/signoff-ui/lib/usage.ts"
         }
       ],
       "cssVars": {
         "theme": {
-          "color-aui-bg": "var(--aui-bg)",
-          "color-aui-surface": "var(--aui-surface)",
-          "color-aui-surface-2": "var(--aui-surface-2)",
-          "color-aui-border": "var(--aui-border)",
-          "color-aui-border-strong": "var(--aui-border-strong)",
-          "color-aui-fg": "var(--aui-fg)",
-          "color-aui-fg-muted": "var(--aui-fg-muted)",
-          "color-aui-fg-subtle": "var(--aui-fg-subtle)",
-          "color-aui-accent": "var(--aui-accent)",
-          "color-aui-accent-fg": "var(--aui-accent-fg)",
-          "color-aui-on-accent": "var(--aui-on-accent)",
-          "color-aui-hot": "var(--aui-hot)",
-          "color-aui-hot-fg": "var(--aui-hot-fg)",
-          "color-aui-on-hot": "var(--aui-on-hot)",
-          "color-aui-warn": "var(--aui-warn)",
-          "color-aui-warn-fg": "var(--aui-warn-fg)",
-          "color-aui-ring": "var(--aui-ring)",
-          "color-aui-add": "var(--aui-add-bg)",
-          "color-aui-add-strong": "var(--aui-add-strong)",
-          "color-aui-del": "var(--aui-del-bg)",
-          "color-aui-del-strong": "var(--aui-del-strong)",
-          "color-aui-chart-input": "var(--aui-chart-input)",
-          "color-aui-chart-output": "var(--aui-chart-output)",
-          "color-aui-code-keyword": "var(--aui-code-keyword)",
-          "color-aui-code-string": "var(--aui-code-string)",
-          "color-aui-code-number": "var(--aui-code-number)",
-          "color-aui-code-comment": "var(--aui-code-comment)",
-          "color-aui-code-punctuation": "var(--aui-code-punctuation)",
-          "radius-aui": "var(--aui-radius)",
-          "font-aui-sans": "var(--aui-font-sans)",
-          "font-aui-mono": "var(--aui-font-mono)",
-          "animate-aui-shimmer": "aui-shimmer 2.2s linear infinite",
-          "animate-aui-ping": "aui-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
-          "animate-aui-spin": "aui-spin 0.9s linear infinite",
-          "animate-aui-blink": "aui-blink 1.1s steps(2, start) infinite",
-          "animate-aui-enter": "aui-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
-          "animate-aui-indeterminate": "aui-indeterminate 1.4s ease-in-out infinite",
-          "animate-aui-expand": "aui-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
-          "animate-aui-collapse": "aui-collapse 0.18s ease-in"
+          "color-signoff-bg": "var(--signoff-bg)",
+          "color-signoff-surface": "var(--signoff-surface)",
+          "color-signoff-surface-2": "var(--signoff-surface-2)",
+          "color-signoff-border": "var(--signoff-border)",
+          "color-signoff-border-strong": "var(--signoff-border-strong)",
+          "color-signoff-fg": "var(--signoff-fg)",
+          "color-signoff-fg-muted": "var(--signoff-fg-muted)",
+          "color-signoff-fg-subtle": "var(--signoff-fg-subtle)",
+          "color-signoff-accent": "var(--signoff-accent)",
+          "color-signoff-accent-fg": "var(--signoff-accent-fg)",
+          "color-signoff-on-accent": "var(--signoff-on-accent)",
+          "color-signoff-hot": "var(--signoff-hot)",
+          "color-signoff-hot-fg": "var(--signoff-hot-fg)",
+          "color-signoff-on-hot": "var(--signoff-on-hot)",
+          "color-signoff-warn": "var(--signoff-warn)",
+          "color-signoff-warn-fg": "var(--signoff-warn-fg)",
+          "color-signoff-ring": "var(--signoff-ring)",
+          "color-signoff-add": "var(--signoff-add-bg)",
+          "color-signoff-add-strong": "var(--signoff-add-strong)",
+          "color-signoff-del": "var(--signoff-del-bg)",
+          "color-signoff-del-strong": "var(--signoff-del-strong)",
+          "color-signoff-chart-input": "var(--signoff-chart-input)",
+          "color-signoff-chart-output": "var(--signoff-chart-output)",
+          "color-signoff-code-keyword": "var(--signoff-code-keyword)",
+          "color-signoff-code-string": "var(--signoff-code-string)",
+          "color-signoff-code-number": "var(--signoff-code-number)",
+          "color-signoff-code-comment": "var(--signoff-code-comment)",
+          "color-signoff-code-punctuation": "var(--signoff-code-punctuation)",
+          "radius-signoff": "var(--signoff-radius)",
+          "font-signoff-sans": "var(--signoff-font-sans)",
+          "font-signoff-mono": "var(--signoff-font-mono)",
+          "animate-signoff-shimmer": "signoff-shimmer 2.2s linear infinite",
+          "animate-signoff-ping": "signoff-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          "animate-signoff-spin": "signoff-spin 0.9s linear infinite",
+          "animate-signoff-blink": "signoff-blink 1.1s steps(2, start) infinite",
+          "animate-signoff-enter": "signoff-enter 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both",
+          "animate-signoff-indeterminate": "signoff-indeterminate 1.4s ease-in-out infinite",
+          "animate-signoff-expand": "signoff-expand 0.22s cubic-bezier(0.2, 0.7, 0.2, 1)",
+          "animate-signoff-collapse": "signoff-collapse 0.18s ease-in"
         },
         "light": {
-          "aui-bg": "#ffffff",
-          "aui-surface": "#f6f7f9",
-          "aui-surface-2": "#eef0f3",
-          "aui-border": "#e2e5ea",
-          "aui-border-strong": "#cdd2d9",
-          "aui-fg": "#0d0f12",
-          "aui-fg-muted": "#4b5563",
-          "aui-fg-subtle": "#5f6875",
-          "aui-accent": "#0e7490",
-          "aui-accent-fg": "#155e75",
-          "aui-on-accent": "#ffffff",
-          "aui-hot": "#be185d",
-          "aui-hot-fg": "#9d174d",
-          "aui-on-hot": "#ffffff",
-          "aui-warn": "#b45309",
-          "aui-warn-fg": "#92400e",
-          "aui-ring": "#0e7490",
-          "aui-add-bg": "rgb(8 145 178 / 0.08)",
-          "aui-add-strong": "rgb(8 145 178 / 0.16)",
-          "aui-del-bg": "rgb(190 24 93 / 0.07)",
-          "aui-del-strong": "rgb(190 24 93 / 0.14)",
-          "aui-chart-input": "#0891b2",
-          "aui-chart-output": "#db2777",
-          "aui-code-keyword": "#155e75",
-          "aui-code-string": "#9a3412",
-          "aui-code-number": "#9d174d",
-          "aui-code-comment": "#525b67",
-          "aui-code-punctuation": "#4b5563",
-          "aui-radius": "0.75rem",
-          "aui-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
-          "aui-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
+          "signoff-bg": "#ffffff",
+          "signoff-surface": "#f6f7f9",
+          "signoff-surface-2": "#eef0f3",
+          "signoff-border": "#e2e5ea",
+          "signoff-border-strong": "#cdd2d9",
+          "signoff-fg": "#0d0f12",
+          "signoff-fg-muted": "#4b5563",
+          "signoff-fg-subtle": "#5f6875",
+          "signoff-accent": "#0e7490",
+          "signoff-accent-fg": "#155e75",
+          "signoff-on-accent": "#ffffff",
+          "signoff-hot": "#be185d",
+          "signoff-hot-fg": "#9d174d",
+          "signoff-on-hot": "#ffffff",
+          "signoff-warn": "#b45309",
+          "signoff-warn-fg": "#92400e",
+          "signoff-ring": "#0e7490",
+          "signoff-add-bg": "rgb(8 145 178 / 0.08)",
+          "signoff-add-strong": "rgb(8 145 178 / 0.16)",
+          "signoff-del-bg": "rgb(190 24 93 / 0.07)",
+          "signoff-del-strong": "rgb(190 24 93 / 0.14)",
+          "signoff-chart-input": "#0891b2",
+          "signoff-chart-output": "#db2777",
+          "signoff-code-keyword": "#155e75",
+          "signoff-code-string": "#9a3412",
+          "signoff-code-number": "#9d174d",
+          "signoff-code-comment": "#525b67",
+          "signoff-code-punctuation": "#4b5563",
+          "signoff-radius": "0.75rem",
+          "signoff-font-sans": "var(--font-sans, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif))",
+          "signoff-font-mono": "var(--font-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace))"
         },
         "dark": {
-          "aui-bg": "#0d0f12",
-          "aui-surface": "#181c22",
-          "aui-surface-2": "#1e232a",
-          "aui-border": "#262b33",
-          "aui-border-strong": "#353c47",
-          "aui-fg": "#e8eaed",
-          "aui-fg-muted": "#a1a9b4",
-          "aui-fg-subtle": "#8b94a0",
-          "aui-accent": "#22d3ee",
-          "aui-accent-fg": "#67e8f9",
-          "aui-on-accent": "#0d0f12",
-          "aui-hot": "#f0468a",
-          "aui-hot-fg": "#f472a8",
-          "aui-on-hot": "#0d0f12",
-          "aui-warn": "#fbbf24",
-          "aui-warn-fg": "#fcd34d",
-          "aui-ring": "#67e8f9",
-          "aui-add-bg": "rgb(34 211 238 / 0.08)",
-          "aui-add-strong": "rgb(34 211 238 / 0.14)",
-          "aui-del-bg": "rgb(240 70 138 / 0.08)",
-          "aui-del-strong": "rgb(240 70 138 / 0.26)",
-          "aui-chart-input": "#11a2bc",
-          "aui-chart-output": "#f0468a",
-          "aui-code-keyword": "#67e8f9",
-          "aui-code-string": "#f5c27a",
-          "aui-code-number": "#f9a8d4",
-          "aui-code-comment": "#a1a9b4",
-          "aui-code-punctuation": "#a1a9b4"
+          "signoff-bg": "#0d0f12",
+          "signoff-surface": "#181c22",
+          "signoff-surface-2": "#1e232a",
+          "signoff-border": "#262b33",
+          "signoff-border-strong": "#353c47",
+          "signoff-fg": "#e8eaed",
+          "signoff-fg-muted": "#a1a9b4",
+          "signoff-fg-subtle": "#8b94a0",
+          "signoff-accent": "#22d3ee",
+          "signoff-accent-fg": "#67e8f9",
+          "signoff-on-accent": "#0d0f12",
+          "signoff-hot": "#f0468a",
+          "signoff-hot-fg": "#f472a8",
+          "signoff-on-hot": "#0d0f12",
+          "signoff-warn": "#fbbf24",
+          "signoff-warn-fg": "#fcd34d",
+          "signoff-ring": "#67e8f9",
+          "signoff-add-bg": "rgb(34 211 238 / 0.08)",
+          "signoff-add-strong": "rgb(34 211 238 / 0.14)",
+          "signoff-del-bg": "rgb(240 70 138 / 0.08)",
+          "signoff-del-strong": "rgb(240 70 138 / 0.26)",
+          "signoff-chart-input": "#11a2bc",
+          "signoff-chart-output": "#f0468a",
+          "signoff-code-keyword": "#67e8f9",
+          "signoff-code-string": "#f5c27a",
+          "signoff-code-number": "#f9a8d4",
+          "signoff-code-comment": "#a1a9b4",
+          "signoff-code-punctuation": "#a1a9b4"
         }
       },
       "css": {
-        "@keyframes aui-shimmer": {
+        "@keyframes signoff-shimmer": {
           "from": {
             "background-position": "200% 0"
           },
@@ -2270,7 +2270,7 @@
             "background-position": "-200% 0"
           }
         },
-        "@keyframes aui-ping": {
+        "@keyframes signoff-ping": {
           "0%": {
             "transform": "scale(1)",
             "opacity": "0.7"
@@ -2280,17 +2280,17 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-spin": {
+        "@keyframes signoff-spin": {
           "to": {
             "transform": "rotate(360deg)"
           }
         },
-        "@keyframes aui-blink": {
+        "@keyframes signoff-blink": {
           "to": {
             "visibility": "hidden"
           }
         },
-        "@keyframes aui-enter": {
+        "@keyframes signoff-enter": {
           "from": {
             "opacity": "0",
             "transform": "translateY(4px)"
@@ -2300,7 +2300,7 @@
             "transform": "none"
           }
         },
-        "@keyframes aui-expand": {
+        "@keyframes signoff-expand": {
           "from": {
             "height": "0",
             "opacity": "0"
@@ -2310,7 +2310,7 @@
             "opacity": "1"
           }
         },
-        "@keyframes aui-collapse": {
+        "@keyframes signoff-collapse": {
           "from": {
             "height": "var(--radix-collapsible-content-height)",
             "opacity": "1"
@@ -2320,7 +2320,7 @@
             "opacity": "0"
           }
         },
-        "@keyframes aui-indeterminate": {
+        "@keyframes signoff-indeterminate": {
           "0%": {
             "transform": "translateX(-100%)"
           },

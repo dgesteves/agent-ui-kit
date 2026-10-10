@@ -1,4 +1,4 @@
-import { inferLanguage, Markdown, type ToolMeta } from '@dgesteves/agent-ui-kit';
+import { inferLanguage, Markdown, type ToolMeta } from 'signoff-ui';
 import type { SVGProps } from 'react';
 
 const Icon = (props: SVGProps<SVGSVGElement>) => (

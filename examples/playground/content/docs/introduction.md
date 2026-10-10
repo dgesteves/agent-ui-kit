@@ -1,4 +1,4 @@
-agent-ui-kit is a set of React components for the parts of an agent product that aren't the chat bubble: watching an agent work, approving what it does, reviewing what it changed, and understanding what the run cost. They render the message parts the AI SDK's `useChat` already gives you, and AG-UI agents through an adapter, so there's no new runtime or state model to adopt.
+signoff-ui is a set of React components for the parts of an agent product that aren't the chat bubble: watching an agent work, approving what it does, reviewing what it changed, and understanding what the run cost. They render the message parts the AI SDK's `useChat` already gives you, and AG-UI agents through an adapter, so there's no new runtime or state model to adopt.
 
 It works with any model and costs nothing extra. The kit calls no model, needs no API key and makes no network requests of its own. Your backend picks the model and holds the keys: OpenAI GPT, Anthropic Claude, Google Gemini, xAI Grok, Mistral or a local model through any AI SDK provider, or an agent on any AG-UI framework (LangGraph, CrewAI, Mastra and the rest). Switching providers is [one line in your route](/docs/getting-started#choosing-a-model); the components don't change.
 
@@ -24,7 +24,7 @@ Most AI UI libraries are built around the chat bubble. Agents changed what the i
 | `Sources`                          | Citations as chips or cards, linked from `[n]` markers in the text                                                                    |
 | `useAgUiAgent`                     | An AG-UI agent's run as AI SDK messages, status, usage and approvals                                                                  |
 
-`Markdown`, `Reasoning` and `JsonView` are exported on their own too, with hooks such as `useRunTiming` and pure helpers such as `deriveAgentState`, `addUsage`, `estimateCost` and `applyHunks`. The helpers are also in `@dgesteves/agent-ui-kit/core`, which has no React, for Route Handlers and Server Components.
+`Markdown`, `Reasoning` and `JsonView` are exported on their own too, with hooks such as `useRunTiming` and pure helpers such as `deriveAgentState`, `addUsage`, `estimateCost` and `applyHunks`. The helpers are also in `signoff-ui/core`, which has no React, for Route Handlers and Server Components.
 
 ## How it reads a run
 

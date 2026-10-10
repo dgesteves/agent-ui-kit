@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!component) return {};
   const href = componentHref(component.slug);
   return pageMetadata({
-    title: `${component.name} · agent-ui-kit docs`,
+    title: `${component.name} · signoff-ui docs`,
     description: `${component.summary.replace(/`/g, '')} Props, install, keyboard and theming.`,
     path: href,
     markdownPath: `${href}.md`,

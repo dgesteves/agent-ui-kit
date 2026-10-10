@@ -31,7 +31,7 @@ if (!process.env.BASE_URL) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
-const require = createRequire(join(import.meta.dirname, '../packages/agent-ui-kit/package.json'));
+const require = createRequire(join(import.meta.dirname, '../packages/signoff-ui/package.json'));
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const browser = await chromium.launch({ channel: 'chrome' });
@@ -52,7 +52,7 @@ async function audit(page, label) {
   for (const v of violations) console.log(`      ${v.id} (${v.impact}): ${v.nodes.slice(0, 3).join(', ')}`);
 }
 
-const pending = '[data-slot="approval-card"][data-status="pending"]';
+const pending = '[data-slot="signoff-approval-card"][data-status="pending"]';
 // Let enter animations settle so contrast is measured at full opacity.
 const settle = (page) => page.waitForTimeout(800);
 
@@ -62,7 +62,7 @@ await page.waitForSelector(pending, { timeout: 60_000 });
 await settle(page);
 await audit(page, 'playground · approval pending');
 await page.keyboard.press('y');
-await page.waitForSelector('[data-slot="diff-submit"]', { timeout: 60_000 });
+await page.waitForSelector('[data-slot="signoff-diff-submit"]', { timeout: 60_000 });
 await settle(page);
 await page.keyboard.press('a');
 await page.keyboard.press('r');
@@ -78,6 +78,7 @@ for (const path of [
   '/docs',
   '/docs/getting-started',
   '/docs/ag-ui',
+  '/docs/migrating-from-agent-ui-kit',
   '/docs/components/approval-card',
   '/docs/components/diff-review',
   '/docs/components/run-meter',

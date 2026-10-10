@@ -40,10 +40,10 @@ const check = (ok, label, detail = '') => {
 try {
   // Link previews: each page has its title, description and a 1200×630 image that is served.
   for (const [path, title] of [
-    ['/', 'agent-ui-kit: accessible React components for agent runs'],
-    ['/gallery', 'Components · agent-ui-kit'],
-    ['/docs/getting-started', 'Getting started · agent-ui-kit docs'],
-    ['/docs/components/approval-card', 'ApprovalCard · agent-ui-kit docs'],
+    ['/', 'signoff-ui: accessible React components for agent runs'],
+    ['/gallery', 'Components · signoff-ui'],
+    ['/docs/getting-started', 'Getting started · signoff-ui docs'],
+    ['/docs/components/approval-card', 'ApprovalCard · signoff-ui docs'],
   ]) {
     const html = await (await fetch(BASE + path)).text();
     const meta = (key) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
@@ -82,7 +82,7 @@ try {
     check(
       response.ok &&
         response.headers.get('content-type')?.startsWith('text/plain') &&
-        text.startsWith('# agent-ui-kit\n') &&
+        text.startsWith('# signoff-ui\n') &&
         text.includes(heading) &&
         !html &&
         !/\]\((?!https?:)/.test(text),
@@ -156,7 +156,9 @@ try {
 
   // The first screen says what the kit is and how to get it, and shows the run's status.
   const fold = await phone.evaluate(() =>
-    ['h1', 'aside [data-slot="agent-status"]'].map((s) => document.querySelector(s)?.getBoundingClientRect().bottom),
+    ['h1', 'aside [data-slot="signoff-agent-status"]'].map(
+      (s) => document.querySelector(s)?.getBoundingClientRect().bottom,
+    ),
   );
   const install = phone.getByRole('button', { name: 'Copy the install command' }).first();
   const star = phone.getByRole('link', { name: 'Star on GitHub' }).first();
@@ -170,7 +172,7 @@ try {
   check(!(await phone.locator('#kbd-heading').isVisible()), 'phone: no keyboard shortcuts card on a touch screen');
   await phone.waitForFunction(
     () =>
-      document.querySelectorAll('[data-slot="tool-call-trigger"]').length >= 3 &&
+      document.querySelectorAll('[data-slot="signoff-tool-call-trigger"]').length >= 3 &&
       document.documentElement.scrollHeight > innerHeight * 1.5,
     null,
     { timeout: 60_000 },
@@ -192,9 +194,9 @@ try {
   // scrolled past it into the sections below.
   const run = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' });
   await run.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
-  await run.waitForSelector('[data-slot="approval-card"][data-status="pending"]', { timeout: 60_000 });
+  await run.waitForSelector('[data-slot="signoff-approval-card"][data-status="pending"]', { timeout: 60_000 });
   await run.keyboard.press('y');
-  await run.waitForSelector('[data-slot="diff-submit"]', { timeout: 60_000 });
+  await run.waitForSelector('[data-slot="signoff-diff-submit"]', { timeout: 60_000 });
   for (const key of ['a', 'a', 'a', 'r']) await run.keyboard.press(key);
   await run.keyboard.press('Control+Enter');
   await run.getByText('Run complete').waitFor({ timeout: 60_000 });
@@ -215,13 +217,13 @@ try {
   // token is measured from its own request (the script pauses 680ms first, 170ms at 4x), not 0ms.
   const replay = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' });
   await replay.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
-  const calls = replay.locator('[data-slot="tool-call-trigger"]');
+  const calls = replay.locator('[data-slot="signoff-tool-call-trigger"]');
   await calls.first().waitFor({ timeout: 60_000 });
   await replay.getByRole('button', { name: 'Replay', exact: true }).first().click();
   await calls.first().waitFor({ state: 'detached', timeout: 10_000 });
   await calls.first().waitFor({ timeout: 60_000 });
   const ttft = await replay
-    .locator('aside [data-slot="run-meter"]')
+    .locator('aside [data-slot="signoff-run-meter"]')
     .evaluate((el) => /TTFT\s*([\d.]+)(ms|s)/.exec(el.textContent ?? '')?.slice(1));
   const ttftMs = ttft && Number(ttft[0]) * (ttft[1] === 's' ? 1000 : 1);
   check(ttftMs >= 100, 'replay: the new run times its first token from its own request', `TTFT ${ttft?.join('')}`);
@@ -238,7 +240,7 @@ try {
   check(missing.length === 0, 'gallery: every section anchor is there', missing.join(', '));
   const snippets = await gallery.locator('pre:visible').allInnerTexts();
   check(
-    snippets.some((text) => text.includes("import '@dgesteves/agent-ui-kit/styles.css';")),
+    snippets.some((text) => text.includes("import 'signoff-ui/styles.css';")),
     'gallery: the npm snippets import the styles',
   );
   await gallery.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: 'Light' }).click();
@@ -253,7 +255,7 @@ try {
   const remembered = await gallery.evaluate(() => document.documentElement.className);
   check(/\blight\b/.test(remembered), 'theme: the choice is remembered, and applied before paint', remembered);
   await gallery.waitForTimeout(800);
-  const require = createRequire(join(import.meta.dirname, '../packages/agent-ui-kit/package.json'));
+  const require = createRequire(join(import.meta.dirname, '../packages/signoff-ui/package.json'));
   await gallery.addScriptTag({ content: readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8') });
   const violations = await gallery.evaluate(async () =>
     (await window.axe.run(document, { resultTypes: ['violations'] })).violations.map(

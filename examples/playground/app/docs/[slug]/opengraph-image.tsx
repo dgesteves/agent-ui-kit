@@ -1,7 +1,7 @@
 import { getGuide, GUIDES } from '@/lib/docs';
 import { OG_SIZE, ogImage } from '@/lib/og';
 
-export const alt = 'An agent-ui-kit docs page';
+export const alt = 'An signoff-ui docs page';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 

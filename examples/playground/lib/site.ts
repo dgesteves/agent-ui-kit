@@ -1,8 +1,8 @@
 /** Links and names the whole site shares. */
 export const SITE_URL = 'https://agent-ui-kit-demo.vercel.app';
-export const GITHUB_URL = 'https://github.com/dgesteves/agent-ui-kit';
-export const NPM_URL = 'https://www.npmjs.com/package/@dgesteves/agent-ui-kit';
-export const PACKAGE = '@dgesteves/agent-ui-kit';
+export const GITHUB_URL = 'https://github.com/dgesteves/signoff-ui';
+export const NPM_URL = 'https://www.npmjs.com/package/signoff-ui';
+export const PACKAGE = 'signoff-ui';
 export const INSTALL_COMMAND = `npm i ${PACKAGE}`;
 export const GET_STARTED_URL = '/docs/getting-started';
 export const RELEASES_URL = `${GITHUB_URL}/releases`;
