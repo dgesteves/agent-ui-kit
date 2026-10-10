@@ -33,6 +33,7 @@ export {
 export {
   applyHunks,
   computeReviewResult,
+  DEFAULT_MAX_EDIT_LENGTH,
   inferLanguage,
   parseFileChange,
   type DiffHunk,
@@ -41,6 +42,7 @@ export {
   type DiffReviewResult,
   type FileChange,
   type HunkDecision,
+  type ParseFileChangeOptions,
   type ParsedFileDiff,
 } from './lib/diff';
 export { formatCost, formatDuration, formatTokens, humanizeToolName } from './lib/format';

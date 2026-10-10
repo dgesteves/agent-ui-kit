@@ -223,6 +223,29 @@ function mutate(r: () => number, text: string, eol: string): string {
   return out.join(eol) + ((r() < 0.5 ? hasEol : !hasEol) ? eol : '');
 }
 
+/**
+ * A parsed file's hunks in jsdiff's own form, for its `applyPatch`: "\\ No newline at end of file"
+ * follows a file's last line when that line has no newline.
+ */
+function asJsdiffHunks(file: ReturnType<typeof parseFileChange>, oldContent: string, newContent: string) {
+  const count = (text: string) => (text === '' ? 0 : text.replace(/\n$/, '').split('\n').length);
+  const [oldCount, newCount] = [count(oldContent), count(newContent)];
+  const [oldEol, newEol] = [oldContent.endsWith('\n'), newContent.endsWith('\n')];
+  return file.hunks.map((hunk) => ({
+    oldStart: hunk.oldStart,
+    oldLines: hunk.oldLines,
+    newStart: hunk.newStart,
+    newLines: hunk.newLines,
+    lines: hunk.lines.flatMap((line) => {
+      const out = [`${line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '}${line.content}`];
+      const lastOld = line.type !== 'add' && line.oldNumber === oldCount && !oldEol;
+      const lastNew = line.type !== 'del' && line.newNumber === newCount && !newEol;
+      if (lastOld || lastNew) out.push('\\ No newline at end of file');
+      return out;
+    }),
+  }));
+}
+
 describe('applyHunks matches jsdiff applyPatch (property test)', () => {
   for (const context of [0, 1, 3]) {
     for (const eol of ['\n', '\r\n']) {
@@ -233,17 +256,20 @@ describe('applyHunks matches jsdiff applyPatch (property test)', () => {
           const oldContent = randomFile(r, eol);
           const newContent = mutate(r, oldContent, eol);
           const file = parseFileChange({ path: 'f.ts', oldContent, newContent }, { context });
+          // As small as jsdiff's own diff. Where two alignments are equally small, the hunks can
+          // differ from jsdiff's: the kit diffs only the region between the common first and last lines.
           const patch = structuredPatch('f.ts', 'f.ts', oldContent, newContent, undefined, undefined, { context });
-          const raw = patch.hunks;
-          expect(file.hunks).toHaveLength(raw.length);
+          const changed = patch.hunks.flatMap((h) => h.lines).filter((l) => l[0] === '+' || l[0] === '-');
+          expect(file.additions + file.deletions).toBe(changed.length);
+          const ours = asJsdiffHunks(file, oldContent, newContent);
           const n = file.hunks.length;
           const subsets =
             n <= 4
               ? Array.from({ length: 1 << n }, (_, m) => [...Array(n).keys()].filter((k) => m & (1 << k)))
               : Array.from({ length: 8 }, () => [...Array(n).keys()].filter(() => r() < 0.5));
-          for (const subset of subsets) {
-            // The oracle: jsdiff applying the same subset of its own hunks to the original.
-            const expected = applyPatch(oldContent, { ...patch, hunks: subset.map((k) => raw[k]!) });
+          for (const subset of [[...Array(n).keys()], ...subsets]) {
+            // The oracle: jsdiff applying the same subset of the hunks to the original.
+            const expected = applyPatch(oldContent, { ...patch, hunks: subset.map((k) => ours[k]!) });
             const actual = applyHunks(
               file,
               subset.map((k) => file.hunks[k]!.id),
@@ -256,6 +282,13 @@ describe('applyHunks matches jsdiff applyPatch (property test)', () => {
             });
             checked++;
           }
+          expect(
+            applyHunks(
+              file,
+              file.hunks.map((h) => h.id),
+            ),
+          ).toBe(newContent);
+          expect(applyHunks(file, [])).toBe(oldContent);
         }
         expect(checked).toBeGreaterThan(2000);
       });

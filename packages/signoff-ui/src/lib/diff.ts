@@ -61,6 +61,11 @@ export interface ParsedFileDiff {
   /** Original contents, when known. Needed to compute the reviewed result. */
   oldContent?: string | undefined;
   newContent?: string | undefined;
+  /**
+   * `'replace'` when the diff went over `maxEditLength`: the changed region, from the first
+   * changed line to the last, is one hunk that replaces it, with no word-level highlights.
+   */
+  fallback?: 'replace' | undefined;
 }
 
 const EXT_LANG: Record<string, string> = {
@@ -88,7 +93,7 @@ export function inferLanguage(path: string): string {
   return EXT_LANG[ext] ?? 'text';
 }
 
-function toDiffLines(hunk: StructuredPatchHunk): DiffLine[] {
+function toDiffLines(hunk: StructuredPatchHunk, words: boolean): DiffLine[] {
   const lines: DiffLine[] = [];
   let oldNo = hunk.oldLines === 0 ? hunk.oldStart + 1 : hunk.oldStart;
   let newNo = hunk.newLines === 0 ? hunk.newStart + 1 : hunk.newStart;
@@ -100,7 +105,7 @@ function toDiffLines(hunk: StructuredPatchHunk): DiffLine[] {
     else if (marker === '-') lines.push({ type: 'del', content, oldNumber: oldNo++ });
     else lines.push({ type: 'context', content, oldNumber: oldNo++, newNumber: newNo++ });
   }
-  pairWordSegments(lines);
+  if (words) pairWordSegments(lines);
   return lines;
 }
 
@@ -169,26 +174,151 @@ function hunkHeader(h: StructuredPatchHunk) {
   return `@@ -${h.oldStart},${h.oldLines} +${h.newStart},${h.newLines} @@`;
 }
 
-/** Turn a `FileChange` into hunks with line numbers and word-level segments. */
-export function parseFileChange(
+/**
+ * The most lines added plus lines removed a file's diff may take before it is shown as one hunk
+ * that replaces the changed region. Diffing costs about the square of this number: 2,000 is about
+ * 0.2 s on a laptop, in a worker for large files, while 10,000 (a 5,000-line rewrite) was 2.7 s.
+ */
+export const DEFAULT_MAX_EDIT_LENGTH = 2_000;
+
+export interface ParseFileChangeOptions {
+  /** Lines of context around each change. Default 3. */
+  context?: number | undefined;
+  /** Id for the file and prefix of its hunk ids. Default: the path. */
+  id?: string | undefined;
+  /**
+   * Past this many lines added plus lines removed, the changed region (from the first changed line
+   * to the last) becomes one hunk that replaces it, and `fallback` is `'replace'`. Default 2,000.
+   */
+  maxEditLength?: number | undefined;
+}
+
+interface Lines {
+  lines: string[];
+  /** Whether the last line ends with a newline. */
+  eol: boolean;
+}
+
+/** Whether line `i` of `a` equals line `j` of `b`, its line ending included, as jsdiff compares lines. */
+function sameLine(a: Lines, i: number, b: Lines, j: number) {
+  if (a.lines[i] !== b.lines[j]) return false;
+  const aEnds = i < a.lines.length - 1 || a.eol;
+  const bEnds = j < b.lines.length - 1 || b.eol;
+  return aEnds === bEnds;
+}
+
+function joinLines(source: Lines, from: number, to: number) {
+  if (to <= from) return '';
+  const end = to === source.lines.length ? (source.eol ? '\n' : '') : '\n';
+  return source.lines.slice(from, to).join('\n') + end;
+}
+
+type ContentDiff = { hunks: StructuredPatchHunk[]; fallback?: 'replace' | undefined };
+
+/**
+ * Hunks between two contents. The common first and last lines are set aside first (bar the context
+ * the hunks show), so a large file with a small edit diffs only the region that changed. Past
+ * `maxEditLength` the region becomes one replacing hunk; past `budget`, smaller than that, the
+ * result is `undefined`, for the caller to finish elsewhere (DiffReview: in a worker).
+ */
+function diffContents(
+  oldContent: string,
+  newContent: string,
+  context: number,
+  maxEditLength: number,
+  budget: number,
+): ContentDiff | undefined {
+  const a = splitLines(oldContent);
+  const b = splitLines(newContent);
+  let prefix = 0;
+  const shortest = Math.min(a.lines.length, b.lines.length);
+  while (prefix < shortest && sameLine(a, prefix, b, prefix)) prefix++;
+  let suffix = 0;
+  while (suffix < shortest - prefix && sameLine(a, a.lines.length - 1 - suffix, b, b.lines.length - 1 - suffix))
+    suffix++;
+  const oldMiddle = a.lines.length - prefix - suffix;
+  const newMiddle = b.lines.length - prefix - suffix;
+  if (oldMiddle === 0 && newMiddle === 0) return { hunks: [] };
+
+  // Keep the context the hunks show; everything before or after it is the same on both sides.
+  const before = Math.min(context, prefix);
+  const after = Math.min(context, suffix);
+  const from = prefix - before;
+  const oldTo = a.lines.length - suffix + after;
+  const newTo = b.lines.length - suffix + after;
+  // Only inserted or only removed lines: one cheap pass, whatever their number.
+  const oneSided = oldMiddle === 0 || newMiddle === 0;
+  const limit = Math.min(maxEditLength, budget);
+  const oldText = joinLines(a, from, oldTo);
+  const newText = joinLines(b, from, newTo);
+  const patch = withConstantClock(() =>
+    oneSided
+      ? structuredPatch('', '', oldText, newText, undefined, undefined, { context })
+      : structuredPatch('', '', oldText, newText, undefined, undefined, { context, maxEditLength: limit }),
+  );
+  if (patch) {
+    for (const hunk of patch.hunks) {
+      hunk.oldStart += from;
+      hunk.newStart += from;
+    }
+    return { hunks: patch.hunks };
+  }
+  if (budget < maxEditLength) return undefined;
+
+  // Over the limit: the changed region, replaced.
+  const ctx = (lines: string[]) => lines.map((line) => ` ${line}`);
+  const lines = [
+    ...ctx(a.lines.slice(from, prefix)),
+    ...a.lines.slice(prefix, a.lines.length - suffix).map((line) => `-${line}`),
+    ...b.lines.slice(prefix, b.lines.length - suffix).map((line) => `+${line}`),
+    ...ctx(a.lines.slice(a.lines.length - suffix, oldTo)),
+  ];
+  const hunk: StructuredPatchHunk = {
+    oldStart: from + 1,
+    oldLines: oldTo - from,
+    newStart: from + 1,
+    newLines: newTo - from,
+    lines,
+  };
+  return { hunks: [hunk], fallback: 'replace' };
+}
+
+/**
+ * Turn a `FileChange` into hunks with line numbers and word-level segments. Contents are diffed;
+ * past `maxEditLength` the changed region is one replacing hunk (`fallback: 'replace'`).
+ */
+export function parseFileChange(change: FileChange, options: ParseFileChangeOptions = {}): ParsedFileDiff {
+  return parseWithin(change, options, Infinity)!;
+}
+
+/**
+ * `parseFileChange`, unless diffing the contents would take more than `budget` edits: then
+ * `undefined`. Deterministic, so a server render and the hydrating client agree on which files
+ * render at once and which wait for the worker.
+ * @internal
+ */
+export function parseWithin(
   change: FileChange,
-  options: {
-    context?: number;
-    /** Id for the file and prefix of its hunk ids. Default: the path. */
-    id?: string;
-  } = {},
-): ParsedFileDiff {
+  options: ParseFileChangeOptions,
+  budget: number,
+): ParsedFileDiff | undefined {
   const id = options.id ?? change.path;
+  const context = options.context ?? 3;
   const oldContent = change.oldContent ?? (change.patch ? undefined : '');
   const newContent = change.newContent ?? (change.patch ? undefined : '');
   let hunks: StructuredPatchHunk[];
+  let fallback: ContentDiff['fallback'];
   if (oldContent !== undefined && newContent !== undefined) {
-    hunks = withConstantClock(
-      () =>
-        structuredPatch(change.oldPath ?? change.path, change.path, oldContent, newContent, undefined, undefined, {
-          context: options.context ?? 3,
-        }).hunks,
+    const diffed = diffContents(
+      oldContent,
+      newContent,
+      context,
+      options.maxEditLength ?? DEFAULT_MAX_EDIT_LENGTH,
+      budget,
     );
+    if (!diffed) return undefined;
+    hunks = diffed.hunks;
+    fallback = diffed.fallback;
   } else if (change.patch) {
     hunks = parsePatch(change.patch)[0]?.hunks ?? [];
   } else {
@@ -196,7 +326,7 @@ export function parseFileChange(
   }
 
   const parsed: DiffHunk[] = hunks.map((h, index) => {
-    const lines = toDiffLines(h);
+    const lines = toDiffLines(h, !fallback);
     return {
       id: `${id}:${index}`,
       index,
@@ -237,10 +367,11 @@ export function parseFileChange(
     deletions: parsed.reduce((n, h) => n + h.deletions, 0),
     oldContent,
     newContent,
+    ...(fallback ? { fallback } : {}),
   };
 }
 
-function splitLines(text: string): { lines: string[]; eol: boolean } {
+function splitLines(text: string): Lines {
   if (text === '') return { lines: [], eol: false };
   const eol = text.endsWith('\n');
   const lines = (eol ? text.slice(0, -1) : text).split('\n');
