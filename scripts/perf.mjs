@@ -32,10 +32,12 @@ const dist = resolve(arg('--dist') ?? join(import.meta.dirname, '../packages/sig
 const enforce = !process.argv.includes('--no-budget');
 const json = process.argv.includes('--json');
 
-// [label, query, budgets]. Times in ms; DOM in elements.
+// [label, query, budgets]. Times in ms; DOM in elements. A local edit renders its hunks in its first
+// task (20 and 100 of them, each with decision and comment buttons and the bar of unchanged lines
+// around it): about 70 and 90 ms on a laptop, and up to about 310 ms on a shared CI runner.
 const CASES = [
-  ['local edit, 1,000 lines', 's=local&n=1000', { readyMs: 400, longestTaskMs: 250, domNodes: 15_000, keyMs: 40 }],
-  ['local edit, 5,000 lines', 's=local&n=5000', { readyMs: 800, longestTaskMs: 250, domNodes: 20_000, keyMs: 40 }],
+  ['local edit, 1,000 lines', 's=local&n=1000', { readyMs: 400, longestTaskMs: 400, domNodes: 15_000, keyMs: 40 }],
+  ['local edit, 5,000 lines', 's=local&n=5000', { readyMs: 800, longestTaskMs: 400, domNodes: 20_000, keyMs: 40 }],
   ['full rewrite, 2,000 lines', 's=rewrite&n=2000', { readyMs: 1000, longestTaskMs: 250, domNodes: 15_000, keyMs: 40 }],
   ['full rewrite, 5,000 lines', 's=rewrite&n=5000', { readyMs: 1500, longestTaskMs: 250, domNodes: 15_000, keyMs: 40 }],
   [
