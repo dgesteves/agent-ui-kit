@@ -78,6 +78,7 @@ for (const path of [
   '/docs',
   '/docs/getting-started',
   '/docs/ag-ui',
+  '/docs/migrating-from-agent-ui-kit',
   '/docs/components/approval-card',
   '/docs/components/diff-review',
   '/docs/components/run-meter',

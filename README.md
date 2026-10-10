@@ -6,6 +6,8 @@ React components for the hard parts of agentic products: watching an agent work,
 [![npm](https://img.shields.io/npm/v/signoff-ui?labelColor=0d0f12&color=22d3ee)](https://www.npmjs.com/package/signoff-ui)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22d3ee?labelColor=0d0f12)](./LICENSE)
 
+Formerly `@dgesteves/agent-ui-kit`. Moving over is a package swap and a rename of the CSS variables, classes and attributes: [Migrating from @dgesteves/agent-ui-kit](https://agent-ui-kit-demo.vercel.app/docs/migrating-from-agent-ui-kit).
+
 **[Open the live playground →](https://agent-ui-kit-demo.vercel.app)** A scripted agent run with replay, speed and keyboard controls. No API key needed. **[Read the docs →](https://agent-ui-kit-demo.vercel.app/docs)** Getting started, AG-UI agents, and a page per component with its props, keyboard and theming hooks. For coding agents, the docs are also at [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt) and [`/llms-full.txt`](https://agent-ui-kit-demo.vercel.app/llms-full.txt), and every page as Markdown at its URL plus `.md`.
 
 <!-- npm-readme:video -->
@@ -60,7 +62,7 @@ Styles, either way:
 import 'signoff-ui/styles.css';
 ```
 
-`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` cannot strip the components' spacing. Every rule in it is scoped to the components' own elements, so it does not restyle your app; import it after your global CSS. `styles.layered.css` is the same stylesheet in `@layer theme, base, utilities`, for apps that order their CSS with layers.
+`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` cannot strip the components' spacing. Every rule in it is scoped to the components' own elements, so it does not restyle your app; import it after your global CSS. That includes your content inside a component (what `renderTool`, `renderData`, `renderOutput` and a custom approval `preview` return): it sits in a `data-signoff-slot` element that the kit's rules do not reach, so your CSS styles it (it still inherits the component's text color and font), and components you render there are styled as usual. The stylesheet sets none of your theme's variables either (`--spacing`, `--text-*`, `--font-*`): the utilities have the kit's values written in and read only its `--signoff-*` tokens. A Chrome test renders a Tailwind v4 app whose theme sets `--spacing: .5rem` and checks that its `p-4` stays 32px inside those slots. `styles.layered.css` is the same stylesheet in `@layer theme, base, utilities`, for apps that order their CSS with layers.
 
 Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette. To follow the OS setting instead, import `signoff-ui/theme.auto.css` after the stylesheet; `class="light"` (or `data-theme="light"`) on `<html>` still forces the light palette.
 
@@ -251,11 +253,7 @@ Every component is also a self-contained registry item: the component, the helpe
 npx shadcn@latest add @signoff-ui/agent-message
 ```
 
-`@signoff-ui` is in the [shadcn registry directory](https://ui.shadcn.com/docs/directory), so the CLI finds it and adds it to your `components.json` on first use. The same items install by URL from the hosted registry (`npx shadcn@latest add https://agent-ui-kit-demo.vercel.app/r/agent-message.json`) or straight from this repository (`npx shadcn@latest add dgesteves/signoff-ui/agent-message`).
-
-Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`, and `ag-ui` (the [AG-UI adapter](#ag-ui-agents)). Installing a second item skips the shared files it already added. Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them. The files pass a new Next.js app's ESLint config with no warnings, which CI checks.
-
-**From a coding agent.** The [shadcn MCP server](https://ui.shadcn.com/docs/mcp) lets Claude Code, Cursor, VS Code or Codex browse and install registry items. Set it up with `npx shadcn@latest mcp init --client claude` (or `cursor`, `vscode`), and make sure `components.json` lists the registry (the first `shadcn add @signoff-ui/...` adds it):
+If the CLI does not know the `@signoff-ui` namespace yet, add it to your `components.json` once:
 
 ```json
 {
@@ -265,7 +263,11 @@ Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `r
 }
 ```
 
-Then ask for it by name, for example "add the signoff-ui approval card to the chat page". Agents can also read these docs from [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt).
+The same items install by URL from the hosted registry, with no setup (`npx shadcn@latest add https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from this repository (`npx shadcn@latest add dgesteves/signoff-ui/agent-message`).
+
+Items: `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning`, and `ag-ui` (the [AG-UI adapter](#ag-ui-agents)). Installing a second item skips the shared files it already added. Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them. The files pass a new Next.js app's ESLint config with no warnings, which CI checks.
+
+**From a coding agent.** The [shadcn MCP server](https://ui.shadcn.com/docs/mcp) lets Claude Code, Cursor, VS Code or Codex browse and install registry items. Set it up with `npx shadcn@latest mcp init --client claude` (or `cursor`, `vscode`), and make sure `components.json` lists the registry, as above. Then ask for it by name, for example "add the signoff-ui approval card to the chat page". Agents can also read these docs from [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt).
 
 ## Components
 
@@ -599,7 +601,7 @@ In a shadcn/ui app, point the kit at your existing tokens so it looks native. Ad
 
 The font already follows `--font-sans`. Diff and chart colors keep the kit's cyan and magenta, which your palette may not distinguish as well. The contrast test covers the kit's own palette, so check text contrast with yours.
 
-Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks.
+Components also accept `className` (merged with `tailwind-merge`) and expose `data-slot` (such as `signoff-approval-card`) and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) for styling hooks. Every component's root has `data-signoff`.
 
 ## Bundle size
 
@@ -608,18 +610,18 @@ What each import adds to an app's JavaScript, minified and gzipped. React and Re
 | Import                                                             | Gzipped |
 | ------------------------------------------------------------------ | ------: |
 | `addUsage`, `estimateCost` from `/core` (for a route handler)      |  0.4 kB |
-| `useAgUiAgent` from `/ag-ui`                                       |  2.7 kB |
+| `useAgUiAgent` from `/ag-ui`                                       |  2.8 kB |
 | `applyHunks`, `parseFileChange` from `/core` (with jsdiff)         |  6.1 kB |
 | `Sources`                                                          |  9.9 kB |
-| `AgentStatus`                                                      | 10.5 kB |
-| `RunMeter`                                                         | 11.7 kB |
-| `ApprovalCard`                                                     | 14.4 kB |
-| `ToolCallTimeline`                                                 | 19.2 kB |
+| `AgentStatus`                                                      | 10.7 kB |
+| `RunMeter`                                                         | 11.9 kB |
+| `ApprovalCard`                                                     | 14.5 kB |
+| `ToolCallTimeline`                                                 | 19.4 kB |
 | `DiffReview`                                                       | 28.3 kB |
-| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) | 77.7 kB |
-| Everything in the main entry                                       | 96.2 kB |
+| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) | 78.0 kB |
+| Everything in the main entry                                       | 96.9 kB |
 
-`styles.css` adds 7.9 kB gzipped; with Tailwind v4, `tailwind.css` adds the tokens and your build generates only the utilities the components use. Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 63.5 kB.
+`styles.css` adds 9.4 kB gzipped (255 kB uncompressed, most of it the selector each rule carries to stay off your content in slots); with Tailwind v4, `tailwind.css` adds the tokens and your build generates only the utilities the components use. Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 63.5 kB.
 
 ## Design decisions
 

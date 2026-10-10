@@ -24,9 +24,19 @@ npm i signoff-ui ai
 npx shadcn@latest add @signoff-ui/agent-message
 ```
 
-`@signoff-ui` is in the [shadcn registry directory](https://ui.shadcn.com/docs/directory), so the CLI finds it and adds it to your `components.json` on first use. Each item brings the component, the helpers it imports, its npm dependencies and the theme tokens, which `shadcn add` writes into your CSS. Files land in `components/signoff-ui/`.
+If the CLI doesn't know the `@signoff-ui` namespace yet, add it to your `components.json` once:
 
-The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`) or straight from the repository (`dgesteves/signoff-ui/agent-message`).
+```json title="components.json"
+{
+  "registries": {
+    "@signoff-ui": "https://agent-ui-kit-demo.vercel.app/r/{name}.json"
+  }
+}
+```
+
+Each item brings the component, the helpers it imports, its npm dependencies and the theme tokens, which `shadcn add` writes into your CSS. Files land in `components/signoff-ui/`.
+
+The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL, with no setup (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from the repository (`dgesteves/signoff-ui/agent-message`).
 
 ### Which one
 
@@ -56,7 +66,7 @@ Once per app. Skip this if you installed with the shadcn CLI, which already wrot
 import 'signoff-ui/styles.css';
 ```
 
-`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` can't strip the components' spacing. Every rule is scoped to the components' own elements, so it doesn't restyle your app; import it after your global CSS. If your app orders its CSS with layers, use `styles.layered.css`, the same stylesheet in `@layer theme, base, utilities`.
+`styles.css` has no cascade layers, so Tailwind v3 builds accept it and a global reset such as `* { padding: 0 }` can't strip the components' spacing. Every rule is scoped to the components' own elements, so it doesn't restyle your app; import it after your global CSS. That holds inside the components too: what `renderTool`, `renderData`, `renderOutput` and a custom approval `preview` return is your content, in a `data-signoff-slot` element the kit's rules don't reach, so your CSS styles it (it still inherits the component's text color and font). Components you render there are styled as usual. The stylesheet also sets none of your theme's variables (`--spacing`, `--text-*`, `--font-*`): its utilities have the kit's values written in and read only the `--signoff-*` tokens. If your app orders its CSS with layers, use `styles.layered.css`, the same stylesheet in `@layer theme, base, utilities`.
 
 **Dark mode.** Light is the default. Add `class="dark"` (or `data-theme="dark"`) to `<html>` or any ancestor for the dark palette. To follow the OS setting instead, also import `signoff-ui/theme.auto.css`; `class="light"` on `<html>` still forces light.
 
@@ -352,7 +362,7 @@ Messages, timelines and sources have no background of their own: they sit on you
 
 Diff and chart colors keep the kit's cyan and magenta, which your palette may not tell apart as well. The kit's contrast test covers its own palette, so check text contrast with yours.
 
-**Styling hooks.** Components accept `className`, merged with `tailwind-merge`, and expose `data-slot` (such as `data-slot="signoff-approval-card"`) and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) to target from your CSS:
+**Styling hooks.** Components accept `className`, merged with `tailwind-merge`, and expose `data-signoff` on their root, `data-slot` (such as `data-slot="signoff-approval-card"`) and state attributes (`data-phase`, `data-state`, `data-decision`, `data-risk`) to target from your CSS:
 
 ```css
 [data-slot='signoff-approval-card'][data-risk='critical'] {

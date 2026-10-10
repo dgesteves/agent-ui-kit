@@ -43,6 +43,13 @@ export const GUIDES: DocPage[] = [
     description:
       'Render LangGraph, CrewAI, Mastra and other AG-UI agents with the same components, interrupts included, through useAgUiAgent.',
   },
+  {
+    slug: 'migrating-from-agent-ui-kit',
+    href: '/docs/migrating-from-agent-ui-kit',
+    title: 'Migrating from @dgesteves/agent-ui-kit',
+    description:
+      'The package is now signoff-ui: swap it, rename the CSS variables, classes and attributes with one command, and what changed in styles.css.',
+  },
 ];
 
 export const NAV: NavGroup[] = [
