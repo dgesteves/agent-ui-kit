@@ -268,9 +268,12 @@ try {
       await page.close();
       return result;
     };
-    const inApp = await measure([app, styles], nested);
-    const aloneInApp = await measure([app, styles], alone);
-    const aloneKit = await measure([styles], alone);
+    // The kit takes the app's --font-sans and --font-mono on purpose. The same fonts on every page,
+    // so that text, and the layout around it, measures the same with and without the app's theme.
+    const fonts = ':root { --font-sans: Arial, sans-serif; --font-mono: "Courier New", monospace; }';
+    const inApp = await measure([app, styles, fonts], nested);
+    const aloneInApp = await measure([app, styles, fonts], alone);
+    const aloneKit = await measure([styles, fonts], alone);
     const expected = {
       'padding-top': '32px',
       'font-size': '17px',
@@ -285,8 +288,7 @@ try {
         for (const [property, value] of Object.entries(expected))
           if (actual[property] !== value) problems.push(`${name} ${property}: ${actual[property]}, expected ${value}`);
     }
-    // The kit takes the app's --font-sans on purpose, so the font differs from styles.css alone.
-    const compare = (label, a, b, skip = []) => {
+    const compare = (label, a, b) => {
       for (const ref of Object.keys(b.refs)) {
         const left = a.refs[ref] ?? [];
         const right = b.refs[ref];
@@ -294,7 +296,7 @@ try {
           problems.push(`${label} ${ref}: ${left.length} elements, expected ${right.length}`);
         right.forEach((values, i) => {
           for (const property of PROPERTIES)
-            if (!skip.includes(property) && left[i]?.[property] !== values[property])
+            if (left[i]?.[property] !== values[property])
               problems.push(
                 `${label} ${ref} element ${i} ${property}: ${left[i]?.[property]} (expected ${values[property]})`,
               );
@@ -302,7 +304,7 @@ try {
       }
     };
     compare('in a slot', inApp, aloneInApp);
-    compare('in the app', aloneInApp, aloneKit, ['font-family']);
+    compare('in the app', aloneInApp, aloneKit);
     const ok = problems.length === 0;
     failed ||= !ok;
     console.log(
