@@ -19,7 +19,11 @@ describe('DiffReview', () => {
   it('renders files, hunks, stats and line markers', () => {
     render(<DiffReview files={files} />);
     expect(screen.getByRole('region', { name: 'Review changes' })).toBeInTheDocument();
-    expect(screen.getByText('route.ts')).toBeInTheDocument();
+    // In the file navigator and in the file's header.
+    expect(
+      within(screen.getByRole('navigation', { name: 'Files in this review' })).getByText('route.ts'),
+    ).toBeVisible();
+    expect(screen.getAllByText('route.ts')).toHaveLength(2);
     expect(hunks().length).toBe(4);
     expect(hunks()[0]).toHaveAccessibleName('Hunk 1 of 4, app/api/chat/route.ts, lines 1 to 7, not reviewed');
     expect(screen.getAllByText('Added:').length).toBeGreaterThan(0);
