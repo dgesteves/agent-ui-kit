@@ -12,13 +12,14 @@ export const AUTHOR = { name: 'Diogo Esteves', url: 'https://github.com/dgesteve
 /** The owner's other open-source projects, for the footer. */
 export const MORE_BY_AUTHOR = [
   {
-    name: 'ask-my-site',
+    name: 'ondocs',
     url: 'https://ask-my-site-demo.vercel.app',
-    description: 'A drop-in ask box for any website: cited answers, no vector database.',
+    description:
+      'Docs answerable by people and agents from one static index: a cited Ask box, an MCP server and llms.txt.',
   },
   {
-    name: 'design-system-mcp',
+    name: 'onsystem',
     url: 'https://design-system-mcp-demo.vercel.app',
-    description: 'Ground truth about your React design system for coding agents, and a linter for their UI.',
+    description: 'Keeps coding agents on your design system, and the same check gates your PRs.',
   },
 ];
