@@ -8,7 +8,7 @@ import { ROUTE_NEW, ROUTE_OLD } from './fixtures';
 
 vi.mock('../src/lib/diff', async (importOriginal) => {
   const actual = await importOriginal<typeof diff>();
-  return { ...actual, parseFileChange: vi.fn(actual.parseFileChange) };
+  return { ...actual, parseWithin: vi.fn(actual.parseWithin) };
 });
 
 describe('DiffReview parsing', () => {
@@ -28,7 +28,7 @@ describe('DiffReview parsing', () => {
         />
       );
     }
-    const parse = vi.mocked(diff.parseFileChange);
+    const parse = vi.mocked(diff.parseWithin);
     const { rerender } = render(<Controlled newContent={ROUTE_NEW} />);
     expect(parse).toHaveBeenCalledTimes(2);
     const [first] = screen.getAllByRole('group', { name: /^Hunk/ });
