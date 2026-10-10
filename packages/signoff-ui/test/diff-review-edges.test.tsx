@@ -33,11 +33,11 @@ describe('DiffReview, the edges', () => {
   it('brings focus back into the review with J from outside a hunk', async () => {
     const user = userEvent.setup();
     render(<DiffReview files={[{ path: 'route.ts', oldContent: ROUTE_OLD, newContent: ROUTE_NEW }]} />);
-    screen.getByRole('radio', { name: 'unified' }).focus();
+    screen.getByRole('radio', { name: 'Unified' }).focus();
     await user.keyboard('j');
     expect(items()[0]).toHaveFocus();
     // The arrows leave the layout toggle to itself.
-    screen.getByRole('radio', { name: 'unified' }).focus();
+    screen.getByRole('radio', { name: 'Unified' }).focus();
     await user.keyboard('{ArrowDown}');
     expect(items()[0]).not.toHaveFocus();
   });

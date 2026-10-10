@@ -367,6 +367,30 @@ describe('useAgUiAgent', () => {
     expect(agent.messages).toEqual([]);
   });
 
+  it('sends edited arguments as the approval payload’s input', async () => {
+    const agent = interruptingAgent();
+    agent.addMessage({ id: 'u1', role: 'user', content: 'Add zod' });
+    const { result } = renderHook(() => useAgUiAgent(agent));
+    await act(() => agent.runAgent());
+    act(() => result.current.editInput('tc1', { command: 'pnpm add zod@4' }));
+    await act(() => result.current.respond({ id: 'int1', approved: true }));
+    expect(agent.inputs[1]?.resume).toEqual([
+      { interruptId: 'int1', status: 'resolved', payload: { approved: true, input: { command: 'pnpm add zod@4' } } },
+    ]);
+  });
+
+  it('drops an edit when the call is denied', async () => {
+    const agent = interruptingAgent();
+    agent.addMessage({ id: 'u1', role: 'user', content: 'Add zod' });
+    const { result } = renderHook(() => useAgUiAgent(agent));
+    await act(() => agent.runAgent());
+    act(() => result.current.editInput('tc1', { command: 'pnpm add zod@4' }));
+    await act(() => result.current.respond({ id: 'int1', approved: false, reason: 'Not now' }));
+    expect(agent.inputs[1]?.resume).toEqual([
+      { interruptId: 'int1', status: 'resolved', payload: { approved: false, reason: 'Not now' } },
+    ]);
+  });
+
   it('follows a run through an interrupt, the approval and the resumed run', async () => {
     const agent = interruptingAgent();
     agent.addMessage({ id: 'u1', role: 'user', content: 'Add zod' });

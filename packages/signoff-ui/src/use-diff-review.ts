@@ -5,7 +5,6 @@ import {
   DEFAULT_MAX_EDIT_LENGTH,
   parseWithin,
   type DiffHunk,
-  type DiffLine,
   type FileChange,
   type HunkDecision,
   type ParsedFileDiff,
@@ -28,7 +27,12 @@ import {
   type ReviewItem,
 } from './lib/review';
 import { useIsMac } from './lib/hooks';
+import { diffReviewLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels } from './labels';
 import { hasModifier, isPromiseLike, isTypingTarget } from './lib/utils';
+
+/** The labels' sections this module reads. */
+const LABELS = { diffReview: diffReviewLabels };
 
 export type { DiffWorkerFactory } from './lib/diff-async';
 export type {
@@ -39,43 +43,6 @@ export type {
   LineRange,
   ReviewItem,
 } from './lib/review';
-
-/** Every string the review shows or announces. */
-export const DIFF_REVIEW_TEXT = {
-  decision: { pending: 'not reviewed', accepted: 'accepted', rejected: 'rejected' } as Record<HunkDecision, string>,
-  hunk: (n: number, total: number, path: string, from: number, to: number, decision: string) =>
-    `Hunk ${n} of ${total}, ${path}, lines ${from} to ${to}, ${decision}`,
-  fileItem: (n: number, total: number, path: string, what: string, decision: string) =>
-    `Change ${n} of ${total}, ${path}, ${what}, ${decision}`,
-  binary: 'binary file',
-  renamed: (from: string) => `renamed from ${from}`,
-  created: 'new empty file',
-  deleted: 'deleted empty file',
-  decided: (kind: 'hunk' | 'file', n: number, total: number, verb: string, remaining: number) =>
-    `${kind === 'hunk' ? 'Hunk' : 'Change'} ${n} of ${total} ${verb}. ${remaining === 0 ? 'All hunks reviewed.' : `${remaining} remaining.`}`,
-  reset: 'reset',
-  decidedAll: (total: number, verb: string) => `All ${total} hunks ${verb}.`,
-  decidedFile: (count: number, path: string, verb: string) =>
-    `${count === 1 ? 'The hunk' : `All ${count} hunks`} in ${path} ${verb}.`,
-  viewed: (path: string, viewed: number, total: number) => `${path} viewed. ${viewed} of ${total} files viewed.`,
-  notViewed: (path: string) => `${path} no longer viewed.`,
-  selected: (line: string, range: LineRange) =>
-    `${line}. ${range.startLine === range.endLine ? `Line ${range.startLine}` : `Lines ${range.startLine} to ${range.endLine}`}${range.side === 'old' ? ' of the original' : ''} selected.`,
-  spoken: (line: DiffLine) =>
-    `${line.type === 'add' ? 'Added: ' : line.type === 'del' ? 'Removed: ' : ''}${line.content}`,
-  commentAdded: (where: string, path: string) => `Comment added on ${where} of ${path}.`,
-  commentUpdated: 'Comment updated.',
-  commentDeleted: 'Comment deleted.',
-  where: (comment: Pick<DiffReviewComment, 'target' | 'startLine' | 'endLine'>) =>
-    comment.target === 'file'
-      ? 'the file'
-      : comment.target === 'hunk'
-        ? 'the hunk'
-        : comment.startLine === comment.endLine
-          ? `line ${comment.startLine}`
-          : `lines ${comment.startLine} to ${comment.endLine}`,
-  expanded: (count: number) => `Showing ${count} more unchanged ${count === 1 ? 'line' : 'lines'}.`,
-};
 
 interface ParsedFiles {
   files: readonly FileChange[];
@@ -229,6 +196,8 @@ export interface UseDiffReviewOptions {
   autoAdvance?: boolean | undefined;
   /** Fold a file away once it is marked viewed. Default `true`. */
   collapseViewed?: boolean | undefined;
+  /** Words to use instead of the English defaults, for what the hook announces and names: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 export interface DiffReviewFileState {
@@ -409,7 +378,9 @@ export function useDiffReview({
   diffWorker = defaultDiffWorker,
   autoAdvance = true,
   collapseViewed = true,
+  labels,
 }: UseDiffReviewOptions): UseDiffReviewResult {
+  const T = useLabels(LABELS, labels).diffReview;
   // Parsed by content rather than by `files` identity, so an inline array (a new one on every
   // parent render) does not re-diff every file on every decision.
   const [parsedFiles, setParsedFiles] = useState<ParsedFiles>(() => parseFiles(changes, context, maxEditLength));
@@ -574,7 +545,6 @@ export function useDiffReview({
     return { item, hunk, anchor, head, from, to, range: linesRange(hunk, from, to) };
   }, [selectionState, items, indexOf]);
 
-  const T = DIFF_REVIEW_TEXT;
   const result = () => computeReviewResult(parsed, decisions, { comments, viewed });
   const patch = () => toPatch(parsed, decisions);
 
@@ -591,9 +561,7 @@ export function useDiffReview({
     setDecisions(next);
     const remaining = items.filter((item) => (next[item.id] ?? 'pending') === 'pending').length;
     const kind = items[index]!.hunk ? 'hunk' : 'file';
-    setAnnouncement(
-      T.decided(kind, index + 1, items.length, decision === 'pending' ? T.reset : T.decision[decision], remaining),
-    );
+    setAnnouncement(T.decided(kind, index + 1, items.length, decision, remaining));
     if (advance && decision !== 'pending') {
       const pending = (i: number) => navigable(i) && (next[items[i]!.id] ?? 'pending') === 'pending';
       const after = items.findIndex((_, i) => i > index && pending(i));
@@ -613,7 +581,7 @@ export function useDiffReview({
       items.map((item) => item.id),
       decision,
     );
-    setAnnouncement(T.decidedAll(items.length, T.decision[decision]));
+    setAnnouncement(T.decidedAll(items.length, decision));
   };
   const decideFile = (fileId: string, decision: Exclude<HunkDecision, 'pending'>) => {
     const file = files.find((f) => f.id === fileId);
@@ -622,7 +590,7 @@ export function useDiffReview({
       file.items.map((item) => item.id),
       decision,
     );
-    setAnnouncement(T.decidedFile(file.items.length, file.path, T.decision[decision]));
+    setAnnouncement(T.decidedFile(file.items.length, file.path, decision));
   };
 
   const setCollapsed = (fileId: string, collapsed: boolean) => setFolded({ ...folded, [fileId]: collapsed });
@@ -636,7 +604,7 @@ export function useDiffReview({
     delete rest[fileId];
     setFolded(rest);
     const count = files.filter((f) => next[f.id] === true).length;
-    setAnnouncement(value ? T.viewed(file.path, count, files.length) : T.notViewed(file.path));
+    setAnnouncement(value ? T.viewedAnnouncement(file.path, count, files.length) : T.notViewedAnnouncement(file.path));
   };
 
   const focusFile = (fileId: string) => {
@@ -660,7 +628,10 @@ export function useDiffReview({
   const announceSelection = (item: ReviewItem, anchor: number, head: number) => {
     const hunk = item.hunk!;
     const line = hunk.lines[head];
-    if (line) setAnnouncement(T.selected(T.spoken(line), linesRange(hunk, anchor, head)));
+    if (line) {
+      const spoken = `${line.type === 'add' ? T.added : line.type === 'del' ? T.removed : ''}${line.content}`;
+      setAnnouncement(T.selected(spoken, linesRange(hunk, anchor, head)));
+    }
   };
   const selectLines = (itemId: string, from: number, to = from) => {
     const item = items[indexOf.get(itemId) ?? -1];
@@ -980,7 +951,6 @@ export function useDiffReview({
       const item = items[index]!;
       const file = fileOf.get(item.id)!;
       const decision = decisions[item.id] ?? 'pending';
-      const state = T.decision[decision];
       const hunk = item.hunk;
       const name = hunk
         ? T.hunk(
@@ -989,9 +959,15 @@ export function useDiffReview({
             file.path,
             hunk.newStart,
             hunk.newLines > 0 ? hunk.newStart + hunk.newLines - 1 : hunk.newStart,
-            state,
+            decision,
           )
-        : T.fileItem(index + 1, items.length, file.path, describeFile(item.file), state);
+        : T.fileItem(
+            index + 1,
+            items.length,
+            file.path,
+            T.describeFile(item.file.status, !!item.file.binary, item.file.oldPath ?? item.file.path),
+            decision,
+          );
       return {
         ref: (el: HTMLElement | null) => registerItem(item.id, el),
         role: 'group' as const,
@@ -1093,12 +1069,4 @@ export function useDiffReview({
     }),
   };
   return review;
-}
-
-/** What a whole-file item is, for its name: binary, a rename, or a file created or deleted empty. */
-function describeFile(file: ParsedFileDiff) {
-  const T = DIFF_REVIEW_TEXT;
-  if (file.binary) return T.binary;
-  if (file.status === 'renamed') return T.renamed(file.oldPath ?? file.path);
-  return file.status === 'deleted' ? T.deleted : T.created;
 }

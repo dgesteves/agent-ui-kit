@@ -1,22 +1,30 @@
+'use client';
+
 import type { ComponentPropsWithoutRef } from 'react';
 import { toSourceItem, type SourceItem, type SourcePart } from './lib/ai';
-
+import { sourcesLabels, commonLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels } from './labels';
 import { getHostname } from './lib/format';
 import { ExternalIcon, FileIcon } from './lib/icons';
 import { cn } from './lib/utils';
+
+/** The labels' sections this module reads. */
+const LABELS = { sources: sourcesLabels, common: commonLabels };
 
 export type { SourceItem };
 
 export interface SourcesProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   sources: ReadonlyArray<SourcePart | SourceItem>;
   variant?: 'chips' | 'cards';
-  /** Visible heading. Default "Sources"; pass `null` to hide it (it stays as the accessible name). */
-  label?: string | null;
+  /** Visible heading. Default "Sources" (`labels.sources.label`); pass `null` to hide it (it stays as the accessible name). */
+  label?: string | null | undefined;
   /**
    * Prefix for element ids (`${idPrefix}-1`, …) so inline citations can link to a source.
    * Default "source".
    */
   idPrefix?: string;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 function Monogram({ item }: { item: SourceItem }) {
@@ -42,14 +50,17 @@ function Monogram({ item }: { item: SourceItem }) {
 export function Sources({
   sources,
   variant = 'chips',
-  label = 'Sources',
+  label: labelProp,
   idPrefix = 'source',
+  labels,
   className,
   ...props
 }: SourcesProps) {
+  const L = useLabels(LABELS, labels);
   const items = sources.map(toSourceItem);
   if (items.length === 0) return null;
-  const name = label ?? 'Sources';
+  const label = labelProp === undefined ? L.sources.label : labelProp;
+  const name = label ?? L.sources.label;
   return (
     <div
       data-signoff
@@ -70,7 +81,7 @@ export function Sources({
       >
         {items.map((item, i) => {
           const n = i + 1;
-          const host = item.url ? getHostname(item.url) : (item.filename ?? item.mediaType ?? 'Document');
+          const host = item.url ? getHostname(item.url) : (item.filename ?? item.mediaType ?? L.sources.document);
           const title = item.title ?? host;
           const content =
             variant === 'chips' ? (
@@ -119,7 +130,7 @@ export function Sources({
               {item.url ? (
                 <a href={item.url} target="_blank" rel="noopener noreferrer" className={shared}>
                   {content}
-                  <span className="sr-only">(opens in a new tab)</span>
+                  <span className="sr-only">{L.common.opensInNewTab}</span>
                 </a>
               ) : (
                 <span className={shared}>{content}</span>

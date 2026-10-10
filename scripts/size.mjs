@@ -20,19 +20,21 @@ const rows = [
   ['`addUsage`, `estimateCost` (`/core`, for a route)', `export { addUsage, estimateCost } from ${core};`, 0.5],
   ['`applyHunks`, `parseFileChange` (`/core`, with jsdiff)', `export { applyHunks, parseFileChange } from ${core};`, 7],
   ['`Sources`', `export { Sources } from ${index};`, 10.5],
-  ['`AgentStatus`', `export { AgentStatus, deriveAgentState } from ${index};`, 11],
-  ['`RunMeter`', `export { RunMeter, useRunTiming } from ${index};`, 12.5],
-  ['`ApprovalCard`', `export { ApprovalCard, ToolApprovalCard } from ${index};`, 15],
+  ['`AgentStatus`', `export { AgentStatus, deriveAgentState } from ${index};`, 11.8],
+  ['`RunMeter`', `export { RunMeter, useRunTiming } from ${index};`, 13],
+  ['`ApprovalCard`', `export { ApprovalCard, ToolApprovalCard } from ${index};`, 18.5],
+  ['`useApprovalPolicy` (no markup)', `export { useApprovalPolicy } from ${index};`, 2],
+  ['`toToolApproval` (`/core`, for a route)', `export { toToolApproval } from ${core};`, 1],
   ['`ToolCallTimeline`', `export { ToolCallTimeline } from ${index};`, 20.5],
   ['`DiffReview`', `export { DiffReview } from ${index};`, 42.5],
-  ['`useDiffReview` (no markup)', `export { useDiffReview } from ${index};`, 15],
+  ['`useDiffReview` (no markup)', `export { useDiffReview } from ${index};`, 16],
   [
     '`AgentMessage` (with markdown, reasoning, timeline, approvals, sources)',
     `export { AgentMessage } from ${index};`,
-    82,
+    85.5,
   ],
   ['`useAgUiAgent` (`/ag-ui`)', `export * from ${JSON.stringify(join(dist, 'ag-ui.js'))};`, 3],
-  ['Everything in the main entry', `export * from ${index};`, 114.5],
+  ['Everything in the main entry', `export * from ${index};`, 122.5],
 ];
 
 const overBudget = [];

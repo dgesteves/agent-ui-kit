@@ -7,19 +7,21 @@ What each import adds to an app's JavaScript, minified and gzipped. React and Re
 | Import                                                             |  Gzipped |
 | ------------------------------------------------------------------ | -------: |
 | `addUsage`, `estimateCost` from `/core` (for a route handler)      |   0.4 kB |
-| `useAgUiAgent` from `/ag-ui`                                       |   2.8 kB |
+| `toToolApproval` from `/core` (approval rules in a route handler)  |   0.9 kB |
+| `useApprovalPolicy` (the rules without markup)                     |   1.9 kB |
+| `useAgUiAgent` from `/ag-ui`                                       |   2.9 kB |
 | `applyHunks`, `parseFileChange` from `/core` (with jsdiff)         |   6.6 kB |
-| `Sources`                                                          |   9.9 kB |
-| `AgentStatus`                                                      |  10.7 kB |
-| `RunMeter`                                                         |  11.9 kB |
-| `useDiffReview` (the review without markup)                        |  14.2 kB |
-| `ApprovalCard`                                                     |  14.5 kB |
-| `ToolCallTimeline`                                                 |  19.4 kB |
-| `DiffReview`                                                       |  40.2 kB |
-| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) |  78.0 kB |
-| Everything in the main entry                                       | 109.1 kB |
+| `Sources`                                                          |  10.3 kB |
+| `AgentStatus`                                                      |  11.2 kB |
+| `RunMeter`                                                         |  12.5 kB |
+| `useDiffReview` (the review without markup)                        |  15.4 kB |
+| `ApprovalCard`                                                     |  18.4 kB |
+| `ToolCallTimeline`                                                 |  20.1 kB |
+| `DiffReview`                                                       |  41.2 kB |
+| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) |  83.0 kB |
+| Everything in the main entry                                       | 116.8 kB |
 
-Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. CI runs it on every pull request, with a budget per row about 5% over its size. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 63.5 kB.
+Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. CI runs it on every pull request, with a budget per row about 5% over its size. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 64.0 kB. Each component carries the English labels of the sections it reads, not the others.
 
 `DiffReview`'s diff worker is a separate file the bundler emits, loaded only when a file is too large to diff while rendering: 18 kB minified, with jsdiff, in a Vite build.
 
@@ -48,18 +50,17 @@ Measured with `pnpm perf`, which CI runs on every pull request with a budget per
 - **Large rewrites.** A file changed in more places than `maxEditLength` is reviewed as one hunk that replaces the changed region, without word-level highlights; raise the limit to compare it line by line, at the square of the cost. Long changed lines skip word-level highlights rather than stall.
 - **Lines are commented on, not decided.** A review accepts or rejects whole hunks, or whole files. Lines can be selected to comment on, and the agent gets the comment with its lines, but a hunk cannot be applied in part.
 - **Patches without binaries.** `toPatch()` lists an accepted binary file as changed, without its contents, so `git apply` cannot apply that part; the file's own `content` in the result has it, when you passed contents.
-- **Approvals are once.** An approval answers one call. "Always allow" or per-session rules are not in the card yet; automatic decisions come from your `toolApproval` rules on the server, and the card shows them as "Auto-approved" or "Blocked by policy".
+- **Edited arguments and signed approvals.** With AI SDK 7's `experimental_toolApprovalSecret`, the server signs the arguments it asked about and refuses any other, so arguments edited before approving fail there by design. ACP's `request_permission` has no way to answer with edited arguments, nor a session option: `allow-session` answers `allow_once` and keeps the session rule on the client.
+- **Rules from the client.** Rules made in the browser are that person's choices. `toToolApproval` can apply them on the server, for that person's runs only; rules that protect other people belong on the server.
 - **Markdown cost while streaming.** The whole text is parsed again on every delta: about 8 ms at 5k characters, 24 ms at 20k and 67 ms at 50k (jsdom), so very long streamed answers can drop frames.
 - **Citation numbering.** `[n]` markers are numbered over the message's sources after de-duplication by URL (by source id for documents). If your prompt numbers a list of sources that contains duplicates, markers after the first duplicate point one source early. Number unique sources in the prompt.
 - **Run state comes from you.** Parts carry no signal that a run has ended, so tool calls left behind by `stop()` or an interrupted history read "Stopped" only when you pass `active={false}`. `deriveAgentState` reports such a run as `stopped`, which the quickstart's `active` condition covers.
 - **Sub-agents render flat.** A sub-agent's calls show inline in its parent's timeline, not as a nested run.
-- **English only.** Most labels are fixed English strings; a few, such as the approve and deny labels and the reason placeholder, are props.
+- **Words for the agent stay English.** Every word a person sees or hears is a [label](/docs/labels), but what goes to the model (`reviewToolOutput`'s summary, `toToolApproval`'s reasons) is English. Right-to-left layouts have not been tested.
 - **Nesting in slots.** With `styles.css`, a component rendered in a slot of a component that is itself in a slot is styled up to two levels deep; deeper than that it renders unstyled.
 
 ## What's next
 
 The next work is on review and approval:
 
-- Approval rules: once, always or for the session, scoped by tool or argument pattern; editing arguments before approving; approve all pending, with an audit trail; and a headless hook for AI SDK 7 `toolApproval`, AG-UI interrupts and the Agent Client Protocol's `request_permission`.
-- Labels for every string, for other languages.
 - Adapters: a documented assistant-ui binding, an AI Elements recipe, an Agent Client Protocol adapter, and AG-UI sub-agents as nested timelines.

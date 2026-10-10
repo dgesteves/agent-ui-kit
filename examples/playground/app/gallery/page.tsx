@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { DEMOS } from '@/components/demos';
+import type { ComponentType, ReactNode } from 'react';
+import { DEMOS, LabelsDemo } from '@/components/demos';
 import { ThemingDemo } from '@/components/demos/theming';
 import { ComponentInstall } from '@/components/docs/component-install';
 import { Footer } from '@/components/footer';
@@ -12,12 +12,21 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
   title: 'Components · signoff-ui',
   description:
-    'Every signoff-ui component in isolation: diff review and approval card first, then tool call timeline, status, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
+    'Every signoff-ui component in isolation: diff review and approval card first, then tool call timeline, status, run meter, sources, theming, labels in Portuguese, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
   path: '/gallery',
 });
 
 // Page order; each id is the section's anchor, which launch posts and the README link to.
-const SECTIONS: Array<{ id: string; slug?: string; heading: string; description: string }> = [
+interface GallerySection {
+  id: string;
+  /** The component's docs slug; without one, `guide` says where the section's docs are. */
+  slug?: string;
+  heading: string;
+  description: string;
+  guide?: { href: string; name: string; link: string; Demo: ComponentType };
+}
+
+const SECTIONS: GallerySection[] = [
   {
     id: 'diff-review',
     slug: 'diff-review',
@@ -36,7 +45,15 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
     id: 'approval-card',
     slug: 'approval-card',
     heading: '<ApprovalCard />',
-    description: 'Approve or deny a tool call, with what will run, its risk, a reason and Y / N shortcuts.',
+    description:
+      'Approve or deny a tool call once, for the session or always, with what will run, its risk, the arguments editable first, a reason and a key for each choice.',
+  },
+  {
+    id: 'use-approval-policy',
+    slug: 'use-approval-policy',
+    heading: 'useApprovalPolicy()',
+    description:
+      'Approval rules: answer once, for this session or always, by tool and argument pattern. The next call a rule covers is answered without asking, and every decision goes to the audit trail.',
   },
   {
     id: 'tool-call-timeline',
@@ -67,6 +84,14 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
     heading: 'Theming',
     description:
       'Every color, radius and font is a CSS variable. Light is the default, .dark switches, and any subtree can override tokens.',
+    guide: { href: '/docs/getting-started#theming', name: 'theming', link: 'Theming docs', Demo: ThemingDemo },
+  },
+  {
+    id: 'labels',
+    heading: 'Labels',
+    description:
+      'Every word the components show or announce is a label. Here the approval and the review are in Portuguese, from one SignoffLabelsProvider.',
+    guide: { href: '/docs/labels', name: 'labels', link: 'Labels docs', Demo: LabelsDemo },
   },
   {
     id: 'agent-message',
@@ -95,10 +120,10 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
   },
 ];
 
-function Section({ id, slug, heading, description }: (typeof SECTIONS)[number]) {
+function Section({ id, slug, heading, description, guide }: GallerySection) {
   const component = slug ? getComponent(slug) : undefined;
-  const Demo = slug ? DEMOS[slug] : ThemingDemo;
-  const docs = component ? componentHref(component.slug) : '/docs/getting-started#theming';
+  const Demo = slug ? DEMOS[slug] : guide?.Demo;
+  const docs = component ? componentHref(component.slug) : (guide?.href ?? '/docs');
   const frame: ReactNode = (
     <div data-shot={id} className="border-signoff-border bg-signoff-bg rounded-2xl border p-3 sm:p-6">
       {Demo ? <Demo /> : null}
@@ -117,8 +142,8 @@ function Section({ id, slug, heading, description }: (typeof SECTIONS)[number]) 
           href={docs}
           className="text-cyan-soft focus-visible:outline-cyan-soft inline-flex items-center gap-1 rounded-sm text-[13px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
-          {component ? 'Docs and props' : 'Theming docs'}
-          <span className="sr-only"> for {component?.name ?? 'theming'}</span>
+          {component ? 'Docs and props' : guide?.link}
+          <span className="sr-only"> for {component?.name ?? guide?.name}</span>
           <ArrowRightIcon className="size-3.5" />
         </Link>
       </div>

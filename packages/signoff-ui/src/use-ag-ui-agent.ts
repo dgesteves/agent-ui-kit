@@ -55,6 +55,11 @@ export interface UseAgUiAgentResult {
   /** Answer any interrupt with your own payload (match its `responseSchema`). */
   resolve: (entry: AgUiResumeEntry) => Promise<void>;
   /**
+   * Arguments a person edited for a tool call, sent as the approval's `input` when it is approved.
+   * Pass it as `AgentMessage`'s `onToolInputEdit`, so approval cards offer editing.
+   */
+  editInput: (toolCallId: string, input: unknown) => void;
+  /**
    * Abort the run in progress. It ends like a cancelled run: what was streaming stays cut off, which
    * `deriveAgentState` reads as `stopped`.
    */
@@ -73,6 +78,8 @@ function createStore(agent: AgUiAgentLike) {
   let snapshot: Snapshot = { messages: [...agent.messages], run: createAgUiRun(agent.pendingInterrupts) };
   const listeners = new Set<() => void>();
   let subscription: { unsubscribe(): void } | undefined;
+  /** Edited arguments by tool call id, until the approval that carries them is answered. */
+  const edits = new Map<string, unknown>();
   const set = (next: Partial<Snapshot>) => {
     snapshot = { ...snapshot, ...next };
     for (const listener of listeners) listener();
@@ -123,8 +130,19 @@ function createStore(agent: AgUiAgentLike) {
     },
     /** Record an answer; returns the resume entries once every open interrupt has one. */
     answer(response: AgUiApprovalResponse | AgUiResumeEntry) {
-      update((run) => answerAgUiInterrupt(run, response));
+      let answer = response;
+      if (!('interruptId' in response)) {
+        const toolCallId = snapshot.run.interrupts.find((i) => i.id === response.id)?.toolCallId;
+        if (toolCallId && edits.has(toolCallId)) {
+          if (response.approved && response.input === undefined) answer = { ...response, input: edits.get(toolCallId) };
+          edits.delete(toolCallId);
+        }
+      }
+      update((run) => answerAgUiInterrupt(run, answer));
       return getAgUiResume(snapshot.run);
+    },
+    editInput(toolCallId: string, input: unknown) {
+      edits.set(toolCallId, input);
     },
   };
 }
@@ -159,6 +177,7 @@ export function useAgUiAgent(agent: AgUiAgentLike): UseAgUiAgentResult {
     interrupts: run.interrupts,
     respond: answer,
     resolve: answer,
+    editInput: store.editInput,
     stop: useCallback(() => agent.abortRun?.(), [agent]),
   };
 }

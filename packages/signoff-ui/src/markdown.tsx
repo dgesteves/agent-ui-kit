@@ -9,6 +9,11 @@ import { getImagePolicy, isAllowedImage } from './lib/images';
 import { CodeLines, CopyButton, Img } from './lib/primitives';
 import { useScrollRegion } from './lib/scroll-region';
 import { cn } from './lib/utils';
+import { markdownLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels, WithLabels } from './labels';
+
+/** The labels' sections this module reads. */
+const LABELS = { markdown: markdownLabels };
 
 /* Minimal structural syntax-tree types, so the plugins need no @types packages. */
 interface TreeNode {
@@ -131,7 +136,8 @@ function textOf(node: ReactNode): string {
 
 /** A wide table scrolls sideways; while it does, the keyboard can reach it. */
 function ScrollableTable({ className, ...props }: ComponentPropsWithoutRef<'table'>) {
-  const scrollRef = useScrollRegion<HTMLDivElement>('Table');
+  const L = useLabels(LABELS);
+  const scrollRef = useScrollRegion<HTMLDivElement>(L.markdown.table);
   return (
     <div
       ref={scrollRef}
@@ -150,14 +156,15 @@ function CodeBlock({ children }: { children?: ReactNode }) {
       : '';
   const language = /language-([\w-]+)/.exec(className)?.[1] ?? 'text';
   const code = textOf(children).replace(/\n$/, '');
-  const scrollRef = useScrollRegion<HTMLPreElement>(language === 'text' ? 'Code' : `Code, ${language}`);
+  const L = useLabels(LABELS);
+  const scrollRef = useScrollRegion<HTMLPreElement>(L.markdown.code(language));
   return (
     <div className="group/code border-signoff-border bg-signoff-bg/70 relative my-3 overflow-hidden rounded-lg border">
       <div className="border-signoff-border flex items-center justify-between border-b px-3 py-1">
         <span className="font-signoff-mono text-signoff-fg-subtle text-[11px]">
-          {language === 'text' ? 'code' : language}
+          {language === 'text' ? L.markdown.codeBadge : language}
         </span>
-        <CopyButton text={code} label="Copy code" />
+        <CopyButton text={code} label={L.markdown.copyCode} />
       </div>
       <pre
         ref={scrollRef}
@@ -166,6 +173,28 @@ function CodeBlock({ children }: { children?: ReactNode }) {
         <CodeLines code={code} language={normalizeLanguage(language)} />
       </pre>
     </div>
+  );
+}
+
+/** A `[n]` marker, linking to its source. */
+function CitationLink({
+  href,
+  citation,
+  children,
+}: {
+  href?: string | undefined;
+  citation: string;
+  children?: ReactNode;
+}) {
+  const L = useLabels(LABELS);
+  return (
+    <a
+      href={href}
+      className="bg-signoff-accent/12 font-signoff-mono text-signoff-accent-fg hover:bg-signoff-accent/25 focus-visible:outline-signoff-ring mx-0.5 inline-flex h-4 min-w-4 -translate-y-px items-center justify-center rounded-[4px] px-1 align-middle text-[10px] font-semibold no-underline transition-colors focus-visible:outline-2 focus-visible:outline-offset-1"
+      aria-label={L.markdown.citation(citation)}
+    >
+      {children}
+    </a>
   );
 }
 
@@ -193,6 +222,7 @@ function MarkdownImage({
   inLink: boolean;
 }) {
   const policy = useContext(ImagePolicyContext);
+  const L = useLabels(LABELS);
   // Unsafe protocols, and images that are still streaming, arrive with an empty URL.
   if (!src) return alt ? <>{alt}</> : null;
   if (isAllowedImage(src, policy)) {
@@ -201,7 +231,7 @@ function MarkdownImage({
   const label = (
     <>
       <ImageIcon size={13} className="shrink-0 self-center" />
-      <span className="sr-only">Image:</span> {alt || 'image'}
+      <span className="sr-only">{L.markdown.image}</span> {alt || L.markdown.imageFallback}
     </>
   );
   if (inLink) {
@@ -302,13 +332,9 @@ const components: Components = {
     const citation = (props as Record<string, unknown>)['data-citation'];
     if (citation !== undefined) {
       return (
-        <a
-          href={href}
-          className="bg-signoff-accent/12 font-signoff-mono text-signoff-accent-fg hover:bg-signoff-accent/25 focus-visible:outline-signoff-ring mx-0.5 inline-flex h-4 min-w-4 -translate-y-px items-center justify-center rounded-[4px] px-1 align-middle text-[10px] font-semibold no-underline transition-colors focus-visible:outline-2 focus-visible:outline-offset-1"
-          aria-label={`Source ${String(citation)}`}
-        >
+        <CitationLink href={href} citation={String(citation)}>
           {children}
-        </a>
+        </CitationLink>
       );
     }
     const external = typeof href === 'string' && /^https?:\/\//.test(href);
@@ -394,6 +420,8 @@ export interface MarkdownProps {
   /** Element overrides, merged over the defaults. Keep the object stable: a new one re-renders the markdown. */
   components?: Components;
   className?: string;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. Keep the object stable. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 const sameList = (a: readonly string[] | undefined, b: readonly string[] | undefined) =>
@@ -422,6 +450,7 @@ export const Markdown = memo(function Markdown({
   allowedImageHosts,
   components: overrides,
   className,
+  labels,
 }: MarkdownProps) {
   const text = useMemo(
     () => (streaming ? remend(children, { linkMode: 'text-only' }) : children),
@@ -447,14 +476,16 @@ export const Markdown = memo(function Markdown({
     >
       {/* .Provider rather than React 19's <Context value>, so that React 18 renders it too. */}
       <ImagePolicyContext.Provider value={imagePolicy}>
-        <ReactMarkdown
-          // Plugin tuples are typed loosely by unified; the shapes above are correct.
-          remarkPlugins={remarkPlugins as never}
-          rehypePlugins={(streaming ? REHYPE_PLUGINS_STREAMING : REHYPE_PLUGINS) as never}
-          components={merged}
-        >
-          {text}
-        </ReactMarkdown>
+        <WithLabels labels={labels}>
+          <ReactMarkdown
+            // Plugin tuples are typed loosely by unified; the shapes above are correct.
+            remarkPlugins={remarkPlugins as never}
+            rehypePlugins={(streaming ? REHYPE_PLUGINS_STREAMING : REHYPE_PLUGINS) as never}
+            components={merged}
+          >
+            {text}
+          </ReactMarkdown>
+        </WithLabels>
       </ImagePolicyContext.Provider>
     </div>
   );

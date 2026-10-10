@@ -2,11 +2,15 @@
 
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { useState, type ComponentPropsWithoutRef } from 'react';
-import { formatDuration } from './lib/format';
 import { useActivityWindow } from './lib/hooks';
+import { reasoningLabels, formatLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels } from './labels';
 import { ChevronIcon, SparkIcon } from './lib/icons';
 import { cn } from './lib/utils';
 import { Markdown } from './markdown';
+
+/** The labels' sections this module reads. */
+const LABELS = { reasoning: reasoningLabels, format: formatLabels };
 
 export interface ReasoningProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   text: string;
@@ -19,6 +23,8 @@ export interface ReasoningProps extends Omit<ComponentPropsWithoutRef<'div'>, 'c
   onOpenChange?: ((open: boolean) => void) | undefined;
   /** Where images in the reasoning may load from: host names, `'self'` or `'*'`. See `MarkdownProps.allowedImageHosts`. */
   allowedImageHosts?: readonly string[] | undefined;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 /**
@@ -34,9 +40,11 @@ export function Reasoning({
   open: openProp,
   onOpenChange,
   allowedImageHosts,
+  labels,
   className,
   ...props
 }: ReasoningProps) {
+  const L = useLabels(LABELS, labels);
   const [openState, setOpenState] = useState(defaultOpen ?? streaming);
   const [touched, setTouched] = useState(false);
   const [prevStreaming, setPrevStreaming] = useState(streaming);
@@ -53,10 +61,10 @@ export function Reasoning({
       : undefined;
   const duration = durationMs ?? measured;
   const label = streaming
-    ? 'Thinking'
+    ? L.reasoning.thinking
     : duration !== undefined
-      ? `Thought for ${formatDuration(duration)}`
-      : 'Reasoning';
+      ? L.reasoning.thoughtFor(L.format.duration(duration))
+      : L.reasoning.reasoning;
 
   return (
     <Collapsible.Root
@@ -93,6 +101,7 @@ export function Reasoning({
           <Markdown
             streaming={streaming}
             allowedImageHosts={allowedImageHosts}
+            labels={labels}
             className="text-signoff-fg-muted text-[13px] leading-relaxed"
           >
             {text}

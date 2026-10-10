@@ -2,12 +2,16 @@
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import type { RunUsage } from './lib/ai';
-import { formatCost, formatDuration, formatTokens } from './lib/format';
+import { runMeterLabels, formatLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels } from './labels';
 import { useAnimatedNumber } from './lib/hooks';
 import { useScrollRegion } from './lib/scroll-region';
 import { ArrowDownIcon, ArrowUpIcon } from './lib/icons';
 import { estimateCost, type ModelPricing } from './lib/usage';
 import { cn, type HeadingLevel } from './lib/utils';
+
+/** The labels' sections this module reads. */
+const LABELS = { runMeter: runMeterLabels, format: formatLabels };
 
 export type { RunUsage };
 export type { CostBreakdown, ModelPricing } from './lib/usage';
@@ -26,10 +30,12 @@ export interface RunMeterProps extends Omit<ComponentPropsWithoutRef<'div'>, 'ch
   live?: boolean;
   model?: string | undefined;
   variant?: 'compact' | 'expanded';
-  /** Heading for the expanded variant. Default "Run". */
+  /** Heading for the expanded variant. Default "Run" (`labels.runMeter.title`). */
   title?: ReactNode;
   /** Heading level for the expanded variant's title. Default 3. */
   headingLevel?: HeadingLevel;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 function Num({ value, format }: { value: number | undefined; format: (n: number) => string }) {
@@ -52,11 +58,16 @@ export function RunMeter({
   live = false,
   model,
   variant = 'compact',
-  title = 'Run',
+  title: titleProp,
   headingLevel = 3,
+  labels,
   className,
   ...props
 }: RunMeterProps) {
+  const L = useLabels(LABELS, labels);
+  const { duration: formatDuration, tokens: formatTokens, cost: formatCost } = L.format;
+  const M = L.runMeter;
+  const title = titleProp ?? M.title;
   const Heading = `h${headingLevel}` as const;
   // The compact strip scrolls sideways in a narrow space; it's already a named group.
   const stripRef = useScrollRegion<HTMLDivElement>();
@@ -69,15 +80,13 @@ export function RunMeter({
   // Share of input tokens served from the provider's prompt cache: the main cost lever for agents.
   const cacheHit = input && cached !== undefined ? cached / input : undefined;
 
-  const summary = [
-    `${formatTokens(input)} input tokens`,
-    `${formatTokens(output)} output tokens`,
-    totalCost !== undefined ? `estimated cost ${formatCost(totalCost)}` : undefined,
-    ttftMs !== undefined ? `time to first token ${formatDuration(ttftMs)}` : undefined,
-    durationMs !== undefined ? `total ${formatDuration(durationMs)}` : undefined,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const summary = M.summary({
+    input: formatTokens(input),
+    output: formatTokens(output),
+    cost: totalCost !== undefined ? formatCost(totalCost) : undefined,
+    ttft: ttftMs !== undefined ? formatDuration(ttftMs) : undefined,
+    total: durationMs !== undefined ? formatDuration(durationMs) : undefined,
+  });
 
   if (variant === 'compact') {
     const item = 'flex items-center gap-1.5 px-2.5 first:pl-0 last:pr-0';
@@ -88,7 +97,7 @@ export function RunMeter({
         data-slot="signoff-run-meter"
         data-variant="compact"
         role="group"
-        aria-label={`Run metrics${live ? ' (live)' : ''}`}
+        aria-label={M.metrics(live)}
         className={cn(
           'divide-signoff-border font-signoff-mono text-signoff-fg-muted focus-visible:outline-signoff-ring inline-flex w-fit max-w-full items-center divide-x overflow-x-auto text-xs whitespace-nowrap tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2',
           className,
@@ -96,33 +105,33 @@ export function RunMeter({
         {...props}
       >
         <span className="sr-only">{summary}</span>
-        <span aria-hidden="true" className={item} title="Input tokens">
+        <span aria-hidden="true" className={item} title={M.inputTokens}>
           <ArrowUpIcon size={12} className="text-signoff-chart-input" />
           <span className="text-signoff-fg">
             <Num value={input} format={formatTokens} />
           </span>
         </span>
-        <span aria-hidden="true" className={item} title="Output tokens">
+        <span aria-hidden="true" className={item} title={M.outputTokens}>
           <ArrowDownIcon size={12} className="text-signoff-chart-output" />
           <span className="text-signoff-fg">
             <Num value={output} format={formatTokens} />
           </span>
         </span>
         {totalCost !== undefined && (
-          <span aria-hidden="true" className={item} title="Estimated cost">
+          <span aria-hidden="true" className={item} title={M.estimatedCost}>
             <span className="text-signoff-fg">
               <Num value={totalCost} format={formatCost} />
             </span>
           </span>
         )}
         {ttftMs !== undefined && (
-          <span aria-hidden="true" className={item} title="Time to first token">
-            <span className="text-signoff-fg-subtle">TTFT</span>
+          <span aria-hidden="true" className={item} title={M.timeToFirstToken}>
+            <span className="text-signoff-fg-subtle">{M.ttft}</span>
             <span className="text-signoff-fg">{formatDuration(ttftMs)}</span>
           </span>
         )}
         {durationMs !== undefined && (
-          <span aria-hidden="true" className={item} title="Total time">
+          <span aria-hidden="true" className={item} title={M.totalTime}>
             {live && <span className="bg-signoff-accent size-1.5 rounded-full motion-safe:animate-pulse" />}
             <span className="text-signoff-fg">{formatDuration(durationMs)}</span>
           </span>
@@ -154,7 +163,7 @@ export function RunMeter({
         {live && (
           <span className="bg-signoff-accent/10 text-signoff-accent-fg inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">
             <span className="bg-signoff-accent size-1.5 rounded-full motion-safe:animate-pulse" />
-            Live
+            {M.live}
           </span>
         )}
         {model && (
@@ -164,13 +173,13 @@ export function RunMeter({
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
         <div>
-          <dt className={label}>Tokens</dt>
+          <dt className={label}>{M.tokens}</dt>
           <dd className={value}>
             <Num value={tokenTotal || undefined} format={formatTokens} />
           </dd>
         </div>
         <div>
-          <dt className={label}>Est. cost</dt>
+          <dt className={label}>{M.estCost}</dt>
           <dd className={value}>{totalCost !== undefined ? <Num value={totalCost} format={formatCost} /> : '–'}</dd>
         </div>
       </dl>
@@ -179,7 +188,7 @@ export function RunMeter({
         <div
           aria-hidden="true"
           className="bg-signoff-surface-2 flex h-2 w-full gap-0.5 overflow-hidden rounded-[4px]"
-          title={`Input ${formatTokens(input)} · Output ${formatTokens(output)}`}
+          title={M.split(formatTokens(input), formatTokens(output))}
         >
           {tokenTotal > 0 && (
             <>
@@ -191,46 +200,45 @@ export function RunMeter({
             </>
           )}
         </div>
-        <ul className="text-signoff-fg-muted mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" aria-label="Token breakdown">
+        <ul className="text-signoff-fg-muted mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" aria-label={M.breakdown}>
           <li className="flex items-center gap-1.5">
             <span aria-hidden="true" className="bg-signoff-chart-input size-2 rounded-[2px]" />
-            Input <span className="font-signoff-mono text-signoff-fg tabular-nums">{formatTokens(input)}</span>
-            {cached ? <span className="text-signoff-fg-subtle">({formatTokens(cached)} cached)</span> : null}
+            {M.input} <span className="font-signoff-mono text-signoff-fg tabular-nums">{formatTokens(input)}</span>
+            {cached ? <span className="text-signoff-fg-subtle">{M.cached(formatTokens(cached))}</span> : null}
           </li>
           <li className="flex items-center gap-1.5">
             <span aria-hidden="true" className="bg-signoff-chart-output size-2 rounded-[2px]" />
-            Output <span className="font-signoff-mono text-signoff-fg tabular-nums">{formatTokens(output)}</span>
-            {reasoning ? <span className="text-signoff-fg-subtle">({formatTokens(reasoning)} reasoning)</span> : null}
+            {M.output} <span className="font-signoff-mono text-signoff-fg tabular-nums">{formatTokens(output)}</span>
+            {reasoning ? (
+              <span className="text-signoff-fg-subtle">{M.reasoningTokens(formatTokens(reasoning))}</span>
+            ) : null}
           </li>
         </ul>
       </div>
 
       <dl className="border-signoff-border mt-4 grid grid-cols-3 gap-x-3 border-t pt-3">
         <div>
-          <dt className={label}>TTFT</dt>
+          <dt className={label}>{M.ttft}</dt>
           <dd className="font-signoff-mono text-signoff-fg text-sm tabular-nums">{formatDuration(ttftMs)}</dd>
         </div>
         <div>
-          <dt className={label}>Total</dt>
+          <dt className={label}>{M.total}</dt>
           <dd className="font-signoff-mono text-signoff-fg text-sm tabular-nums">{formatDuration(durationMs)}</dd>
         </div>
         <div>
-          <dt className={label}>Cache hit</dt>
+          <dt className={label}>{M.cacheHit}</dt>
           <dd className="font-signoff-mono text-signoff-fg text-sm tabular-nums">
-            {cacheHit !== undefined ? `${Math.round(cacheHit * 100)}%` : '–'}
+            {cacheHit !== undefined ? L.format.percent(cacheHit) : '–'}
           </dd>
         </div>
       </dl>
       {breakdown && (
         <p className="text-signoff-fg-subtle mt-3 text-[11px]">
-          {formatCost(breakdown.input + breakdown.cachedInput + breakdown.cacheWrite)} input ·{' '}
-          {formatCost(breakdown.output)} output
-          {pricing && (
-            <>
-              {' '}
-              · ${pricing.input}/${pricing.output} per 1M
-            </>
+          {M.costSplit(
+            formatCost(breakdown.input + breakdown.cachedInput + breakdown.cacheWrite),
+            formatCost(breakdown.output),
           )}
+          {pricing && <> · {M.rates(pricing.input, pricing.output)}</>}
         </p>
       )}
     </div>

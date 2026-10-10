@@ -4,8 +4,12 @@ export { AgentMessage, type AgentMessageProps } from './agent-message';
 export { AgentStatus, AgentStatusDot, type AgentStatusProps } from './agent-status';
 export {
   ApprovalCard,
+  approvalRequestOf,
+  ToolApprovalBatch,
   ToolApprovalCard,
   type ApprovalCardProps,
+  type ApprovalChoice,
+  type ToolApprovalBatchProps,
   type ToolApprovalCardProps,
   type ToolApprovalResponse,
 } from './approval-card';
@@ -19,6 +23,16 @@ export {
   type UseDiffReviewOptions,
   type UseDiffReviewResult,
 } from './use-diff-review';
+export {
+  memoryRuleStorage,
+  useApprovalPolicy,
+  webStorageRules,
+  type ApprovalAuditEvent,
+  type ApprovalOutcome,
+  type ApprovalPolicy,
+  type ApprovalRuleStorage,
+  type UseApprovalPolicyOptions,
+} from './use-approval-policy';
 export { Markdown, type MarkdownProps } from './markdown';
 export { Reasoning, type ReasoningProps } from './reasoning';
 export { RunMeter, type RunMeterProps } from './run-meter';
@@ -31,6 +45,7 @@ export {
   type ToolMeta,
 } from './tool-call-timeline';
 export { JsonView, type JsonViewProps } from './lib/primitives';
+export { SignoffLabelsProvider, useSignoffLabels } from './labels';
 export {
   useActivityWindow,
   useHydrated,

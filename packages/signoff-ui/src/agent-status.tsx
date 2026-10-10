@@ -1,18 +1,22 @@
 'use client';
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
-import { AGENT_STATE_LABEL, type AgentState } from './lib/ai';
-import { formatDuration } from './lib/format';
+import type { AgentState } from './lib/ai';
+import { agentStatusLabels, formatLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels } from './labels';
 import { useHydrated, useNow } from './lib/hooks';
 import { AlertIcon, CheckIcon, SparkIcon, SpinnerIcon } from './lib/icons';
 import { LiveRegion, useDebouncedValue } from './lib/primitives';
 import { cn } from './lib/utils';
 
+/** The labels' sections this module reads. */
+const LABELS = { agentStatus: agentStatusLabels, format: formatLabels };
+
 export type { AgentState };
 
 export interface AgentStatusProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children'> {
   state: AgentState;
-  /** Overrides the default label for the state. */
+  /** Overrides the state's name (`labels.agentStatus.states`). */
   label?: string | undefined;
   /** Secondary detail, e.g. the tool being run. */
   detail?: string | undefined;
@@ -23,6 +27,8 @@ export interface AgentStatusProps extends Omit<ComponentPropsWithoutRef<'div'>, 
   /** Announce state changes to assistive tech. Default `true`. */
   announce?: boolean;
   size?: 'sm' | 'md';
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 const ACTIVE: AgentState[] = ['thinking', 'working'];
@@ -72,15 +78,17 @@ export function AgentStatus({
   elapsedMs,
   announce = true,
   size = 'md',
+  labels,
   className,
   ...props
 }: AgentStatusProps) {
+  const L = useLabels(LABELS, labels);
   const active = ACTIVE.includes(state);
   const now = useNow(active && startedAt !== undefined && elapsedMs === undefined, 100);
   const hydrated = useHydrated();
   const elapsed = elapsedMs ?? (startedAt !== undefined && hydrated ? Math.max(0, now - startedAt) : undefined);
-  const text = label ?? AGENT_STATE_LABEL[state];
-  const spoken = detail ? `${text}: ${detail}` : text;
+  const text = label ?? L.agentStatus.states[state];
+  const spoken = L.agentStatus.spoken(text, detail);
   const urgent = state === 'error' || state === 'awaiting-approval';
   const debounced = useDebouncedValue(spoken, 350);
   const debouncedUrgent = useDebouncedValue(urgent, 350);
@@ -118,7 +126,7 @@ export function AgentStatus({
       )}
       {elapsed !== undefined && state !== 'idle' && (
         <span className="font-signoff-mono text-signoff-fg-subtle text-[0.92em] font-normal tabular-nums">
-          {formatDuration(elapsed)}
+          {L.format.duration(elapsed)}
         </span>
       )}
       {announce && (

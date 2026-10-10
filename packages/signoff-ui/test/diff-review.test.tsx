@@ -290,8 +290,8 @@ describe('DiffReview', () => {
     const user = userEvent.setup();
     const { container } = render(<DiffReview files={files} />);
     expect(container.querySelector('.grid-cols-\\[minmax\\(0\\,1fr\\)_1px_minmax\\(0\\,1fr\\)\\]')).toBeNull();
-    await user.click(screen.getByRole('radio', { name: 'split' }));
-    expect(screen.getByRole('radio', { name: 'split' })).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('radio', { name: 'Split' }));
+    expect(screen.getByRole('radio', { name: 'Split' })).toHaveAttribute('aria-checked', 'true');
     expect(container.querySelectorAll('[data-line="add"]').length).toBeGreaterThan(0);
     expect(container.querySelector('.grid-cols-\\[minmax\\(0\\,1fr\\)_1px_minmax\\(0\\,1fr\\)\\]')).not.toBeNull();
   });

@@ -13,6 +13,11 @@ import { CheckIcon, CopyIcon } from './icons';
 import { safeStringify } from './format';
 import { TOKEN_CLASS, tokenizeLine } from './highlight';
 import { cn } from './utils';
+import { commonLabels, type SignoffLabelsInput } from './labels';
+import { useLabels, WithLabels } from '../labels';
+
+/** The labels' sections this module reads. */
+const LABELS = { common: commonLabels };
 
 /**
  * An <img> for images from messages, written without JSX. Next.js' `no-img-element` lint rule
@@ -67,7 +72,8 @@ export function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-export function CopyButton({ text, label = 'Copy', className }: { text: string; label?: string; className?: string }) {
+export function CopyButton({ text, label, className }: { text: string; label: string; className?: string }) {
+  const L = useLabels(LABELS);
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -84,7 +90,7 @@ export function CopyButton({ text, label = 'Copy', className }: { text: string; 
           // Clipboard can be unavailable (permissions, insecure context); fail quietly.
         }
       }}
-      aria-label={copied ? 'Copied' : label}
+      aria-label={copied ? L.common.copied : label}
       className={cn(
         'text-signoff-fg-subtle hover:bg-signoff-surface-2 hover:text-signoff-fg focus-visible:outline-signoff-ring inline-flex size-7 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-1',
         className,
@@ -120,10 +126,13 @@ export interface JsonViewProps {
   /** Lines shown before "Show all" collapses the rest. */
   collapseAfter?: number;
   className?: string;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 /** Read-only JSON with light syntax tinting, a copy button and long-output folding. */
-export function JsonView({ value, label, collapseAfter = 24, className }: JsonViewProps) {
+export function JsonView({ value, label, collapseAfter = 24, className, labels }: JsonViewProps) {
+  const L = useLabels(LABELS, labels);
   const text = useMemo(() => (typeof value === 'string' ? value : safeStringify(value)), [value]);
   const language = typeof value === 'string' ? 'text' : 'json';
   const lineCount = useMemo(() => text.split('\n').length, [text]);
@@ -141,7 +150,9 @@ export function JsonView({ value, label, collapseAfter = 24, className }: JsonVi
         <CodeLines code={shown} language={language} />
       </pre>
       <div className="absolute top-1.5 right-1.5 opacity-0 transition-opacity group-focus-within/json:opacity-100 group-hover/json:opacity-100 [@media(hover:none)]:opacity-100">
-        <CopyButton text={text} label={`Copy ${label.toLowerCase()}`} />
+        <WithLabels labels={labels}>
+          <CopyButton text={text} label={L.common.copyThe(label)} />
+        </WithLabels>
       </div>
       {lineCount > collapseAfter && (
         <button
@@ -149,7 +160,7 @@ export function JsonView({ value, label, collapseAfter = 24, className }: JsonVi
           onClick={() => setShowAll((v) => !v)}
           className="font-signoff-mono text-signoff-fg-subtle hover:text-signoff-fg focus-visible:outline-signoff-ring mt-1.5 cursor-pointer rounded text-[11px] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
         >
-          {showAll ? 'Show less' : `Show all ${lineCount} lines`}
+          {showAll ? L.common.showLess : L.common.showAllLines(lineCount)}
         </button>
       )}
     </div>
