@@ -26,16 +26,18 @@ const rows = [
   ['`Sources`', `export { Sources } from ${index};`, 10.5],
   ['`AgentStatus`', `export { AgentStatus, deriveAgentState } from ${index};`, 11],
   ['`RunMeter`', `export { RunMeter, useRunTiming } from ${index};`, 12.5],
-  ['`ApprovalCard`', `export { ApprovalCard, ToolApprovalCard } from ${index};`, 15],
+  ['`ApprovalCard`', `export { ApprovalCard, ToolApprovalCard } from ${index};`, 18.5],
+  ['`useApprovalPolicy` (no markup)', `export { useApprovalPolicy } from ${index};`, 2],
+  ['`toToolApproval` (`/core`, for a route)', `export { toToolApproval } from ${core};`, 1],
   ['`ToolCallTimeline`', `export { ToolCallTimeline } from ${index};`, 20.5],
   ['`DiffReview`', `export { DiffReview } from ${index};`, 30],
   [
     '`AgentMessage` (with markdown, reasoning, timeline, approvals, sources)',
     `export { AgentMessage } from ${index};`,
-    82,
+    85.5,
   ],
   ['`useAgUiAgent` (`/ag-ui`)', `export * from ${JSON.stringify(join(dist, 'ag-ui.js'))};`, 3],
-  ['Everything in the main entry', `export * from ${index};`, 101],
+  ['Everything in the main entry', `export * from ${index};`, 107.5],
 ];
 
 const overBudget = [];

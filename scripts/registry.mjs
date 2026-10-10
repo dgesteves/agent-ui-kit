@@ -28,7 +28,14 @@ const ITEMS = [
     entry: 'approval-card.tsx',
     title: 'Approval Card',
     description:
-      'Approve or deny a tool call: an args preview, risk levels, a denial reason, keyboard shortcuts, and automatic decisions shown as such.',
+      'Approve or deny a tool call once, for the session or always, by tool and argument pattern: an args preview, editable arguments, risk levels, a denial reason, a key per choice, approve all pending.',
+  },
+  {
+    name: 'use-approval-policy',
+    entry: 'use-approval-policy.ts',
+    title: 'useApprovalPolicy',
+    description:
+      'Approval rules without markup: once, session or always, by tool and argument glob, deny winning; pluggable storage, an audit trail, and the same rules as AI SDK 7 toolApproval.',
   },
   {
     name: 'agent-message',

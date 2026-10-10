@@ -1,13 +1,13 @@
 'use client';
 
-import { ApprovalCard } from 'signoff-ui';
+import { ApprovalCard, APPROVAL_DECISIONS, type ApprovalChoice } from 'signoff-ui';
 import { useState } from 'react';
 
 export function ApprovalCardDemo() {
-  const [status, setStatus] = useState<'pending' | 'approved' | 'denied'>('pending');
-  const [reason, setReason] = useState<string>();
+  const [choice, setChoice] = useState<ApprovalChoice>();
+  const status = !choice ? 'pending' : choice.decision.startsWith('allow') ? 'approved' : 'denied';
   return (
-    <div className="max-w-2xl">
+    <div className="flex max-w-2xl flex-col gap-3">
       <ApprovalCard
         toolName="run_command"
         title="Run command"
@@ -15,24 +15,25 @@ export function ApprovalCardDemo() {
         input={{ command: 'pnpm add @upstash/ratelimit', cwd: '~/acme/chat-app' }}
         risk="high"
         status={status}
-        reason={reason}
-        onApprove={() => setStatus('approved')}
-        onDeny={(why) => {
-          setReason(why);
-          setStatus('denied');
-        }}
+        reason={choice?.reason}
+        decision={choice?.decision}
+        // Once, for this session or always, the arguments editable first.
+        decisions={APPROVAL_DECISIONS}
+        editable
+        onDecide={setChoice}
       />
-      {status !== 'pending' && (
-        <button
-          type="button"
-          onClick={() => {
-            setStatus('pending');
-            setReason(undefined);
-          }}
-          className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring mt-3 cursor-pointer rounded-sm text-xs underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          Reset
-        </button>
+      {choice && (
+        <p className="text-fg-muted text-xs">
+          <code className="font-mono">onDecide</code> got{' '}
+          <code className="text-fg-soft font-mono break-all">{JSON.stringify(choice)}</code>.{' '}
+          <button
+            type="button"
+            onClick={() => setChoice(undefined)}
+            className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-sm underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            Reset
+          </button>
+        </p>
       )}
     </div>
   );

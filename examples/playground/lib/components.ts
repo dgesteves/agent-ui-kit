@@ -107,38 +107,97 @@ export const COMPONENTS: ComponentDoc[] = [
         props: 'ToolApprovalCardProps',
         defaults: { file: 'approval-card.tsx', functions: ['ToolApprovalCard', 'ApprovalCard'] },
       },
+      {
+        name: 'ToolApprovalBatch',
+        props: 'ToolApprovalBatchProps',
+        defaults: { file: 'approval-card.tsx', functions: ['ToolApprovalBatch'] },
+      },
     ],
-    types: ['ToolApprovalResponse', 'RiskLevel', 'ApprovalStatus'],
+    types: ['ApprovalChoice', 'ApprovalDecision', 'ToolApprovalResponse', 'RiskLevel', 'ApprovalStatus'],
     imports: {
-      npm: npm('ApprovalCard, ToolApprovalCard'),
-      shadcn: shadcn('ApprovalCard, ToolApprovalCard', 'approval-card'),
+      npm: npm('ApprovalCard, ToolApprovalCard, ToolApprovalBatch'),
+      shadcn: shadcn('ApprovalCard, ToolApprovalCard, ToolApprovalBatch', 'approval-card'),
     },
-    usage: `// Bound to an AI SDK tool part in the approval flow:
-<ToolApprovalCard part={part} onRespond={addToolApprovalResponse} risk="high" autoFocus />
+    usage: `// Bound to an AI SDK tool part in the approval flow, with rules from useApprovalPolicy:
+<ToolApprovalCard
+  part={part}
+  onRespond={addToolApprovalResponse}
+  policy={policy}
+  // Edit the arguments before approving (AI SDK 7: the call runs with the edited input).
+  onEditInput={(id, input) => setMessages((m) => setToolInput(m, id, input))}
+  risk="high"
+/>
 
-// Or on its own:
+// Or on its own, with every choice:
 <ApprovalCard
   toolName="run_command"
   input={{ command: 'pnpm add @upstash/ratelimit' }}
   risk="high"
-  onApprove={() => approve()}
-  onDeny={(reason) => deny(reason)}
+  decisions={['allow-once', 'allow-session', 'allow-always', 'deny-once', 'deny-always']}
+  editable
+  onDecide={({ decision, reason, input, args }) => answer(decision, { reason, input, args })}
 />`,
     keyboard: [
-      { keys: ['Y'], action: 'Approve' },
+      { keys: ['Y'], action: 'Approve, once' },
+      { keys: ['S'], action: 'Approve for this session, when offered' },
+      { keys: ['A'], action: 'Always approve, when offered' },
       { keys: ['N'], action: 'Deny' },
+      { keys: ['⇧N'], action: 'Always deny, when offered' },
       { keys: ['⌘/Ctrl', '↵'], action: 'Approve (page-wide with `globalShortcut`)' },
       { keys: ['Esc'], action: 'Close the reason field and return to the card' },
     ],
     accessibility: [
-      'A group named by its title and described by its description and a visually hidden line that spells out the shortcuts. It is not a landmark, so a run with many approvals doesn’t fill landmark navigation; pass `role="region"` to make it one.',
-      'Y and N only work while focus is inside the card, with no modifier and not while typing, which keeps them within WCAG 2.1.4. The buttons carry `aria-keyshortcuts`.',
-      '`critical` actions need a second press within four seconds, and say so: "Critical action. Press approve again to confirm."',
-      'Deciding announces "Approved" or "Denied" and moves focus to the card, so it isn’t lost when the buttons go away; the announcement then clears, so the decided card reads its outcome once. `autoFocus` puts focus on a card that arrives pending.',
-      'Each pending approval sends one decision: a double click, or Y then N, is ignored until `status` changes or the handler’s promise settles.',
+      'A group named by its title and described by its description and a visually hidden line that spells out the shortcuts on offer. It is not a landmark, so a run with many approvals doesn’t fill landmark navigation; pass `role="region"` to make it one.',
+      'Every choice is a button with its key in `aria-keyshortcuts`. Y, S, A, N and Shift+N only work while focus is inside the card, with no other modifier and not while typing, which keeps them within WCAG 2.1.4.',
+      'A lasting choice says what it will cover, in a labelled group: the tool, and a text field per argument pattern ("command matches"), or "Any arguments".',
+      'Editing arguments opens a form with a labelled field per argument, or a JSON text area; JSON that does not parse is marked `aria-invalid`, its error is the field’s description, and approving says "The arguments are not valid JSON." instead of approving.',
+      '`critical` actions need a second press of the same choice within four seconds, and say so: "Critical action. Press approve again to confirm." Approve all asks for one when any of the calls is critical.',
+      'Deciding announces the outcome ("Approved for this session") and moves focus to the card, so it isn’t lost when the buttons go away; the announcement then clears, so the decided card reads its outcome once. `autoFocus` puts focus on a card that arrives pending.',
+      'Each pending approval sends one decision: a double click, or Y then N, is ignored until `status` changes or the handler’s promise settles. A call a rule decides is answered without showing a card, and reads "Allowed by your rule" with the rule once it is.',
       'The risk level is spelled out, not shown by color alone, and only when you give one: without `risk` the card shows none rather than guessing. `headingLevel` fits the title into your outline.',
     ],
-    stateTypes: { 'data-status': 'ApprovalStatus', 'data-risk': 'RiskLevel' },
+    stateTypes: { 'data-status': 'ApprovalStatus', 'data-risk': 'RiskLevel', 'data-decision': 'ApprovalDecision' },
+  },
+  {
+    slug: 'use-approval-policy',
+    name: 'useApprovalPolicy',
+    summary:
+      'Approval rules: once, for the session or always, by tool and argument pattern, with storage and an audit trail.',
+    galleryId: 'use-approval-policy',
+    item: 'use-approval-policy',
+    file: 'use-approval-policy.ts',
+    api: [{ name: 'useApprovalPolicy', parameters: 'UseApprovalPolicyOptions', returns: 'ApprovalPolicy' }],
+    types: [
+      'ApprovalRule',
+      'ApprovalDecision',
+      'ApprovalRequest',
+      'ApprovalOutcome',
+      'ApprovalAuditEvent',
+      'ApprovalRuleStorage',
+    ],
+    imports: {
+      npm: npm('useApprovalPolicy, webStorageRules, setToolInput'),
+      shadcn: shadcn('useApprovalPolicy, webStorageRules', 'use-approval-policy'),
+    },
+    usage: `const storage = webStorageRules(); // once, outside the component
+
+function Run() {
+  const { messages, setMessages, addToolApprovalResponse } = useChat();
+  const policy = useApprovalPolicy({ storage, onAudit: (event) => log(event) });
+  return messages.map((m) => (
+    <AgentMessage
+      key={m.id}
+      message={m}
+      onToolApproval={addToolApprovalResponse}
+      approvalPolicy={policy}
+      onToolInputEdit={(id, input) => setMessages((all) => setToolInput(all, id, input))}
+    />
+  ));
+}`,
+    accessibility: [
+      'A hook with no markup of its own: `ApprovalCard`, `ToolApprovalCard` and `ToolApprovalBatch` carry the behavior on their pages.',
+      'A call a rule decides is answered without a prompt that would take focus, and reads "Allowed by your rule" or "Denied by your rule" with the rule in words.',
+    ],
   },
   {
     slug: 'agent-message',

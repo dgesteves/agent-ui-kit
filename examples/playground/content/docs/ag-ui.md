@@ -55,41 +55,42 @@ export async function send(text: string) {
 
 Create the agent once, outside the component or in a `useMemo`: the hook subscribes to the instance it's given.
 
-| Returns      | What it is                                                                  |
-| ------------ | --------------------------------------------------------------------------- |
-| `messages`   | The conversation as AI SDK `UIMessage`s: pass each to `AgentMessage`        |
-| `status`     | `useChat`-style status, for `deriveAgentState` and `AgentStatus`            |
-| `error`      | The run's error, if it failed                                               |
-| `usage`      | Token usage summed over the runs seen, for `RunMeter`                       |
-| `step`       | The step in progress, such as the LangGraph node running                    |
-| `interrupts` | Open interrupts; those bound to a tool call show as approval cards          |
-| `respond`    | Answers a tool-call interrupt; pass it as `AgentMessage`'s `onToolApproval` |
-| `resolve`    | Answers any interrupt with your own payload                                 |
-| `stop`       | Aborts the run in progress; it ends as cancelled, so it reads as `stopped`  |
+| Returns      | What it is                                                                      |
+| ------------ | ------------------------------------------------------------------------------- |
+| `messages`   | The conversation as AI SDK `UIMessage`s: pass each to `AgentMessage`            |
+| `status`     | `useChat`-style status, for `deriveAgentState` and `AgentStatus`                |
+| `error`      | The run's error, if it failed                                                   |
+| `usage`      | Token usage summed over the runs seen, for `RunMeter`                           |
+| `step`       | The step in progress, such as the LangGraph node running                        |
+| `interrupts` | Open interrupts; those bound to a tool call show as approval cards              |
+| `respond`    | Answers a tool-call interrupt; pass it as `AgentMessage`'s `onToolApproval`     |
+| `resolve`    | Answers any interrupt with your own payload                                     |
+| `editInput`  | Arguments a person edited, sent with the approval; pass it as `onToolInputEdit` |
+| `stop`       | Aborts the run in progress; it ends as cancelled, so it reads as `stopped`      |
 
 ## How events map
 
-| AG-UI 1.0                                                           | Becomes                                                                                         |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| user message                                                        | `user` message with `text` parts, images and documents as `file` parts                          |
-| the assistant, reasoning, tool and activity messages that follow it | one `assistant` message, the way the AI SDK groups a multi-step run                             |
-| `TEXT_MESSAGE_*`, `REASONING_*`                                     | `text` and `reasoning` parts, `state: 'streaming'` until their end event                        |
-| `TOOL_CALL_START`, `TOOL_CALL_ARGS`                                 | `dynamic-tool` part, `input-streaming`, with the arguments parsed as they arrive                |
-| `TOOL_CALL_END`                                                     | `input-available`                                                                               |
-| `TOOL_CALL_RESULT`, tool message                                    | `output-available` (JSON results parsed), or `output-error` with the tool message's `error`     |
-| `RUN_FINISHED` with an `interrupt` outcome bound to a tool call     | `approval-requested`, the interrupt's `message` as `approval.requestReason`                     |
-| `respond({ id, approved, reason })`                                 | `approval-responded` or `output-denied`; the agent resumes with `payload: { approved, reason }` |
-| `RUN_STARTED`, content, `RUN_FINISHED`, `RUN_ERROR`                 | `status`: `submitted`, `streaming`, then `ready` or `error`                                     |
-| `RUN_FINISHED` with a `cancelled` outcome, or `stop()`              | `status: 'ready'`, with what was streaming left cut off: `deriveAgentState` reads `stopped`     |
-| `usage` on `RUN_FINISHED` and `RUN_ERROR`                           | `usage`, summed over runs, with cache and reasoning tokens                                      |
-| `STEP_STARTED`                                                      | `step`                                                                                          |
-| activity message                                                    | a `data-${activityType}` part, rendered by `renderData`                                         |
+| AG-UI 1.0                                                           | Becomes                                                                                                                                                       |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| user message                                                        | `user` message with `text` parts, images and documents as `file` parts                                                                                        |
+| the assistant, reasoning, tool and activity messages that follow it | one `assistant` message, the way the AI SDK groups a multi-step run                                                                                           |
+| `TEXT_MESSAGE_*`, `REASONING_*`                                     | `text` and `reasoning` parts, `state: 'streaming'` until their end event                                                                                      |
+| `TOOL_CALL_START`, `TOOL_CALL_ARGS`                                 | `dynamic-tool` part, `input-streaming`, with the arguments parsed as they arrive                                                                              |
+| `TOOL_CALL_END`                                                     | `input-available`                                                                                                                                             |
+| `TOOL_CALL_RESULT`, tool message                                    | `output-available` (JSON results parsed), or `output-error` with the tool message's `error`                                                                   |
+| `RUN_FINISHED` with an `interrupt` outcome bound to a tool call     | `approval-requested`, the interrupt's `message` as `approval.requestReason`                                                                                   |
+| `respond({ id, approved, reason })`                                 | `approval-responded` or `output-denied`; the agent resumes with `payload: { approved, reason }`, plus `input` when the arguments were edited with `editInput` |
+| `RUN_STARTED`, content, `RUN_FINISHED`, `RUN_ERROR`                 | `status`: `submitted`, `streaming`, then `ready` or `error`                                                                                                   |
+| `RUN_FINISHED` with a `cancelled` outcome, or `stop()`              | `status: 'ready'`, with what was streaming left cut off: `deriveAgentState` reads `stopped`                                                                   |
+| `usage` on `RUN_FINISHED` and `RUN_ERROR`                           | `usage`, summed over runs, with cache and reasoning tokens                                                                                                    |
+| `STEP_STARTED`                                                      | `step`                                                                                                                                                        |
+| activity message                                                    | a `data-${activityType}` part, rendered by `renderData`                                                                                                       |
 
 Shared state (`STATE_SNAPSHOT`, `STATE_DELTA`) stays on `agent.state`, and a subagent's messages render inline in its parent's timeline.
 
 ## Interrupts and approvals
 
-AG-UI resumes every open interrupt in one run, so the hook waits until each has an answer before it calls `runAgent({ resume })`. A tool-call interrupt renders as an approval card, and `respond` answers it with `{ approved, reason }`.
+AG-UI resumes every open interrupt in one run, so the hook waits until each has an answer before it calls `runAgent({ resume })`. A tool-call interrupt renders as an approval card, and `respond` answers it with `{ approved, reason }`. Pass `editInput` as `AgentMessage`'s `onToolInputEdit` and the cards let a person edit a call's arguments first; the payload then carries them as `input`, for your agent to run with. With an `approvalPolicy`, cards offer approving for the session or always, and answer what a rule covers without asking.
 
 Interrupts that aren't tool approvals (`input_required`, or your own) are in `interrupts`. Answer them with `resolve`, matching the interrupt's `responseSchema`:
 

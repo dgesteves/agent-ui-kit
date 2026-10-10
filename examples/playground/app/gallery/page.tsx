@@ -29,7 +29,15 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
     id: 'approval-card',
     slug: 'approval-card',
     heading: '<ApprovalCard />',
-    description: 'Approve or deny a tool call, with what will run, its risk, a reason and Y / N shortcuts.',
+    description:
+      'Approve or deny a tool call once, for the session or always, with what will run, its risk, the arguments editable first, a reason and a key for each choice.',
+  },
+  {
+    id: 'use-approval-policy',
+    slug: 'use-approval-policy',
+    heading: 'useApprovalPolicy()',
+    description:
+      'Approval rules: answer once, for this session or always, by tool and argument pattern. The next call a rule covers is answered without asking, and every decision goes to the audit trail.',
   },
   {
     id: 'tool-call-timeline',
