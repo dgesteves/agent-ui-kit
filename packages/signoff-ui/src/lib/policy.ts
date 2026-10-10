@@ -332,6 +332,8 @@ export interface AcpRequestPermissionRequest {
   toolCall: {
     toolCallId: string;
     title?: string | null | undefined;
+    /** The tool's programmatic name, when the agent sends one (ACP 1.8). */
+    name?: string | null | undefined;
     kind?: string | null | undefined;
     rawInput?: unknown;
   };
@@ -350,13 +352,25 @@ const ACP_KIND: Record<AcpPermissionOptionKind, ApprovalDecision> = {
   reject_always: 'deny-always',
 };
 
-/** An ACP permission request as the card's request: the tool call's id, kind or title, and raw input. */
+/**
+ * The tool name rules and cards use for an ACP tool call: its programmatic `name` when the agent
+ * sends one, else its `kind` (`edit`, `execute`…), else its `title`.
+ */
+export function acpToolName(toolCall: {
+  name?: string | null | undefined;
+  kind?: string | null | undefined;
+  title?: string | null | undefined;
+}): string {
+  return toolCall.name || toolCall.kind || toolCall.title || 'tool';
+}
+
+/** An ACP permission request as the card's request: the tool call's id, name, and raw input. */
 export function fromAcpPermissionRequest(request: AcpRequestPermissionRequest): ApprovalRequest & { title?: string } {
   const { toolCall } = request;
   return {
     id: toolCall.toolCallId,
     toolCallId: toolCall.toolCallId,
-    toolName: toolCall.kind ?? toolCall.title ?? 'tool',
+    toolName: acpToolName(toolCall),
     input: toolCall.rawInput,
     ...(toolCall.title ? { title: toolCall.title } : {}),
   };

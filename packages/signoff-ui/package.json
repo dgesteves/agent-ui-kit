@@ -52,6 +52,10 @@
       "types": "./dist/ag-ui.d.ts",
       "default": "./dist/ag-ui.js"
     },
+    "./acp": {
+      "types": "./dist/acp.d.ts",
+      "default": "./dist/acp.js"
+    },
     "./assistant-ui": {
       "types": "./dist/assistant-ui.d.ts",
       "default": "./dist/assistant-ui.js"
@@ -98,6 +102,7 @@
   "devDependencies": {
     "@ag-ui/client": "^1.0.2",
     "@ag-ui/core": "^1.0.2",
+    "@agentclientprotocol/sdk": "^1.8.0",
     "@arethetypeswrong/cli": "^0.18.5",
     "@assistant-ui/react": "^0.15.26",
     "@tailwindcss/cli": "^4.3.3",

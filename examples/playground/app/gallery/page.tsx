@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
 import { DEMOS, LabelsDemo } from '@/components/demos';
+import AcpDemo from '@/components/acp-demo';
 import { ThemingDemo } from '@/components/demos/theming';
 import { ComponentInstall } from '@/components/docs/component-install';
 import { Footer } from '@/components/footer';
@@ -12,7 +13,7 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
   title: 'Components · signoff-ui',
   description:
-    'Every signoff-ui component in isolation: diff review and approval card first, then tool call timeline, status, run meter, sources, theming, labels in Portuguese, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
+    'Every signoff-ui component in isolation: diff review and approval card first, then tool call timeline, status, run meter, sources, theming, labels in Portuguese, markdown, reasoning, a whole message, an AG-UI agent and an ACP turn, with npm and shadcn install snippets.',
   path: '/gallery',
 });
 
@@ -118,6 +119,13 @@ const SECTIONS: GallerySection[] = [
     description:
       'AG-UI agents (LangGraph, CrewAI, Mastra, Pydantic AI) through the same components. This one is a real @ag-ui/client agent replaying a LangGraph-style run: steps, streamed tool arguments, and an interrupt that resumes the run when you answer it.',
   },
+  {
+    id: 'acp',
+    heading: 'Agent Client Protocol',
+    description:
+      'An ACP prompt turn through the same components, with signoff-ui/acp: a scripted agent sends its session updates and asks permission to edit a file, whose diff the card shows, and to run the tests. The card offers the options the agent sent.',
+    guide: { href: '/docs/acp', name: 'the Agent Client Protocol', link: 'ACP docs', Demo: AcpDemo },
+  },
 ];
 
 function Section({ id, slug, heading, description, guide }: GallerySection) {
@@ -165,10 +173,10 @@ export default function GalleryPage() {
         <div className="max-w-2xl">
           <h1 className="text-fg text-2xl font-semibold tracking-tight">Components</h1>
           <p className="text-fg-muted mt-2 text-[14px] leading-relaxed">
-            Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent, at the end),
-            with how to install it from npm or as a shadcn registry item. Everything here is interactive and keyboard
-            accessible; each component&apos;s docs page has its props, keyboard and theming hooks. The frames follow the
-            site&apos;s theme: switch it in the header to see either palette.
+            Each component in isolation, rendered from AI SDK 6 and 7 message parts (or an AG-UI agent and an ACP turn,
+            at the end), with how to install it from npm or as a shadcn registry item. Everything here is interactive
+            and keyboard accessible; each component&apos;s docs page has its props, keyboard and theming hooks. The
+            frames follow the site&apos;s theme: switch it in the header to see either palette.
           </p>
         </div>
         <div className="mt-14 flex flex-col gap-16">

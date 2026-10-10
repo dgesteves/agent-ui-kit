@@ -52,6 +52,13 @@ export const GUIDES: DocPage[] = [
       'Render LangGraph, CrewAI, Mastra and other AG-UI agents with the same components, interrupts included, through useAgUiAgent.',
   },
   {
+    slug: 'acp',
+    href: '/docs/acp',
+    title: 'Agent Client Protocol',
+    description:
+      "Render an ACP prompt turn with the same components: session updates as message parts, permission requests as approval cards with the agent's options, edits as diffs.",
+  },
+  {
     slug: 'accessibility',
     href: '/docs/accessibility',
     title: 'Accessibility',

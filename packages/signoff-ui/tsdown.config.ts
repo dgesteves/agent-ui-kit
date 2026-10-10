@@ -34,7 +34,7 @@ const workerUrls: TsdownPlugin = {
 
 export default defineConfig({
   // The diff worker is an entry of its own: nothing imports it, DiffReview starts it by URL.
-  entry: ['src/index.ts', 'src/core.ts', 'src/ag-ui.ts', 'src/assistant-ui.ts', 'src/lib/diff-worker.ts'],
+  entry: ['src/index.ts', 'src/core.ts', 'src/ag-ui.ts', 'src/acp.ts', 'src/assistant-ui.ts', 'src/lib/diff-worker.ts'],
   format: 'esm',
   platform: 'neutral',
   target: 'es2022',

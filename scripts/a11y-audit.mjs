@@ -79,6 +79,7 @@ for (const path of [
   '/docs/getting-started',
   '/docs/chat-ui',
   '/docs/ag-ui',
+  '/docs/acp',
   '/docs/accessibility',
   '/docs/labels',
   '/docs/limits',

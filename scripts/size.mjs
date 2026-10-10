@@ -34,6 +34,7 @@ const rows = [
     85.5,
   ],
   ['`useAgUiAgent` (`/ag-ui`)', `export * from ${JSON.stringify(join(dist, 'ag-ui.js'))};`, 3],
+  ['ACP converters (`/acp`)', `export * from ${JSON.stringify(join(dist, 'acp.js'))};`, 1.8],
   [
     '`signoffTools` (`/assistant-ui`, with DiffReview and the approval card)',
     `export * from ${JSON.stringify(join(dist, 'assistant-ui.js'))};`,
