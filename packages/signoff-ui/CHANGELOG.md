@@ -2,6 +2,30 @@
 
 Until 0.4.3 this package was published as `@dgesteves/agent-ui-kit`. Its entries below keep the links and names of that time.
 
+## 0.6.0
+
+### Minor Changes
+
+- [#59](https://github.com/dgesteves/signoff-ui/pull/59) [`782ed22`](https://github.com/dgesteves/signoff-ui/commit/782ed2281faeeb3f492427c2e4e494eba0d62f45) Thanks [@dgesteves](https://github.com/dgesteves)! - `signoff-ui/acp`: render Agent Client Protocol sessions with the components. Pure functions, no React, nothing new to install.
+
+  - **A prompt turn as a message.** `createAcpTurn()`, then `reduceAcpTurn(turn, notification)` for each `session/update`: message and thought chunks become text and reasoning, and tool calls and their updates merge by id. `requestAcpPermission(turn, request)` marks a call as waiting on its `session/request_permission`, `answerAcpPermission(turn, toolCallId, decision)` records the answer, and `endAcpTurn(turn, response)` ends the turn with its `stopReason` (or an error). `toAcpMessage(turn)` is the assistant `UIMessage` for `AgentMessage` and `ToolCallTimeline`: a call waiting on a person is `approval-requested`, its tool call id the approval id, and a denied or cancelled one is `output-denied`.
+  - **Diffs as review files.** `fromAcpDiffs(content, { root })` maps a tool call's `{ type: 'diff', path, oldText, newText }` content to `DiffReview` files, relative to the session's `cwd`. `toAcpDiffs` goes back.
+  - **The permission converters** (`decisionsFromAcpOptions`, `toAcpPermissionResponse`, `fromAcpPermissionResponse`, `fromAcpPermissionRequest`) are re-exported here. `fromAcpPermissionRequest` now names the tool by ACP 1.8's `name` when the agent sends one, then by `kind` and `title` as before (`acpToolName`). Rules saved against a call's kind (`execute`) no longer match when the agent sends a name (`Bash`): those calls are asked about again, and a `deny-always` rule on the kind needs a rule on the name added to keep blocking them.
+
+  - **`ApprovalCard`'s `ruleScope={false}`** hides the argument patterns a session or always decision would cover, for when the agent keeps what "always" means, as ACP's `allow_always` does. The decision then comes without `args`.
+
+  The types mirror what is read, and a type test checks that `@agentclientprotocol/sdk` 1.8's notifications, permission requests and diff content fit them, and that the responses fit the SDK's. The components page has a demo with a scripted ACP agent.
+
+- [#57](https://github.com/dgesteves/signoff-ui/pull/57) [`66d5c2f`](https://github.com/dgesteves/signoff-ui/commit/66d5c2f438a6190b02d89244f6291bab01affefe) Thanks [@dgesteves](https://github.com/dgesteves)! - `signoff-ui/assistant-ui`: review and approve assistant-ui tool calls.
+
+  - **`signoffTools({ review })`** goes in `MessagePrimitive.Parts`' `components.tools`. A call to one of the `review` tools gets a `DiffReview` once its arguments are in, and the review goes back as the call's result through `addResult` (`reviewToolOutput(review)`), then stays on the page read-only. Any other call at an approval gate gets the approval card, answered through `respondToApproval`. `Fallback` renders the calls with no gate.
+  - **`SignoffToolsProvider`**, optional, passes approval rules from `useApprovalPolicy` (once, this session or always, and a call a rule decides is answered without a card once the run has paused for it), labels and risk levels by tool, props for every `DiffReview` and approval card, and `reviewToolOutput`'s options.
+  - **`ReviewToolUI` and `ApprovalToolUI`** are the two components, for your own tool components.
+
+  It works with any assistant-ui runtime; it ran end to end with the AI SDK runtime (`@assistant-ui/react-ai-sdk` 1.4) and the local runtime. `@assistant-ui/react` (`^0.15.0`) is an optional peer dependency: the entry imports only its types, and nothing of it reaches the main entry. The shadcn registry has it as the `assistant-ui` item.
+
+  `ToolApprovalCard` with a `policy` no longer answers a call twice when a person's session or always decision adds a rule while the call still reads pending, as it does with a runtime that records the answer a moment later.
+
 ## 0.5.0
 
 ### Minor Changes
