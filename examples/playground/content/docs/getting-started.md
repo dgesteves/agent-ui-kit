@@ -38,7 +38,7 @@ Each item brings the component, the helpers it imports, its npm dependencies and
 
 The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL, with no setup (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from the repository (`dgesteves/signoff-ui/agent-message`).
 
-Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them. The files pass a new Next.js app's ESLint config with no warnings, which CI checks.
+Component and hook files start with `'use client'`, so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them. The files pass a new Next.js app's ESLint config with no warnings, which CI checks.
 
 **From a coding agent.** The [shadcn MCP server](https://ui.shadcn.com/docs/mcp) lets Claude Code, Cursor, VS Code or Codex browse and install registry items. Set it up with `npx shadcn@latest mcp init --client claude` (or `cursor`, `vscode`), make sure `components.json` lists the registry as above, and ask for it by name, for example "add the signoff-ui diff review to the chat page". Agents can also read these docs from [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt).
 
@@ -343,7 +343,7 @@ The rest of the walkthrough is the same. CI typechecks the library and runs its 
 
 ## Next.js
 
-**Server Components.** Components and hooks are client modules with their own `'use client'` directive (except `Sources`, which has no state and renders on the server too), so a Server Component can render any of them. The pure helpers aren't, so Server Components and Route Handlers can call them. Import those from `signoff-ui/core`, which has no React:
+**Server Components.** Components and hooks are client modules with their own `'use client'` directive, so a Server Component can render any of them. The pure helpers aren't, so Server Components and Route Handlers can call them. Import those from `signoff-ui/core`, which has no React:
 
 ```ts title="app/api/review/route.ts"
 import { applyHunks, parseFileChange } from 'signoff-ui/core';

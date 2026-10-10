@@ -19,7 +19,8 @@ import {
   type ToolPart,
 } from './lib/ai';
 import { humanizeToolName, safeStringify } from './lib/format';
-import { describeRule, evaluateRules, suggestArgs, type ApprovalDecision, type ApprovalRequest } from './lib/policy';
+import { approvalCardLabels, commonLabels, type SignoffLabels, type SignoffLabelsInput } from './lib/labels';
+import { evaluateRules, suggestArgs, type ApprovalDecision, type ApprovalRequest } from './lib/policy';
 import { useScrollRegion } from './lib/scroll-region';
 import { BanIcon, CheckIcon, ShieldIcon, TerminalIcon } from './lib/icons';
 import { JsonView, Kbd, LiveRegion } from './lib/primitives';
@@ -27,6 +28,10 @@ import { useIsMac } from './lib/hooks';
 import { cn, hasModifier, isPromiseLike, isTypingTarget, type HeadingLevel } from './lib/utils';
 import type { RiskLevel, ToolMeta } from './tool-call-timeline';
 import type { ApprovalOutcome, ApprovalPolicy } from './use-approval-policy';
+import { useLabels, WithLabels } from './labels';
+
+/** The labels' sections this module reads. */
+const LABELS = { approvalCard: approvalCardLabels, common: commonLabels };
 
 export type { ApprovalStatus, RiskLevel };
 export type { ApprovalDecision } from './lib/policy';
@@ -110,51 +115,51 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   autoFocus?: boolean;
   /** Offer an optional free-text reason when denying. Default `true`. */
   allowReason?: boolean;
-  /** Placeholder of the reason field. Default "What should the agent do instead?". */
+  /** Placeholder of the reason field. Default "What should the agent do instead?" (`labels.approvalCard.reasonPlaceholder`). */
   reasonPlaceholder?: string;
+  /** The approve button's text. Default "Approve" (`labels.approvalCard.approve`). */
   approveLabel?: string;
+  /** The deny button's text. Default "Deny" (`labels.approvalCard.deny`). */
   denyLabel?: string;
   /** Heading level for the title, to fit your document outline. Default 3. */
   headingLevel?: HeadingLevel;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 /** No risk given: no badge, and the card's neutral colors. */
 const UNRATED = { card: 'border-signoff-border', icon: 'bg-signoff-surface-2 text-signoff-fg-muted' };
 
-const RISK: Record<RiskLevel, { label: string; badge: string; card: string; icon: string }> = {
+const RISK: Record<RiskLevel, { badge: string; card: string; icon: string }> = {
   low: {
-    label: 'Low risk',
     badge: 'border-signoff-border-strong text-signoff-fg-muted',
     card: 'border-signoff-border',
     icon: 'bg-signoff-surface-2 text-signoff-fg-muted',
   },
   medium: {
-    label: 'Medium risk',
     badge: 'border-signoff-warn/40 bg-signoff-warn/10 text-signoff-warn-fg',
     card: 'border-signoff-warn/30',
     icon: 'bg-signoff-warn/10 text-signoff-warn-fg',
   },
   high: {
-    label: 'High risk',
     badge: 'border-signoff-hot/45 bg-signoff-hot/10 text-signoff-hot-fg',
     card: 'border-signoff-hot/40',
     icon: 'bg-signoff-hot/12 text-signoff-hot-fg',
   },
   critical: {
-    label: 'Critical',
     badge: 'border-signoff-hot bg-signoff-hot text-signoff-on-hot',
     card: 'border-signoff-hot/70 shadow-[0_0_0_3px_color-mix(in_oklab,var(--signoff-hot)_14%,transparent)]',
     icon: 'bg-signoff-hot/15 text-signoff-hot-fg',
   },
 };
 
-/** The buttons for each decision: label, key, and how it looks. */
-const CHOICE: Record<ApprovalDecision, { label: string; key: string; keys: string }> = {
-  'allow-once': { label: 'Approve', key: 'Y', keys: 'Y' },
-  'allow-session': { label: 'For this session', key: 'S', keys: 'S' },
-  'allow-always': { label: 'Always', key: 'A', keys: 'A' },
-  'deny-once': { label: 'Deny', key: 'N', keys: 'N' },
-  'deny-always': { label: 'Always deny', key: '⇧N', keys: 'Shift+N' },
+/** The key for each decision, as printed and as `aria-keyshortcuts` names it. */
+const CHOICE: Record<ApprovalDecision, { key: string; keys: string }> = {
+  'allow-once': { key: 'Y', keys: 'Y' },
+  'allow-session': { key: 'S', keys: 'S' },
+  'allow-always': { key: 'A', keys: 'A' },
+  'deny-once': { key: 'N', keys: 'N' },
+  'deny-always': { key: '⇧N', keys: 'Shift+N' },
 };
 
 /** Styling hooks for the buttons; the once buttons keep the names they always had. */
@@ -166,18 +171,9 @@ const SLOT: Record<ApprovalDecision, string> = {
   'deny-always': 'signoff-approval-deny-always',
 };
 
-/** What a resolved card says of a decision a person made. */
-const RESOLVED: Record<ApprovalDecision, string> = {
-  'allow-once': 'Approved',
-  'allow-session': 'Approved for this session',
-  'allow-always': 'Always approved',
-  'deny-once': 'Denied',
-  'deny-always': 'Always denied',
-};
-
 /** A long command scrolls sideways; while it does, the keyboard can reach it. */
-function CommandPreview({ command, cwd }: { command: string; cwd: string | undefined }) {
-  const scrollRef = useScrollRegion<HTMLDivElement>('Command');
+function CommandPreview({ command, cwd, label }: { command: string; cwd: string | undefined; label: string }) {
+  const scrollRef = useScrollRegion<HTMLDivElement>(label);
   return (
     <div
       ref={scrollRef}
@@ -194,13 +190,13 @@ function CommandPreview({ command, cwd }: { command: string; cwd: string | undef
   );
 }
 
-function DefaultPreview({ input }: { input: unknown }) {
+function DefaultPreview({ input, L }: { input: unknown; L: SignoffLabels['approvalCard'] }) {
   if (input && typeof input === 'object' && 'command' in input && typeof input.command === 'string') {
     const cwd = 'cwd' in input && typeof input.cwd === 'string' ? input.cwd : undefined;
-    return <CommandPreview command={input.command} cwd={cwd} />;
+    return <CommandPreview command={input.command} cwd={cwd} label={L.command} />;
   }
   if (input === undefined) return null;
-  return <JsonView value={input} label="Arguments" collapseAfter={14} />;
+  return <JsonView value={input} label={L.arguments} collapseAfter={14} />;
 }
 
 /** An object of strings, numbers and booleans, edited as a form; anything else is edited as JSON. */
@@ -225,17 +221,19 @@ function ArgumentsEditor({
   value,
   onChange,
   idPrefix,
+  L,
 }: {
   original: unknown;
   value: EditorValue;
   onChange: (value: EditorValue) => void;
   idPrefix: string;
+  L: SignoffLabels['approvalCard'];
 }) {
   if (value.kind === 'form') {
     const record = value.record;
     return (
       <fieldset className="flex flex-col gap-2.5">
-        <legend className="text-signoff-fg-muted mb-1 text-xs font-medium">Arguments</legend>
+        <legend className="text-signoff-fg-muted mb-1 text-xs font-medium">{L.arguments}</legend>
         {Object.entries(record).map(([key, v]) => {
           const id = `${idPrefix}-arg-${key}`;
           const kind = typeof (original as Record<string, unknown>)[key];
@@ -292,7 +290,7 @@ function ArgumentsEditor({
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={`${idPrefix}-json`} className="text-signoff-fg-muted text-xs font-medium">
-        Arguments, as JSON
+        {L.argumentsJson}
       </label>
       <textarea
         id={`${idPrefix}-json`}
@@ -306,7 +304,7 @@ function ArgumentsEditor({
       />
       {value.error && (
         <p id={errorId} className="text-signoff-hot-fg text-xs">
-          Not valid JSON: {value.error}
+          {L.notValidJson(value.error)}
         </p>
       )}
     </div>
@@ -369,13 +367,16 @@ export function ApprovalCard({
   globalShortcut = false,
   autoFocus = false,
   allowReason = true,
-  reasonPlaceholder = 'What should the agent do instead?',
-  approveLabel = 'Approve',
-  denyLabel = 'Deny',
+  reasonPlaceholder,
+  approveLabel,
+  denyLabel,
   headingLevel = 3,
+  labels,
   className,
   ...props
 }: ApprovalCardProps) {
+  const all = useLabels(LABELS, labels);
+  const L = all.approvalCard;
   const Heading = `h${headingLevel}` as const;
   const ids = useId();
   const titleId = `${ids}-title`;
@@ -395,7 +396,7 @@ export function ApprovalCard({
   const r = risk ? RISK[risk] : UNRATED;
   const heading = title ?? humanizeToolName(toolName);
   const mac = useIsMac();
-  const mod = mac ? '⌘' : 'Ctrl';
+  const mod = all.common.modKey(mac);
   const has = (d: ApprovalDecision) => offered.includes(d);
   const remembers = has('allow-session') || has('allow-always') || has('deny-always');
 
@@ -436,19 +437,19 @@ export function ApprovalCard({
     if (!pending || decided.current || !has(decision)) return;
     const approving = decision.startsWith('allow');
     if (approving && invalid) {
-      setAnnouncement('The arguments are not valid JSON.');
+      setAnnouncement(L.invalidJson);
       return;
     }
     if (approving && risk === 'critical' && confirming !== decision) {
       setConfirming(decision);
-      setAnnouncement('Critical action. Press approve again to confirm.');
+      setAnnouncement(L.critical);
       clearTimeout(confirmTimer.current);
       confirmTimer.current = setTimeout(() => setConfirming(undefined), 4000);
       return;
     }
     clearTimeout(confirmTimer.current);
     setConfirming(undefined);
-    setAnnouncement(RESOLVED[decision]);
+    setAnnouncement(L.resolved[decision]);
     cardRef.current?.focus();
     const why = withReason?.trim() ? withReason.trim() : undefined;
     const lasting = decision !== 'allow-once' && decision !== 'deny-once';
@@ -529,29 +530,30 @@ export function ApprovalCard({
     }
   };
 
-  const keyHint = [
-    has('allow-once') && 'Y to approve',
-    has('allow-session') && 'S to approve for this session',
-    has('allow-always') && 'A to always approve',
-    has('deny-once') && 'N to deny',
-    has('deny-always') && 'Shift N to always deny',
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const keyHint = L.keyboardHint(
+    {
+      approve: has('allow-once'),
+      session: has('allow-session'),
+      always: has('allow-always'),
+      deny: has('deny-once'),
+      alwaysDeny: has('deny-always'),
+    },
+    mod,
+  );
 
   const resolvedText = decidedByRule
     ? status === 'approved'
-      ? 'Allowed by your rule'
-      : 'Denied by your rule'
+      ? L.allowedByRule
+      : L.deniedByRule
     : automatic
       ? status === 'approved'
-        ? 'Auto-approved'
-        : 'Blocked by policy'
+        ? L.autoApproved
+        : L.blockedByPolicy
       : resolvedDecision && resolvedDecision.startsWith(status === 'approved' ? 'allow' : 'deny')
-        ? RESOLVED[resolvedDecision]
+        ? L.resolved[resolvedDecision]
         : status === 'approved'
-          ? 'Approved'
-          : 'Denied';
+          ? L.approved
+          : L.denied;
 
   const secondary =
     'border-signoff-border-strong bg-signoff-surface-2 text-signoff-fg hover:border-signoff-fg-subtle hover:bg-signoff-bg focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60';
@@ -579,7 +581,7 @@ export function ApprovalCard({
       onClick={() => choose(decision, decision.startsWith('deny') && reasonOpen ? reasonText : undefined)}
       className={className}
     >
-      {confirming === decision ? 'Confirm approval' : label}
+      {confirming === decision ? L.confirm : label}
       {shortcuts && (
         <Kbd
           aria-hidden="true"
@@ -593,207 +595,208 @@ export function ApprovalCard({
 
   return (
     // Shortcuts are scoped to focus within the card (WCAG 2.1.4); the actions themselves are real buttons.
-    <section
-      ref={cardRef}
-      data-signoff
-      data-slot="signoff-approval-card"
-      data-status={status}
-      data-risk={risk}
-      role="group"
-      tabIndex={-1}
-      aria-labelledby={titleId}
-      aria-describedby={
-        pending
-          ? [description ? descId : '', shortcuts ? hintId : ''].filter(Boolean).join(' ') || undefined
-          : undefined
-      }
-      onKeyDown={onKeyDown}
-      className={cn(
-        'rounded-signoff bg-signoff-surface font-signoff-sans text-signoff-fg focus-visible:outline-signoff-ring relative overflow-hidden border outline-none focus-visible:outline-2 focus-visible:outline-offset-2',
-        pending ? r.card : 'border-signoff-border bg-signoff-surface/60',
-        pending && 'motion-safe:animate-signoff-enter',
-        className,
-      )}
-      {...props}
-    >
-      <LiveRegion>{announcement}</LiveRegion>
-      {pending ? (
-        <>
-          {(risk === 'high' || risk === 'critical') && (
-            <div
-              aria-hidden="true"
-              className="via-signoff-hot h-px w-full bg-gradient-to-r from-transparent to-transparent"
-            />
-          )}
-          <div className="flex flex-col gap-3.5 p-4">
-            <div className="flex items-start gap-3">
-              <span
+    <WithLabels labels={labels}>
+      <section
+        ref={cardRef}
+        data-signoff
+        data-slot="signoff-approval-card"
+        data-status={status}
+        data-risk={risk}
+        role="group"
+        tabIndex={-1}
+        aria-labelledby={titleId}
+        aria-describedby={
+          pending
+            ? [description ? descId : '', shortcuts ? hintId : ''].filter(Boolean).join(' ') || undefined
+            : undefined
+        }
+        onKeyDown={onKeyDown}
+        className={cn(
+          'rounded-signoff bg-signoff-surface font-signoff-sans text-signoff-fg focus-visible:outline-signoff-ring relative overflow-hidden border outline-none focus-visible:outline-2 focus-visible:outline-offset-2',
+          pending ? r.card : 'border-signoff-border bg-signoff-surface/60',
+          pending && 'motion-safe:animate-signoff-enter',
+          className,
+        )}
+        {...props}
+      >
+        <LiveRegion>{announcement}</LiveRegion>
+        {pending ? (
+          <>
+            {(risk === 'high' || risk === 'critical') && (
+              <div
                 aria-hidden="true"
-                className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', r.icon)}
-              >
-                {input && typeof input === 'object' && 'command' in input ? (
-                  <TerminalIcon size={16} />
-                ) : (
-                  <ShieldIcon size={16} />
-                )}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-signoff-mono text-signoff-hot-fg pt-0.5 text-[10.5px] font-medium tracking-[0.08em] uppercase">
-                    Approval required
-                  </p>
-                  {risk && (
-                    <span
-                      className={cn(
-                        'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
-                        RISK[risk].badge,
-                      )}
-                    >
-                      {RISK[risk].label}
-                    </span>
-                  )}
-                </div>
-                <Heading id={titleId} className="text-signoff-fg -mt-0.5 text-[15px] leading-snug font-semibold">
-                  {heading}
-                </Heading>
-                {description && (
-                  <p id={descId} className="text-signoff-fg-muted mt-1 text-[13px] leading-relaxed">
-                    {description}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {editing ? (
-              <ArgumentsEditor original={input} value={edited} onChange={setEdited} idPrefix={ids} />
-            ) : preview === undefined || preview === null ? (
-              <DefaultPreview input={input} />
-            ) : (
-              <div data-signoff-slot className="contents">
-                {preview}
-              </div>
-            )}
-            {editable && input !== undefined && (
-              <div className="-mt-1.5 flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-expanded={editing}
-                  onClick={() => setEditing((open) => !open)}
-                  className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-1 py-0.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
-                >
-                  {editing ? 'Done editing' : 'Edit arguments'}
-                </button>
-                {editing && finalInput !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => setEdited(editorFor(input))}
-                    className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-1 py-0.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
-                  >
-                    Undo edits
-                  </button>
-                )}
-                {finalInput !== undefined && (
-                  <span className="text-signoff-warn-fg text-xs">Edited: approving runs the new arguments.</span>
-                )}
-              </div>
-            )}
-
-            {remembers && (
-              <RuleScope
-                toolName={toolName}
-                scope={scopeArgs}
-                onChange={setScope}
-                idPrefix={ids}
-                // Arguments the call has, to narrow the rule to.
-                available={suggested}
+                className="via-signoff-hot h-px w-full bg-gradient-to-r from-transparent to-transparent"
               />
             )}
-
-            {reasonOpen && (
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor={reasonId} className="text-signoff-fg-muted text-xs font-medium">
-                  Tell the agent why (optional)
-                </label>
-                <textarea
-                  ref={reasonRef}
-                  id={reasonId}
-                  rows={2}
-                  value={reasonText}
-                  onChange={(e) => setReasonText(e.target.value)}
-                  onKeyDown={(e) => {
-                    // The Enter that commits an IME composition (Japanese, Chinese, Korean…) is not a submit.
-                    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      deny(reasonText);
-                    } else if (e.key === 'Escape') {
-                      e.preventDefault();
-                      setReasonOpen(false);
-                      cardRef.current?.focus();
-                    }
-                  }}
-                  placeholder={reasonPlaceholder}
-                  className={cn(field, 'resize-none')}
-                />
+            <div className="flex flex-col gap-3.5 p-4">
+              <div className="flex items-start gap-3">
+                <span
+                  aria-hidden="true"
+                  className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', r.icon)}
+                >
+                  {input && typeof input === 'object' && 'command' in input ? (
+                    <TerminalIcon size={16} />
+                  ) : (
+                    <ShieldIcon size={16} />
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-signoff-mono text-signoff-hot-fg pt-0.5 text-[10.5px] font-medium tracking-[0.08em] uppercase">
+                      {L.required}
+                    </p>
+                    {risk && (
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
+                          RISK[risk].badge,
+                        )}
+                      >
+                        {L.risk[risk]}
+                      </span>
+                    )}
+                  </div>
+                  <Heading id={titleId} className="text-signoff-fg -mt-0.5 text-[15px] leading-snug font-semibold">
+                    {heading}
+                  </Heading>
+                  {description && (
+                    <p id={descId} className="text-signoff-fg-muted mt-1 text-[13px] leading-relaxed">
+                      {description}
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
 
-            <div className="flex flex-wrap items-center gap-2">
-              {shortcuts && (
-                <p id={hintId} className="text-signoff-fg-subtle mr-auto hidden items-center gap-1.5 text-xs sm:flex">
-                  <span className="sr-only">
-                    Keyboard: press {keyHint}, or {mod} Enter to approve.
-                  </span>
-                  <span aria-hidden="true" className="flex items-center gap-1.5">
-                    <Kbd>{mod}</Kbd>
-                    <Kbd>↵</Kbd>
-                    <span>approve</span>
-                  </span>
-                </p>
+              {editing ? (
+                <ArgumentsEditor original={input} value={edited} onChange={setEdited} idPrefix={ids} L={L} />
+              ) : preview === undefined || preview === null ? (
+                <DefaultPreview input={input} L={L} />
+              ) : (
+                <div data-signoff-slot className="contents">
+                  {preview}
+                </div>
               )}
-              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                {allowReason && !reasonOpen && (
+              {editable && input !== undefined && (
+                <div className="-mt-1.5 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={openReason}
-                    className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-2 py-1.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
+                    aria-expanded={editing}
+                    onClick={() => setEditing((open) => !open)}
+                    className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-1 py-0.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
                   >
-                    Deny with feedback
+                    {editing ? L.doneEditing : L.editArguments}
                   </button>
+                  {editing && finalInput !== undefined && (
+                    <button
+                      type="button"
+                      onClick={() => setEdited(editorFor(input))}
+                      className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-1 py-0.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
+                    >
+                      {L.undoEdits}
+                    </button>
+                  )}
+                  {finalInput !== undefined && <span className="text-signoff-warn-fg text-xs">{L.edited}</span>}
+                </div>
+              )}
+
+              {remembers && (
+                <RuleScope
+                  toolName={toolName}
+                  scope={scopeArgs}
+                  onChange={setScope}
+                  idPrefix={ids}
+                  // Arguments the call has, to narrow the rule to.
+                  available={suggested}
+                  L={L}
+                />
+              )}
+
+              {reasonOpen && (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor={reasonId} className="text-signoff-fg-muted text-xs font-medium">
+                    {L.reasonLabel}
+                  </label>
+                  <textarea
+                    ref={reasonRef}
+                    id={reasonId}
+                    rows={2}
+                    value={reasonText}
+                    onChange={(e) => setReasonText(e.target.value)}
+                    onKeyDown={(e) => {
+                      // The Enter that commits an IME composition (Japanese, Chinese, Korean…) is not a submit.
+                      if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        deny(reasonText);
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        setReasonOpen(false);
+                        cardRef.current?.focus();
+                      }
+                    }}
+                    placeholder={reasonPlaceholder ?? L.reasonPlaceholder}
+                    className={cn(field, 'resize-none')}
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                {shortcuts && (
+                  <p id={hintId} className="text-signoff-fg-subtle mr-auto hidden items-center gap-1.5 text-xs sm:flex">
+                    <span className="sr-only">{keyHint}</span>
+                    <span aria-hidden="true" className="flex items-center gap-1.5">
+                      <Kbd>{mod}</Kbd>
+                      <Kbd>↵</Kbd>
+                      <span>{L.approveHint}</span>
+                    </span>
+                  </p>
                 )}
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  {has('deny-always') && choiceButton('deny-always', 'Always deny', secondary)}
-                  {has('deny-once') && choiceButton('deny-once', reasonOpen ? 'Send denial' : denyLabel, secondary)}
-                  {has('allow-session') &&
-                    choiceButton(
-                      'allow-session',
-                      'For this session',
-                      confirming === 'allow-session' ? primary(true) : secondary,
-                    )}
-                  {has('allow-always') &&
-                    choiceButton('allow-always', 'Always', confirming === 'allow-always' ? primary(true) : secondary)}
-                  {has('allow-once') && choiceButton('allow-once', approveLabel, primary(confirming === 'allow-once'))}
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                  {allowReason && !reasonOpen && (
+                    <button
+                      type="button"
+                      onClick={openReason}
+                      className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-2 py-1.5 text-xs underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-1"
+                    >
+                      {L.denyWithFeedback}
+                    </button>
+                  )}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {has('deny-always') && choiceButton('deny-always', L.alwaysDeny, secondary)}
+                    {has('deny-once') &&
+                      choiceButton('deny-once', reasonOpen ? L.sendDenial : (denyLabel ?? L.deny), secondary)}
+                    {has('allow-session') &&
+                      choiceButton(
+                        'allow-session',
+                        L.session,
+                        confirming === 'allow-session' ? primary(true) : secondary,
+                      )}
+                    {has('allow-always') &&
+                      choiceButton('allow-always', L.always, confirming === 'allow-always' ? primary(true) : secondary)}
+                    {has('allow-once') &&
+                      choiceButton('allow-once', approveLabel ?? L.approve, primary(confirming === 'allow-once'))}
+                  </div>
                 </div>
               </div>
             </div>
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3.5 py-2.5 text-[13px]">
+            {status === 'approved' ? (
+              <CheckIcon size={15} className="text-signoff-accent-fg shrink-0" />
+            ) : (
+              <BanIcon size={15} className="text-signoff-hot-fg shrink-0" />
+            )}
+            <span className="text-signoff-fg font-semibold">{resolvedText}</span>
+            <Heading id={titleId} className="text-signoff-fg-muted min-w-0 truncate">
+              {heading}
+            </Heading>
+            {decidedByRule && <span className="text-signoff-fg-subtle min-w-0 truncate">· {decidedByRule}</span>}
+            {reason && <span className="text-signoff-fg-subtle min-w-0 truncate">· {reason}</span>}
           </div>
-        </>
-      ) : (
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3.5 py-2.5 text-[13px]">
-          {status === 'approved' ? (
-            <CheckIcon size={15} className="text-signoff-accent-fg shrink-0" />
-          ) : (
-            <BanIcon size={15} className="text-signoff-hot-fg shrink-0" />
-          )}
-          <span className="text-signoff-fg font-semibold">{resolvedText}</span>
-          <Heading id={titleId} className="text-signoff-fg-muted min-w-0 truncate">
-            {heading}
-          </Heading>
-          {decidedByRule && <span className="text-signoff-fg-subtle min-w-0 truncate">· {decidedByRule}</span>}
-          {reason && <span className="text-signoff-fg-subtle min-w-0 truncate">· {reason}</span>}
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+    </WithLabels>
   );
 }
 
@@ -806,20 +809,24 @@ function RuleScope({
   onChange,
   available,
   idPrefix,
+  L,
 }: {
   toolName: string;
   scope: { any: boolean; args: Record<string, string> };
   onChange: (scope: { any: boolean; args: Record<string, string> }) => void;
   available: Record<string, string> | undefined;
   idPrefix: string;
+  L: SignoffLabels['approvalCard'];
 }) {
   const names = Object.keys(available ?? scope.args);
+  const remembered = L.rememberedFor(scope.any);
   return (
     <fieldset className="border-signoff-border bg-signoff-bg/40 flex flex-col gap-2 rounded-lg border px-3 py-2.5">
-      <legend className="sr-only">Calls a lasting decision covers</legend>
+      <legend className="sr-only">{L.ruleLegend}</legend>
       <p className="text-signoff-fg-muted text-xs">
-        Remembered for <span className="font-signoff-mono text-signoff-fg">{toolName}</span>
-        {scope.any ? ' with any arguments.' : ' calls where:'}
+        {remembered.before}
+        <span className="font-signoff-mono text-signoff-fg">{toolName}</span>
+        {remembered.after}
       </p>
       {!scope.any &&
         names.map((name) => {
@@ -827,7 +834,7 @@ function RuleScope({
           return (
             <div key={name} className="flex items-center gap-2">
               <label htmlFor={id} className="font-signoff-mono text-signoff-fg-muted shrink-0 text-[11px]">
-                {name} matches
+                {L.argumentMatches(name)}
               </label>
               <input
                 id={id}
@@ -847,14 +854,10 @@ function RuleScope({
             onChange={(e) => onChange({ ...scope, any: e.target.checked })}
             className="accent-signoff-accent focus-visible:outline-signoff-ring size-3.5 focus-visible:outline-2 focus-visible:outline-offset-2"
           />
-          Any arguments
+          {L.anyArguments}
         </label>
       )}
-      {!scope.any && (
-        <p className="text-signoff-fg-subtle text-[11px]">
-          * matches any text but shell operators (; &amp; | &gt; &lt; and backticks); ** matches anything.
-        </p>
-      )}
+      {!scope.any && <p className="text-signoff-fg-subtle text-[11px]">{L.globHelp}</p>}
     </fieldset>
   );
 }
@@ -927,6 +930,7 @@ export function ToolApprovalCard({
   editable,
   ...props
 }: ToolApprovalCardProps) {
+  const L = useLabels(LABELS, props.labels).approvalCard;
   const status = getApprovalStatus(part);
   const request = approvalRequestOf(part);
   // A rule decides this request: answer it from the policy, once, without asking anyone.
@@ -973,7 +977,7 @@ export function ToolApprovalCard({
       reason={part.approval.reason}
       automatic={automatic}
       decision={outcome?.decision}
-      decidedByRule={outcome?.by === 'rule' && outcome.rule ? describeRule(outcome.rule) : undefined}
+      decidedByRule={outcome?.by === 'rule' && outcome.rule ? L.describeRule(outcome.rule) : undefined}
       decisions={decisions ?? (policy ? ALL_DECISIONS : undefined)}
       // Editing only where an edit can be applied: never silently dropped on the way to the agent.
       editable={!!onEditInput && (editable ?? true)}
@@ -997,6 +1001,8 @@ export interface ToolApprovalBatchProps extends Omit<ComponentPropsWithoutRef<'d
   tools?: Record<string, ToolMeta> | undefined;
   /** Shown from this many waiting approvals. Default 2. */
   min?: number;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 /**
@@ -1010,9 +1016,11 @@ export function ToolApprovalBatch({
   policy,
   tools,
   min = 2,
+  labels,
   className,
   ...props
 }: ToolApprovalBatchProps) {
+  const B = useLabels(LABELS, labels).approvalCard.batch;
   const [confirming, setConfirming] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -1034,7 +1042,7 @@ export function ToolApprovalBatch({
   const answerAll = (decision: 'allow-once' | 'deny-once') => {
     if (decision === 'allow-once' && critical && !confirming) {
       setConfirming(true);
-      setAnnouncement('One of them is critical. Press Approve all again to confirm.');
+      setAnnouncement(B.critical);
       clearTimeout(timer.current);
       timer.current = setTimeout(() => setConfirming(false), 4000);
       return;
@@ -1045,14 +1053,14 @@ export function ToolApprovalBatch({
       const outcome = policy?.decide(request, decision);
       void onRespond(outcome ? toResponse(outcome) : { id: request.id, approved: decision === 'allow-once' });
     }
-    setAnnouncement(`${waiting.length} approvals ${decision === 'allow-once' ? 'approved' : 'denied'}.`);
+    setAnnouncement(B.answered(waiting.length, decision === 'allow-once'));
   };
   return (
     <div
       data-signoff
       data-slot="signoff-approval-batch"
       role="group"
-      aria-label="Approvals waiting"
+      aria-label={B.group}
       className={cn(
         'rounded-signoff border-signoff-warn/40 bg-signoff-surface font-signoff-sans text-signoff-fg flex flex-wrap items-center gap-x-3 gap-y-2 border px-3.5 py-2.5 text-[13px]',
         className,
@@ -1061,14 +1069,14 @@ export function ToolApprovalBatch({
     >
       <LiveRegion>{announcement}</LiveRegion>
       <ShieldIcon size={15} className="text-signoff-warn-fg shrink-0" />
-      <span className="text-signoff-fg font-medium">{waiting.length} approvals are waiting.</span>
+      <span className="text-signoff-fg font-medium">{B.waiting(waiting.length)}</span>
       <span className="ml-auto flex items-center gap-2">
         <button
           type="button"
           onClick={() => answerAll('deny-once')}
           className="border-signoff-border-strong text-signoff-fg hover:bg-signoff-surface-2 focus-visible:outline-signoff-ring inline-flex h-7 cursor-pointer items-center rounded-lg border px-2.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
         >
-          Deny all
+          {B.denyAll}
         </button>
         <button
           type="button"
@@ -1080,7 +1088,7 @@ export function ToolApprovalBatch({
               : 'bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90',
           )}
         >
-          {confirming ? 'Confirm approve all' : 'Approve all'}
+          {confirming ? B.confirm : B.approveAll}
         </button>
       </span>
     </div>

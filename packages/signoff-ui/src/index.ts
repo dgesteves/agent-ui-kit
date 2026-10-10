@@ -45,6 +45,7 @@ export {
   type ToolMeta,
 } from './tool-call-timeline';
 export { JsonView, type JsonViewProps } from './lib/primitives';
+export { SignoffLabelsProvider, useSignoffLabels } from './labels';
 export {
   useActivityWindow,
   useHydrated,

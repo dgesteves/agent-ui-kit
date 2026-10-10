@@ -20,6 +20,10 @@ Tool completions and failures (calls that settle together, such as parallel call
 
 Every state has an icon and text, diff lines keep their + and − glyphs plus "Added:" and "Removed:" for screen readers, and risk levels are spelled out.
 
+## In the reader's language
+
+Accessible names, announcements and keyboard hints are labels like the visible text, so a [translation](/docs/labels) covers what a screen reader says too. Set `lang` on the page, or on the element that holds the components, so it is pronounced in that language. The keys themselves stay the same.
+
 ## Motion
 
 All animation is behind `motion-safe`, and the number tweening in `RunMeter` honours `prefers-reduced-motion`.

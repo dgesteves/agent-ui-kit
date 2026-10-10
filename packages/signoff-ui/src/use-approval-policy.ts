@@ -10,6 +10,11 @@ import {
   type ApprovalRule,
   type RuleMatch,
 } from './lib/policy';
+import { approvalPolicyLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels } from './labels';
+
+/** The labels' sections this module reads. */
+const LABELS = { approvalPolicy: approvalPolicyLabels };
 
 export type { ApprovalDecision, ApprovalRequest, ApprovalRule, RuleMatch } from './lib/policy';
 
@@ -112,6 +117,11 @@ export interface UseApprovalPolicyOptions {
   storage?: ApprovalRuleStorage | undefined;
   /** Every decision, rule added or removed, and session cleared, as it happens. */
   onAudit?: ((event: ApprovalAuditEvent) => void) | undefined;
+  /**
+   * Words to use instead of the English defaults: the reason a deny rule without one of its own
+   * sends (`labels.approvalPolicy.ruleDenial`). See `SignoffLabelsProvider`.
+   */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 export interface ApprovalPolicy {
@@ -142,7 +152,7 @@ export interface ApprovalPolicy {
 /**
  * Approval rules, held for the page: once, for the session or always, scoped by tool and by
  * argument patterns, deny winning over allow. Pass the policy to `ToolApprovalCard`, `AgentMessage`
- * or `ApprovalBatch`, and they offer the choices, answer what a rule already decides, and record
+ * or `ToolApprovalBatch`, and they offer the choices, answer what a rule already decides, and record
  * the rest. Persistence is pluggable: `always` rules go to `storage`, session rules stay in memory.
  */
 export function useApprovalPolicy({
@@ -151,7 +161,9 @@ export function useApprovalPolicy({
   onRulesChange,
   storage: storageProp,
   onAudit,
+  labels,
 }: UseApprovalPolicyOptions = {}): ApprovalPolicy {
+  const ruleDenial = useLabels(LABELS, labels).approvalPolicy.ruleDenial;
   const [fallbackStorage] = useState(() => memoryRuleStorage());
   const storage = storageProp ?? fallbackStorage;
   // The storage is read after the first render, on the client: a server render and the hydrating
@@ -235,7 +247,7 @@ export function useApprovalPolicy({
       if (!match) return undefined;
       const decision: ApprovalDecision =
         match.effect === 'allow' ? (match.rule.scope === 'session' ? 'allow-session' : 'allow-always') : 'deny-always';
-      const reason = match.effect === 'deny' ? (match.rule.reason ?? 'Denied by a rule') : undefined;
+      const reason = match.effect === 'deny' ? (match.rule.reason ?? ruleDenial) : undefined;
       audit({ type: 'decision', at: Date.now(), request, decision, by: 'rule', rule: match.rule, reason });
       return record({
         id: request.id,

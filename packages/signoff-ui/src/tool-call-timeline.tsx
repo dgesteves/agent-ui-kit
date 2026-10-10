@@ -18,18 +18,22 @@ import {
   isInterruptibleToolPart,
   isSettledPhase,
   isToolPart,
-  TOOL_PHASE_LABEL,
   type AnyUIPart,
   type ToolPart,
   type ToolPhase,
 } from './lib/ai';
-import { formatDuration, formatDurationLong, humanizeToolName, summarizeValue } from './lib/format';
+import { humanizeToolName, summarizeValue } from './lib/format';
+import { toolCallTimelineLabels, formatLabels, type RiskLevel, type SignoffLabelsInput } from './lib/labels';
+import { useLabels, WithLabels } from './labels';
 import { useActivityWindow, useHydrated, useNow, useToolTimings, type ToolTiming, type ToolTimings } from './lib/hooks';
 import { BanIcon, CheckIcon, ChevronIcon, SpinnerIcon, XIcon } from './lib/icons';
 import { JsonView, LiveRegion } from './lib/primitives';
 import { cn } from './lib/utils';
 
-export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+/** The labels' sections this module reads. */
+const LABELS = { toolCallTimeline: toolCallTimelineLabels, format: formatLabels };
+
+export type { RiskLevel };
 
 /** Per-tool presentation. Every field is optional. */
 export interface ToolMeta {
@@ -71,7 +75,7 @@ export interface ToolCallTimelineProps extends Omit<ComponentPropsWithoutRef<'di
   announce?: boolean;
   /** Extra content under a call, e.g. an approval card. Your content, like `renderOutput`'s. */
   renderExtra?: ((part: ToolPart) => ReactNode) | undefined;
-  /** Accessible name for the list. Default "Tool calls". */
+  /** Accessible name for the list. Default "Tool calls" (`labels.toolCallTimeline.list`). */
   label?: string;
   /**
    * Whether the run can still make progress. Default `true`. Pass `false` once it has ended
@@ -79,6 +83,8 @@ export interface ToolCallTimelineProps extends Omit<ComponentPropsWithoutRef<'di
    * then read "Stopped" and their clocks stop, instead of counting up forever.
    */
   active?: boolean;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 const PHASE_TEXT: Record<ToolPhase, string> = {
@@ -172,11 +178,14 @@ export function ToolCallTimeline({
   waterfall = true,
   announce = true,
   renderExtra,
-  label = 'Tool calls',
+  label,
   active = true,
+  labels,
   className,
   ...props
 }: ToolCallTimelineProps) {
+  const L = useLabels(LABELS, labels);
+  const T = L.toolCallTimeline;
   const toolParts = useMemo(() => parts.filter(isToolPart), [parts]);
   const measured = useToolTimings(toolParts);
   const timings = timingsProp ?? measured;
@@ -234,15 +243,14 @@ export function ToolCallTimeline({
     const sentences = settled.map(({ part, at }) => {
       const name = tools?.[getToolPartName(part)]?.label ?? humanizeToolName(getToolPartName(part));
       const phase = getToolPhase(part);
-      if (phase === 'error') return `${name} failed: ${part.errorText ?? 'unknown error'}`;
-      if (phase === 'denied')
-        return isAutomaticApproval(part.approval) ? `${name} was blocked by policy` : `${name} was denied`;
-      return `${name} finished in ${formatDurationLong(getDuration(timings[part.toolCallId], at))}`;
+      if (phase === 'error') return T.failed(name, part.errorText);
+      if (phase === 'denied') return isAutomaticApproval(part.approval) ? T.blockedByPolicy(name) : T.denied(name);
+      return T.finished(name, L.format.durationLong(getDuration(timings[part.toolCallId], at)));
     });
     const text =
       sentences.length > 1 ? sentences.map((s) => (/[.!?]$/.test(s) ? s : `${s}.`)).join(' ') : (sentences[0] ?? '');
     return { text, through: settled.at(-1)?.at ?? announcedThrough };
-  }, [toolParts, timings, tools, announcedThrough]);
+  }, [toolParts, timings, tools, announcedThrough, T, L.format]);
   // Wait a moment, so that calls finishing together (parallel calls) are read out as one.
   const { text: pendingText, through: pendingThrough } = pending;
   useEffect(() => {
@@ -272,33 +280,35 @@ export function ToolCallTimeline({
   if (toolParts.length === 0) return null;
 
   return (
-    <div
-      data-signoff
-      data-slot="signoff-tool-call-timeline"
-      className={cn('font-signoff-sans text-signoff-fg @container', className)}
-      {...props}
-    >
-      {/* Arrow-key navigation between the disclosure buttons, as in the WAI-ARIA accordion pattern. */}
-      <ol ref={listRef} aria-label={label} onKeyDown={onKeyDown} className="relative flex flex-col">
-        {toolParts.map((part, index) => (
-          <TimelineItem
-            key={part.toolCallId}
-            part={part}
-            meta={tools?.[getToolPartName(part)]}
-            timing={timings[part.toolCallId]}
-            clock={clock}
-            interrupted={!active && isInterruptibleToolPart(part)}
-            bounds={waterfall && hydrated ? bounds : undefined}
-            hydrated={hydrated}
-            isLast={index === toolParts.length - 1}
-            open={isOpen(part)}
-            onOpenChange={(open) => setOpen(part, open)}
-            extra={renderExtra?.(part)}
-          />
-        ))}
-      </ol>
-      {announce && <LiveRegion>{announced.text}</LiveRegion>}
-    </div>
+    <WithLabels labels={labels}>
+      <div
+        data-signoff
+        data-slot="signoff-tool-call-timeline"
+        className={cn('font-signoff-sans text-signoff-fg @container', className)}
+        {...props}
+      >
+        {/* Arrow-key navigation between the disclosure buttons, as in the WAI-ARIA accordion pattern. */}
+        <ol ref={listRef} aria-label={label ?? T.list} onKeyDown={onKeyDown} className="relative flex flex-col">
+          {toolParts.map((part, index) => (
+            <TimelineItem
+              key={part.toolCallId}
+              part={part}
+              meta={tools?.[getToolPartName(part)]}
+              timing={timings[part.toolCallId]}
+              clock={clock}
+              interrupted={!active && isInterruptibleToolPart(part)}
+              bounds={waterfall && hydrated ? bounds : undefined}
+              hydrated={hydrated}
+              isLast={index === toolParts.length - 1}
+              open={isOpen(part)}
+              onOpenChange={(open) => setOpen(part, open)}
+              extra={renderExtra?.(part)}
+            />
+          ))}
+        </ol>
+        {announce && <LiveRegion>{announced.text}</LiveRegion>}
+      </div>
+    </WithLabels>
   );
 }
 
@@ -331,6 +341,7 @@ function TimelineItem({
   onOpenChange,
   extra,
 }: TimelineItemProps) {
+  const L = useLabels(LABELS);
   const name = getToolPartName(part);
   const phase = getToolPhase(part);
   const label = meta?.label ?? part.title ?? humanizeToolName(name);
@@ -395,7 +406,7 @@ function TimelineItem({
                 phase === 'success' && 'sr-only',
               )}
             >
-              {interrupted ? 'Stopped' : TOOL_PHASE_LABEL[phase]}
+              {interrupted ? L.toolCallTimeline.stopped : L.toolCallTimeline.phases[phase]}
             </span>
             {bar && (
               <span
@@ -416,7 +427,7 @@ function TimelineItem({
               </span>
             )}
             <span className="font-signoff-mono text-signoff-fg-subtle w-12 text-right text-[11px] tabular-nums">
-              {duration !== undefined && phase !== 'awaiting-approval' ? formatDuration(duration) : ''}
+              {duration !== undefined && phase !== 'awaiting-approval' ? L.format.duration(duration) : ''}
             </span>
             <ChevronIcon
               size={14}
@@ -443,7 +454,17 @@ function TimelineItem({
 }
 
 /** The expanded body of a tool call: input, output or error, and approval outcome. */
-export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMeta | undefined }) {
+export function ToolCallDetails({
+  part,
+  meta,
+  labels,
+}: {
+  part: ToolPart;
+  meta?: ToolMeta | undefined;
+  /** Words to use instead of the English defaults: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
+}) {
+  const T = useLabels(LABELS, labels).toolCallTimeline;
   const hasInput = part.input !== undefined;
   const sectionLabel =
     'mb-1.5 font-signoff-mono text-[10.5px] font-medium tracking-[0.08em] text-signoff-fg-subtle uppercase';
@@ -451,23 +472,23 @@ export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMet
     <div data-signoff data-slot="signoff-tool-call-details" className="flex flex-col gap-3 px-2 pt-1.5 pb-3">
       {hasInput && (
         <div>
-          <div className={sectionLabel}>{part.state === 'input-streaming' ? 'Input (streaming)' : 'Input'}</div>
-          <JsonView value={part.input} label="Input" />
+          <div className={sectionLabel}>{part.state === 'input-streaming' ? T.inputStreaming : T.input}</div>
+          <JsonView value={part.input} label={T.input} />
         </div>
       )}
       {part.state === 'output-available' && (
         <div>
-          <div className={sectionLabel}>{part.preliminary ? 'Output (partial)' : 'Output'}</div>
+          <div className={sectionLabel}>{part.preliminary ? T.outputPartial : T.output}</div>
           {meta?.renderOutput ? (
             <div data-signoff-slot>{meta.renderOutput(part.output, part)}</div>
           ) : (
-            <JsonView value={part.output} label="Output" />
+            <JsonView value={part.output} label={T.output} />
           )}
         </div>
       )}
       {part.state === 'output-error' && (
         <div>
-          <div className={sectionLabel}>Error</div>
+          <div className={sectionLabel}>{T.error}</div>
           <p className="border-signoff-hot/35 bg-signoff-hot/[0.07] font-signoff-mono text-signoff-fg rounded-lg border px-3 py-2 text-xs leading-5 break-words whitespace-pre-wrap">
             {part.errorText}
           </p>
@@ -475,7 +496,7 @@ export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMet
       )}
       {(part.state === 'output-denied' || (part.state === 'approval-responded' && !part.approval.approved)) && (
         <p className="text-signoff-fg-muted text-xs">
-          {isAutomaticApproval(part.approval) ? 'Blocked by policy' : 'Denied by user'}
+          {T.deniedBy(isAutomaticApproval(part.approval))}
           {part.approval.reason ? (
             <>
               : <span className="text-signoff-fg">{part.approval.reason}</span>
@@ -486,7 +507,7 @@ export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMet
         </p>
       )}
       {!hasInput && part.state === 'input-streaming' && (
-        <p className="text-signoff-fg-subtle text-xs">Waiting for input…</p>
+        <p className="text-signoff-fg-subtle text-xs">{T.waitingForInput}</p>
       )}
     </div>
   );

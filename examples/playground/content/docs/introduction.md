@@ -34,6 +34,8 @@ Supporting pieces:
 
 `Markdown`, `Reasoning` and `JsonView` are exported on their own too, with hooks such as `useRunTiming` and pure helpers such as `deriveAgentState`, `addUsage`, `estimateCost` and `applyHunks`. The helpers are also in `signoff-ui/core`, which has no React, for Route Handlers and Server Components.
 
+Every word the components show or announce is a label: `SignoffLabelsProvider` takes a translation of them all, or a few, and [Labels and translations](/docs/labels) has a complete one in Portuguese.
+
 ## How it reads a run
 
 Each AI SDK 6 or 7 message part has a place:

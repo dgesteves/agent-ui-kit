@@ -106,6 +106,7 @@ export function getToolPhase(
   }
 }
 
+/** The English phase names. The timeline reads them from `labels.toolCallTimeline.phases`. */
 export const TOOL_PHASE_LABEL: Record<ToolPhase, string> = {
   streaming: 'Preparing',
   running: 'Running',
@@ -218,6 +219,7 @@ export function toSourceItem(source: SourcePart | SourceItem): SourceItem {
 
 export type AgentState = 'idle' | 'thinking' | 'working' | 'awaiting-approval' | 'done' | 'stopped' | 'error';
 
+/** The English state names. `AgentStatus` reads them from `labels.agentStatus.states`. */
 export const AGENT_STATE_LABEL: Record<AgentState, string> = {
   idle: 'Idle',
   thinking: 'Thinking',
@@ -249,6 +251,7 @@ export function deriveAgentState({
   message,
   pendingClientTools = [],
   clientTools = [],
+  writingResponse = 'Writing response',
 }: {
   status: ChatStatus;
   message?: Pick<UIMessage, 'role' | 'parts'> | undefined;
@@ -260,6 +263,8 @@ export function deriveAgentState({
    * as the detail, not `stopped`, until the output lands and the run continues.
    */
   clientTools?: readonly string[];
+  /** The detail while the model writes its answer. Default "Writing response": pass `labels.agentStatus.writingResponse`. */
+  writingResponse?: string;
 }): DerivedAgentState {
   if (status === 'error') return { state: 'error' };
   const parts = message?.role === 'assistant' ? message.parts : [];
@@ -275,7 +280,7 @@ export function deriveAgentState({
     const last = parts.at(-1);
     if (!last || last.type === 'step-start' || last.type === 'reasoning') return { state: 'thinking' };
     if (isToolPart(last)) return { state: 'working', detail: getToolPartName(last) };
-    if (last.type === 'text') return { state: 'working', detail: 'Writing response' };
+    if (last.type === 'text') return { state: 'working', detail: writingResponse };
     return { state: 'working' };
   }
   if (status === 'ready') {

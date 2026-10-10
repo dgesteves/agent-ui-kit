@@ -93,3 +93,11 @@ export {
 } from './lib/policy';
 export { addUsage, estimateCost, type CostBreakdown, type ModelPricing } from './lib/usage';
 export { cn, type HeadingLevel } from './lib/utils';
+export {
+  defaultLabels,
+  mergeLabels,
+  type OfferedChoices,
+  type RangeLabel,
+  type SignoffLabels,
+  type SignoffLabelsInput,
+} from './lib/labels';

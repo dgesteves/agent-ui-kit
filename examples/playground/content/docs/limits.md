@@ -8,24 +8,24 @@ What each import adds to an app's JavaScript, minified and gzipped. React and Re
 | ------------------------------------------------------------------ | -------: |
 | `addUsage`, `estimateCost` from `/core` (for a route handler)      |   0.4 kB |
 | `toToolApproval` from `/core` (approval rules in a route handler)  |   0.9 kB |
-| `useApprovalPolicy` (the rules without markup)                     |   1.7 kB |
+| `useApprovalPolicy` (the rules without markup)                     |   1.9 kB |
 | `useAgUiAgent` from `/ag-ui`                                       |   2.9 kB |
 | `applyHunks`, `parseFileChange` from `/core` (with jsdiff)         |   6.6 kB |
-| `Sources`                                                          |   9.9 kB |
-| `AgentStatus`                                                      |  10.7 kB |
-| `RunMeter`                                                         |  11.9 kB |
-| `useDiffReview` (the review without markup)                        |  14.2 kB |
-| `ApprovalCard`                                                     |  17.4 kB |
-| `ToolCallTimeline`                                                 |  19.4 kB |
-| `DiffReview`                                                       |  40.3 kB |
-| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) |  81.5 kB |
-| Everything in the main entry                                       | 114.4 kB |
+| `Sources`                                                          |  10.3 kB |
+| `AgentStatus`                                                      |  11.2 kB |
+| `RunMeter`                                                         |  12.5 kB |
+| `useDiffReview` (the review without markup)                        |  15.4 kB |
+| `ApprovalCard`                                                     |  18.4 kB |
+| `ToolCallTimeline`                                                 |  20.1 kB |
+| `DiffReview`                                                       |  41.2 kB |
+| `AgentMessage` (markdown, reasoning, timeline, approvals, sources) |  83.0 kB |
+| Everything in the main entry                                       | 116.8 kB |
 
-Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. CI runs it on every pull request, with a budget per row about 5% over its size. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 63.5 kB.
+Measured with `pnpm size`, which bundles each import from the built package with Rolldown and gzips it. CI runs it on every pull request, with a budget per row about 5% over its size. Most of `AgentMessage` is the markdown parser: `Markdown` alone is 64.0 kB. Each component carries the English labels of the sections it reads, not the others.
 
 `DiffReview`'s diff worker is a separate file the bundler emits, loaded only when a file is too large to diff while rendering: 18 kB minified, with jsdiff, in a Vite build.
 
-`styles.css` adds 9.4 kB gzipped, 255 kB uncompressed. Most of that is the selector each rule carries so that it styles the components' own elements and never your content inside them. With Tailwind v4, `tailwind.css` adds the tokens, and your build generates only the utilities the components use.
+`styles.css` adds 9.9 kB gzipped, 269 kB uncompressed. Most of that is the selector each rule carries so that it styles the components' own elements and never your content inside them. With Tailwind v4, `tailwind.css` adds the tokens, and your build generates only the utilities the components use.
 
 ## Large diffs
 
@@ -56,12 +56,11 @@ Measured with `pnpm perf`, which CI runs on every pull request with a budget per
 - **Citation numbering.** `[n]` markers are numbered over the message's sources after de-duplication by URL (by source id for documents). If your prompt numbers a list of sources that contains duplicates, markers after the first duplicate point one source early. Number unique sources in the prompt.
 - **Run state comes from you.** Parts carry no signal that a run has ended, so tool calls left behind by `stop()` or an interrupted history read "Stopped" only when you pass `active={false}`. `deriveAgentState` reports such a run as `stopped`, which the quickstart's `active` condition covers.
 - **Sub-agents render flat.** A sub-agent's calls show inline in its parent's timeline, not as a nested run.
-- **English only.** Most labels are fixed English strings; a few, such as the approve and deny labels and the reason placeholder, are props.
+- **Words for the agent stay English.** Every word a person sees or hears is a [label](/docs/labels), but what goes to the model (`reviewToolOutput`'s summary, `toToolApproval`'s reasons) is English. Right-to-left layouts have not been tested.
 - **Nesting in slots.** With `styles.css`, a component rendered in a slot of a component that is itself in a slot is styled up to two levels deep; deeper than that it renders unstyled.
 
 ## What's next
 
 The next work is on review and approval:
 
-- Labels for every string, for other languages.
 - Adapters: a documented assistant-ui binding, an AI Elements recipe, an Agent Client Protocol adapter, and AG-UI sub-agents as nested timelines.

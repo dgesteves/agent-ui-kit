@@ -15,9 +15,14 @@ import { Img } from './lib/primitives';
 import { cn } from './lib/utils';
 import { Markdown } from './markdown';
 import type { ApprovalPolicy } from './use-approval-policy';
+import { agentMessageLabels, commonLabels, type SignoffLabelsInput } from './lib/labels';
+import { useLabels, WithLabels } from './labels';
 import { Reasoning } from './reasoning';
 import { Sources } from './sources';
 import { ToolCallTimeline, type ToolMeta } from './tool-call-timeline';
+
+/** The labels' sections this module reads. */
+const LABELS = { agentMessage: agentMessageLabels, common: commonLabels };
 
 type DataPart = Extract<AnyUIPart, { type: `data-${string}` }>;
 type FilePart = Extract<AnyUIPart, { type: 'file' }>;
@@ -68,6 +73,8 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   allowedImageHosts?: readonly string[] | undefined;
   /** Externally measured tool timings. Measured client-side when omitted. */
   timings?: ToolTimings | undefined;
+  /** Words to use instead of the English defaults, for the message and all it renders: see `SignoffLabelsProvider`. */
+  labels?: SignoffLabelsInput | undefined;
 }
 
 type Segment =
@@ -97,6 +104,7 @@ export function AgentMessage({
   sourcesVariant = 'chips',
   allowedImageHosts,
   timings: timingsProp,
+  labels,
   className,
   ...props
 }: AgentMessageProps) {
@@ -147,84 +155,86 @@ export function AgentMessage({
   }, [parts, streaming, active, renderTool, renderData]);
 
   return (
-    <article
-      data-signoff
-      data-slot="signoff-agent-message"
-      data-role={message.role}
-      aria-busy={streaming || undefined}
-      className={cn('font-signoff-sans text-signoff-fg flex min-w-0 flex-col gap-3', className)}
-      {...props}
-    >
-      {onToolApproval && (
-        <ToolApprovalBatch
-          parts={parts.filter(isToolPart)}
-          onRespond={onToolApproval}
-          policy={approvalPolicy}
-          tools={tools}
-        />
-      )}
-      {segments.map((segment) => {
-        switch (segment.kind) {
-          case 'text':
-            return (
-              <Markdown
-                key={segment.key}
-                streaming={segment.streaming}
-                citations={sources.length}
-                citationPrefix={sourcePrefix}
-                allowedImageHosts={allowedImageHosts}
-              >
-                {segment.text}
-              </Markdown>
-            );
-          case 'reasoning':
-            return (
-              <Reasoning
-                key={segment.key}
-                text={segment.text}
-                streaming={segment.streaming}
-                allowedImageHosts={allowedImageHosts}
-              />
-            );
-          case 'tools':
-            return (
-              <ToolCallTimeline
-                key={segment.key}
-                parts={segment.parts}
-                tools={tools}
-                timings={timings}
-                active={active}
-                renderExtra={
-                  onToolApproval
-                    ? (part) =>
-                        part.approval ? (
-                          <ToolApprovalCard
-                            part={part}
-                            onRespond={onToolApproval}
-                            meta={tools?.[getToolPartName(part)]}
-                            policy={approvalPolicy}
-                            onEditInput={onToolInputEdit}
-                            {...approvalProps}
-                          />
-                        ) : null
-                    : undefined
-                }
-              />
-            );
-          case 'file':
-            return <FileAttachment key={segment.key} part={segment.part} imagePolicy={imagePolicy} />;
-          case 'node':
-            return (
-              <div key={segment.key} data-signoff-slot>
-                {segment.node}
-              </div>
-            );
-        }
-      })}
-      {sources.length > 0 && (
-        <Sources sources={sources} variant={sourcesVariant} idPrefix={sourcePrefix} className="mt-1" />
-      )}
-    </article>
+    <WithLabels labels={labels}>
+      <article
+        data-signoff
+        data-slot="signoff-agent-message"
+        data-role={message.role}
+        aria-busy={streaming || undefined}
+        className={cn('font-signoff-sans text-signoff-fg flex min-w-0 flex-col gap-3', className)}
+        {...props}
+      >
+        {onToolApproval && (
+          <ToolApprovalBatch
+            parts={parts.filter(isToolPart)}
+            onRespond={onToolApproval}
+            policy={approvalPolicy}
+            tools={tools}
+          />
+        )}
+        {segments.map((segment) => {
+          switch (segment.kind) {
+            case 'text':
+              return (
+                <Markdown
+                  key={segment.key}
+                  streaming={segment.streaming}
+                  citations={sources.length}
+                  citationPrefix={sourcePrefix}
+                  allowedImageHosts={allowedImageHosts}
+                >
+                  {segment.text}
+                </Markdown>
+              );
+            case 'reasoning':
+              return (
+                <Reasoning
+                  key={segment.key}
+                  text={segment.text}
+                  streaming={segment.streaming}
+                  allowedImageHosts={allowedImageHosts}
+                />
+              );
+            case 'tools':
+              return (
+                <ToolCallTimeline
+                  key={segment.key}
+                  parts={segment.parts}
+                  tools={tools}
+                  timings={timings}
+                  active={active}
+                  renderExtra={
+                    onToolApproval
+                      ? (part) =>
+                          part.approval ? (
+                            <ToolApprovalCard
+                              part={part}
+                              onRespond={onToolApproval}
+                              meta={tools?.[getToolPartName(part)]}
+                              policy={approvalPolicy}
+                              onEditInput={onToolInputEdit}
+                              {...approvalProps}
+                            />
+                          ) : null
+                      : undefined
+                  }
+                />
+              );
+            case 'file':
+              return <FileAttachment key={segment.key} part={segment.part} imagePolicy={imagePolicy} />;
+            case 'node':
+              return (
+                <div key={segment.key} data-signoff-slot>
+                  {segment.node}
+                </div>
+              );
+          }
+        })}
+        {sources.length > 0 && (
+          <Sources sources={sources} variant={sourcesVariant} idPrefix={sourcePrefix} className="mt-1" />
+        )}
+      </article>
+    </WithLabels>
   );
 }
 
@@ -232,6 +242,7 @@ export function AgentMessage({
 const canPreview = (url: string, policy: ImagePolicy) => /^(data|blob):/i.test(url) || isAllowedImage(url, policy);
 
 function FileAttachment({ part, imagePolicy }: { part: FilePart; imagePolicy: ImagePolicy }) {
+  const L = useLabels(LABELS);
   const name = part.filename ?? part.mediaType;
   const image = part.mediaType.startsWith('image');
   if (image && canPreview(part.url, imagePolicy)) {
@@ -244,7 +255,7 @@ function FileAttachment({ part, imagePolicy }: { part: FilePart; imagePolicy: Im
       >
         <Img
           src={part.url}
-          alt={part.filename ?? 'Attached image'}
+          alt={part.filename ?? L.agentMessage.attachedImage}
           className="border-signoff-border max-h-64 rounded-lg border"
         />
       </a>
@@ -260,7 +271,7 @@ function FileAttachment({ part, imagePolicy }: { part: FilePart; imagePolicy: Im
     >
       <Icon size={14} className="text-signoff-fg-subtle" />
       {name}
-      <span className="sr-only">(opens in a new tab)</span>
+      <span className="sr-only">{L.common.opensInNewTab}</span>
     </a>
   );
 }

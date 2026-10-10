@@ -117,13 +117,14 @@ try {
   }
 
   // Component pages document props from the package's own types: ApprovalCard's toolName is a
-  // required string, risk has no default, and approveLabel defaults to 'Approve' (the page and its
-  // Markdown share the source).
+  // required string, risk has no default, allowReason defaults to true, and approveLabel says which
+  // label it defaults to (the page and its Markdown share the source).
   const card = await (await fetch(`${BASE}/docs/components/approval-card.md`)).text();
   check(
     card.includes('| `toolName` (required) | `string` |') &&
       /\| `risk` \| `RiskLevel` \| {2}\|/.test(card) &&
-      /\| `approveLabel` \| `string` \| `'Approve'` \|/.test(card),
+      /\| `allowReason` \| `boolean` \| `true` \|/.test(card) &&
+      /\| `approveLabel` \| `string` \| {2}\| The approve button's text\. Default "Approve"/.test(card),
     'docs: props tables come from the types, with defaults from the source',
     card
       .split('\n')
@@ -236,9 +237,18 @@ try {
   const gallery = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
   await gallery.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
   const anchors = ['agent-status', 'tool-call-timeline', 'approval-card', 'diff-review', 'run-meter', 'sources'];
-  anchors.push('theming', 'agent-message', 'ag-ui');
+  anchors.push('theming', 'labels', 'agent-message', 'ag-ui');
   const missing = await gallery.evaluate((ids) => ids.filter((id) => !document.getElementById(id)), anchors);
   check(missing.length === 0, 'gallery: every section anchor is there', missing.join(', '));
+  const portuguese = await gallery.locator('#labels [lang="pt-PT"]').evaluate((el) => ({
+    review: el.querySelector('[data-slot="signoff-diff-review"]')?.getAttribute('aria-label'),
+    approval: el.querySelector('[data-slot="signoff-approval-card"]')?.textContent ?? '',
+  }));
+  check(
+    portuguese.review === 'Rever alterações' && portuguese.approval.includes('Aprovação necessária'),
+    'gallery: the labels section is in Portuguese',
+    JSON.stringify(portuguese).slice(0, 200),
+  );
   const snippets = await gallery.locator('pre:visible').allInnerTexts();
   check(
     snippets.some((text) => text.includes("import 'signoff-ui/styles.css';")),

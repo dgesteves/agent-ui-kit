@@ -23,6 +23,11 @@
           "target": "components/signoff-ui/diff-review.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -61,6 +66,11 @@
           "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/icons.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/primitives.tsx",
@@ -282,6 +292,11 @@
           "target": "components/signoff-ui/use-diff-review.ts"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -302,9 +317,19 @@
           "target": "components/signoff-ui/lib/diff.ts"
         },
         {
+          "path": "packages/signoff-ui/src/lib/format.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/format.ts"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/hooks.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/hooks.ts"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/review.ts",
@@ -511,6 +536,11 @@
           "target": "components/signoff-ui/approval-card.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -534,6 +564,11 @@
           "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/icons.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/policy.ts",
@@ -755,6 +790,21 @@
           "target": "components/signoff-ui/use-approval-policy.ts"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/format.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/format.ts"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/policy.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/policy.ts"
@@ -962,6 +1012,11 @@
           "target": "components/signoff-ui/approval-card.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -990,6 +1045,11 @@
           "path": "packages/signoff-ui/src/lib/images.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/images.ts"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/policy.ts",
@@ -1231,6 +1291,11 @@
           "target": "components/signoff-ui/tool-call-timeline.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -1254,6 +1319,11 @@
           "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/icons.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/primitives.tsx",
@@ -1459,6 +1529,11 @@
           "target": "components/signoff-ui/run-meter.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -1477,6 +1552,11 @@
           "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/icons.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/scroll-region.ts",
@@ -1687,6 +1767,11 @@
           "target": "components/signoff-ui/agent-status.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -1710,6 +1795,11 @@
           "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/icons.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/primitives.tsx",
@@ -1915,6 +2005,11 @@
           "target": "components/signoff-ui/sources.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -1928,6 +2023,11 @@
           "path": "packages/signoff-ui/src/lib/icons.tsx",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/icons.tsx"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/utils.ts",
@@ -2130,6 +2230,11 @@
           "target": "components/signoff-ui/markdown.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/format.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/format.ts"
@@ -2148,6 +2253,11 @@
           "path": "packages/signoff-ui/src/lib/images.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/images.ts"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/primitives.tsx",
@@ -2362,6 +2472,11 @@
           "target": "components/signoff-ui/reasoning.tsx"
         },
         {
+          "path": "packages/signoff-ui/src/labels.tsx",
+          "type": "registry:component",
+          "target": "components/signoff-ui/labels.tsx"
+        },
+        {
           "path": "packages/signoff-ui/src/lib/ai.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/ai.ts"
@@ -2390,6 +2505,11 @@
           "path": "packages/signoff-ui/src/lib/images.ts",
           "type": "registry:lib",
           "target": "components/signoff-ui/lib/images.ts"
+        },
+        {
+          "path": "packages/signoff-ui/src/lib/labels.ts",
+          "type": "registry:lib",
+          "target": "components/signoff-ui/lib/labels.ts"
         },
         {
           "path": "packages/signoff-ui/src/lib/primitives.tsx",

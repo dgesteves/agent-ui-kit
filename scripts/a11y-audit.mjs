@@ -80,6 +80,7 @@ for (const path of [
   '/docs/chat-ui',
   '/docs/ag-ui',
   '/docs/accessibility',
+  '/docs/labels',
   '/docs/limits',
   '/docs/comparison',
   '/docs/migrating-from-agent-ui-kit',

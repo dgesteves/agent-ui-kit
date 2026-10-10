@@ -23,9 +23,10 @@ import { useScrollRegion } from './lib/scroll-region';
 import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronIcon, CommentIcon, UndoIcon, XIcon } from './lib/icons';
 import { Kbd, LiveRegion } from './lib/primitives';
 import { cn, type HeadingLevel } from './lib/utils';
+import { diffReviewLabels, commonLabels } from './lib/labels';
+import { useLabels, WithLabels } from './labels';
 import {
   CONTEXT_STEP,
-  DIFF_REVIEW_TEXT,
   useDiffReview,
   type DiffReviewDraft,
   type DiffReviewFileState,
@@ -33,6 +34,9 @@ import {
   type UseDiffReviewOptions,
   type UseDiffReviewResult,
 } from './use-diff-review';
+
+/** The labels' sections this module reads. */
+const LABELS = { diffReview: diffReviewLabels, common: commonLabels };
 
 export type { DiffWorkerFactory } from './lib/diff-async';
 export type { FileChange, HunkDecision } from './lib/diff';
@@ -50,10 +54,12 @@ export interface DiffReviewProps
   extends
     Omit<ComponentPropsWithoutRef<'section'>, 'title' | 'onSubmit' | 'children'>,
     Omit<UseDiffReviewOptions, 'readOnly' | 'context' | 'maxEditLength' | 'autoAdvance' | 'collapseViewed'> {
+  /** Heading. Default "Review changes" (`labels.diffReview.title`). */
   title?: ReactNode;
   view?: DiffViewMode | undefined;
   defaultView?: DiffViewMode;
   onViewChange?: ((view: DiffViewMode) => void) | undefined;
+  /** The apply button's text. Default "Apply 2 of 5", or "Apply changes" before any is accepted (`labels.diffReview.apply`). */
   submitLabel?: string;
   /** Hide review controls, e.g. once the review has been submitted. */
   readOnly?: boolean;
@@ -73,11 +79,11 @@ export interface DiffReviewProps
   headingLevel?: HeadingLevel;
 }
 
-const STATUS_BADGE: Record<ParsedFileDiff['status'], { letter: string; label: string; className: string }> = {
-  modified: { letter: 'M', label: 'Modified', className: 'border-signoff-warn/40 text-signoff-warn-fg' },
-  added: { letter: 'A', label: 'Added', className: 'border-signoff-accent/45 text-signoff-accent-fg' },
-  deleted: { letter: 'D', label: 'Deleted', className: 'border-signoff-hot/45 text-signoff-hot-fg' },
-  renamed: { letter: 'R', label: 'Renamed', className: 'border-signoff-border-strong text-signoff-fg-muted' },
+const STATUS_BADGE: Record<ParsedFileDiff['status'], string> = {
+  modified: 'border-signoff-warn/40 text-signoff-warn-fg',
+  added: 'border-signoff-accent/45 text-signoff-accent-fg',
+  deleted: 'border-signoff-hot/45 text-signoff-hot-fg',
+  renamed: 'border-signoff-border-strong text-signoff-fg-muted',
 };
 
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -169,7 +175,7 @@ interface ReviewActions {
  */
 export function DiffReview({
   files,
-  title = 'Review changes',
+  title: titleProp,
   view: viewProp,
   defaultView = 'unified',
   onViewChange,
@@ -191,9 +197,13 @@ export function DiffReview({
   autoAdvance = true,
   collapseViewed = true,
   headingLevel = 3,
+  labels,
   className,
   ...props
 }: DiffReviewProps) {
+  const L = useLabels(LABELS, labels);
+  const T = L.diffReview;
+  const title = titleProp ?? T.title;
   const Heading = `h${headingLevel}` as const;
   const review = useDiffReview({
     files,
@@ -213,6 +223,7 @@ export function DiffReview({
     diffWorker,
     autoAdvance,
     collapseViewed,
+    labels,
   });
   const { items, counts, comparing, isMac } = review;
 
@@ -279,224 +290,214 @@ export function DiffReview({
   const deletions = review.files.reduce((n, f) => n + (f.parsed?.deletions ?? 0), 0);
   const hunkCount = items.filter((item) => item.hunk).length;
   const viewedCount = review.files.filter((f) => f.viewed).length;
-  const label = submitLabel ?? (counts.accepted > 0 ? `Apply ${counts.accepted} of ${counts.total}` : 'Apply changes');
-  const mod = isMac ? '⌘' : 'Ctrl';
+  const label = submitLabel ?? T.apply(counts.accepted, counts.total);
+  const mod = L.common.modKey(isMac);
   const indexOf = useMemo(() => new Map(items.map((item, i) => [item.id, i])), [items]);
 
   return (
     // Review shortcuts are scoped to focus within the diff (WCAG 2.1.4); every action is also a button.
-    <section
-      ref={rootRef}
-      data-signoff
-      data-slot="signoff-diff-review"
-      aria-label={typeof title === 'string' ? title : 'Review changes'}
-      {...review.getRootProps()}
-      className={cn(
-        'rounded-signoff border-signoff-border bg-signoff-surface font-signoff-sans text-signoff-fg overflow-hidden border',
-        className,
-      )}
-      {...props}
-    >
-      <div className="border-signoff-border flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <Heading className="text-signoff-fg text-sm font-semibold">{title}</Heading>
-          <p className="font-signoff-mono text-signoff-fg-subtle mt-0.5 text-xs">
-            {review.files.length} {review.files.length === 1 ? 'file' : 'files'} · {hunkCount}{' '}
-            {hunkCount === 1 ? 'hunk' : 'hunks'}
-            {comparing && ' so far'} · <span className="text-signoff-accent-fg">+{additions}</span>{' '}
-            <span className="text-signoff-hot-fg">−{deletions}</span>
-          </p>
-        </div>
-        <ToggleGroup.Root
-          type="single"
-          value={view}
-          onValueChange={(v) => v && setView(v as DiffViewMode)}
-          aria-label="Diff layout"
-          className="border-signoff-border bg-signoff-bg/50 inline-flex rounded-lg border p-0.5"
-        >
-          {(['unified', 'split'] as const).map((mode) => (
-            <ToggleGroup.Item
-              key={mode}
-              value={mode}
-              className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring data-[state=on]:bg-signoff-surface-2 data-[state=on]:text-signoff-fg cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 data-[state=on]:shadow-[inset_0_0_0_1px_var(--signoff-border-strong)]"
-            >
-              {mode}
-            </ToggleGroup.Item>
-          ))}
-        </ToggleGroup.Root>
-      </div>
-
-      {review.files.length > 1 && <FileNavigator review={review} />}
-
-      <VirtualizerContext.Provider value={virtualize ? virtualizer : null}>
-        {review.files.map((file) => (
-          <FileSection key={file.id} file={file} review={review}>
-            {file.items.map((item) => {
-              const index = indexOf.get(item.id)!;
-              const itemProps = review.getItemProps(index);
-              const selection = review.selection?.item.id === item.id ? review.selection : undefined;
-              const draft = review.draft && draftItem(review.draft) === item.id ? review.draft : undefined;
-              if (!item.hunk) {
-                return (
-                  <WholeFile
-                    key={item.id}
-                    file={file}
-                    index={index}
-                    name={itemProps['aria-label']}
-                    active={itemProps.tabIndex === 0}
-                    decision={itemProps['data-decision']}
-                    readOnly={readOnly}
-                    comments={commentsByItem.get(item.id)}
-                    draft={draft}
-                    actions={actions}
-                  />
-                );
-              }
-              const gap = (before: number) => {
-                const found = file.gaps.find((g) => g.before === before);
-                return (
-                  found && (
-                    <ContextGapView
-                      key={`gap-${before}`}
-                      review={review}
-                      file={file}
-                      gap={found}
-                      view={view}
-                      shown={review.shown[`${file.id}:${before}`]}
-                    />
-                  )
-                );
-              };
-              const hunk = item.hunk;
-              const last = hunk.index === file.parsed!.hunks.length - 1;
-              return (
-                <Fragment key={item.id}>
-                  {gap(hunk.index)}
-                  <Hunk
-                    hunk={hunk}
-                    file={file.parsed!}
-                    index={index}
-                    name={itemProps['aria-label']}
-                    view={view}
-                    decision={itemProps['data-decision']}
-                    active={itemProps.tabIndex === 0}
-                    readOnly={readOnly}
-                    rowOffset={layout.offsets.get(item.id) ?? 0}
-                    selection={selection && { from: selection.from, to: selection.to, head: selection.head }}
-                    comments={commentsByItem.get(item.id)}
-                    draft={draft}
-                    actions={actions}
-                  />
-                  {last && gap(hunk.index + 1)}
-                </Fragment>
-              );
-            })}
-          </FileSection>
-        ))}
-      </VirtualizerContext.Provider>
-
-      {!readOnly && (
-        <div className="border-signoff-border bg-signoff-surface-2/30 flex flex-wrap items-center gap-x-4 gap-y-3 border-t px-4 py-3">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <p className="text-signoff-fg-muted text-xs">
-              <span className="text-signoff-fg font-semibold tabular-nums">
-                {counts.accepted + counts.rejected}/{counts.total}
-              </span>{' '}
-              reviewed
-              {review.files.length > 1 && (
-                <span className="text-signoff-fg-subtle">
-                  {' '}
-                  · {viewedCount} of {review.files.length} files viewed
-                </span>
-              )}
-              {review.comments.length > 0 && (
-                <span className="text-signoff-fg-subtle">
-                  {' '}
-                  · {review.comments.length} {review.comments.length === 1 ? 'comment' : 'comments'}
-                </span>
-              )}
-              {comparing ? (
-                <span className="text-signoff-fg-subtle"> · comparing files…</span>
-              ) : (
-                counts.pending > 0 &&
-                counts.accepted + counts.rejected > 0 && (
-                  <span className="text-signoff-fg-subtle"> · unreviewed hunks are skipped</span>
-                )
-              )}
+    <WithLabels labels={labels}>
+      <section
+        ref={rootRef}
+        data-signoff
+        data-slot="signoff-diff-review"
+        aria-label={typeof title === 'string' ? title : T.title}
+        {...review.getRootProps()}
+        className={cn(
+          'rounded-signoff border-signoff-border bg-signoff-surface font-signoff-sans text-signoff-fg overflow-hidden border',
+          className,
+        )}
+        {...props}
+      >
+        <div className="border-signoff-border flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <Heading className="text-signoff-fg text-sm font-semibold">{title}</Heading>
+            <p className="font-signoff-mono text-signoff-fg-subtle mt-0.5 text-xs">
+              {T.files(review.files.length)} · {T.hunks(hunkCount, comparing)} ·{' '}
+              <span className="text-signoff-accent-fg">+{additions}</span>{' '}
+              <span className="text-signoff-hot-fg">−{deletions}</span>
             </p>
-            <div aria-hidden="true" className="flex h-1 w-40 gap-0.5 overflow-hidden rounded-full">
-              {items.map((item) => {
-                const d = review.decisions[item.id] ?? 'pending';
+          </div>
+          <ToggleGroup.Root
+            type="single"
+            value={view}
+            onValueChange={(v) => v && setView(v as DiffViewMode)}
+            aria-label={T.layout}
+            className="border-signoff-border bg-signoff-bg/50 inline-flex rounded-lg border p-0.5"
+          >
+            {(['unified', 'split'] as const).map((mode) => (
+              <ToggleGroup.Item
+                key={mode}
+                value={mode}
+                className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring data-[state=on]:bg-signoff-surface-2 data-[state=on]:text-signoff-fg cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 data-[state=on]:shadow-[inset_0_0_0_1px_var(--signoff-border-strong)]"
+              >
+                {T.views[mode]}
+              </ToggleGroup.Item>
+            ))}
+          </ToggleGroup.Root>
+        </div>
+
+        {review.files.length > 1 && <FileNavigator review={review} />}
+
+        <VirtualizerContext.Provider value={virtualize ? virtualizer : null}>
+          {review.files.map((file) => (
+            <FileSection key={file.id} file={file} review={review}>
+              {file.items.map((item) => {
+                const index = indexOf.get(item.id)!;
+                const itemProps = review.getItemProps(index);
+                const selection = review.selection?.item.id === item.id ? review.selection : undefined;
+                const draft = review.draft && draftItem(review.draft) === item.id ? review.draft : undefined;
+                if (!item.hunk) {
+                  return (
+                    <WholeFile
+                      key={item.id}
+                      file={file}
+                      index={index}
+                      name={itemProps['aria-label']}
+                      active={itemProps.tabIndex === 0}
+                      decision={itemProps['data-decision']}
+                      readOnly={readOnly}
+                      comments={commentsByItem.get(item.id)}
+                      draft={draft}
+                      actions={actions}
+                    />
+                  );
+                }
+                const gap = (before: number) => {
+                  const found = file.gaps.find((g) => g.before === before);
+                  return (
+                    found && (
+                      <ContextGapView
+                        key={`gap-${before}`}
+                        review={review}
+                        file={file}
+                        gap={found}
+                        view={view}
+                        shown={review.shown[`${file.id}:${before}`]}
+                      />
+                    )
+                  );
+                };
+                const hunk = item.hunk;
+                const last = hunk.index === file.parsed!.hunks.length - 1;
                 return (
-                  <span
-                    key={item.id}
-                    className={cn(
-                      'h-full flex-1 transition-colors',
-                      d === 'accepted'
-                        ? 'bg-signoff-accent'
-                        : d === 'rejected'
-                          ? 'bg-signoff-hot'
-                          : 'bg-signoff-border-strong',
-                    )}
-                  />
+                  <Fragment key={item.id}>
+                    {gap(hunk.index)}
+                    <Hunk
+                      hunk={hunk}
+                      file={file.parsed!}
+                      index={index}
+                      name={itemProps['aria-label']}
+                      view={view}
+                      decision={itemProps['data-decision']}
+                      active={itemProps.tabIndex === 0}
+                      readOnly={readOnly}
+                      rowOffset={layout.offsets.get(item.id) ?? 0}
+                      selection={selection && { from: selection.from, to: selection.to, head: selection.head }}
+                      comments={commentsByItem.get(item.id)}
+                      draft={draft}
+                      actions={actions}
+                    />
+                    {last && gap(hunk.index + 1)}
+                  </Fragment>
                 );
               })}
+            </FileSection>
+          ))}
+        </VirtualizerContext.Provider>
+
+        {!readOnly && (
+          <div className="border-signoff-border bg-signoff-surface-2/30 flex flex-wrap items-center gap-x-4 gap-y-3 border-t px-4 py-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <p className="text-signoff-fg-muted text-xs">
+                <span className="text-signoff-fg font-semibold tabular-nums">
+                  {counts.accepted + counts.rejected}/{counts.total}
+                </span>{' '}
+                {T.reviewed}
+                {review.files.length > 1 && (
+                  <span className="text-signoff-fg-subtle"> · {T.filesViewed(viewedCount, review.files.length)}</span>
+                )}
+                {review.comments.length > 0 && (
+                  <span className="text-signoff-fg-subtle"> · {T.comments(review.comments.length)}</span>
+                )}
+                {comparing ? (
+                  <span className="text-signoff-fg-subtle"> · {T.comparingFiles}</span>
+                ) : (
+                  counts.pending > 0 &&
+                  counts.accepted + counts.rejected > 0 && (
+                    <span className="text-signoff-fg-subtle"> · {T.skipped}</span>
+                  )
+                )}
+              </p>
+              <div aria-hidden="true" className="flex h-1 w-40 gap-0.5 overflow-hidden rounded-full">
+                {items.map((item) => {
+                  const d = review.decisions[item.id] ?? 'pending';
+                  return (
+                    <span
+                      key={item.id}
+                      className={cn(
+                        'h-full flex-1 transition-colors',
+                        d === 'accepted'
+                          ? 'bg-signoff-accent'
+                          : d === 'rejected'
+                            ? 'bg-signoff-hot'
+                            : 'bg-signoff-border-strong',
+                      )}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+            <p className="text-signoff-fg-subtle hidden items-center gap-1 text-[11px] lg:flex" aria-hidden="true">
+              <Kbd>J</Kbd>
+              <Kbd>K</Kbd>
+              <span className="mr-1.5">{T.keyHints.move}</span>
+              <Kbd>A</Kbd>
+              <span className="mr-1.5">{T.keyHints.accept}</span>
+              <Kbd>R</Kbd>
+              <span className="mr-1.5">{T.keyHints.reject}</span>
+              <Kbd>C</Kbd>
+              <span className="mr-1.5">{T.keyHints.comment}</span>
+              <Kbd>{mod}</Kbd>
+              <Kbd>↵</Kbd>
+              <span>{T.keyHints.apply}</span>
+            </p>
+            <p className="sr-only">{T.keyboardHelp(mod)}</p>
+            <div className="ml-auto flex items-center gap-2">
+              {/* aria-disabled rather than disabled while comparing: the buttons keep focus. */}
+              <button
+                type="button"
+                aria-disabled={comparing || undefined}
+                aria-keyshortcuts="Shift+R"
+                onClick={() => review.decideAll('rejected')}
+                className={secondaryButton}
+              >
+                {T.rejectAll}
+              </button>
+              <button
+                type="button"
+                aria-disabled={comparing || undefined}
+                aria-keyshortcuts="Shift+A"
+                onClick={() => review.decideAll('accepted')}
+                className={secondaryButton}
+              >
+                {T.acceptAll}
+              </button>
+              {onSubmit && (
+                <button
+                  data-slot="signoff-diff-submit"
+                  {...review.getSubmitProps()}
+                  className="bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+                >
+                  {label}
+                </button>
+              )}
             </div>
           </div>
-          <p className="text-signoff-fg-subtle hidden items-center gap-1 text-[11px] lg:flex" aria-hidden="true">
-            <Kbd>J</Kbd>
-            <Kbd>K</Kbd>
-            <span className="mr-1.5">move</span>
-            <Kbd>A</Kbd>
-            <span className="mr-1.5">accept</span>
-            <Kbd>R</Kbd>
-            <span className="mr-1.5">reject</span>
-            <Kbd>C</Kbd>
-            <span className="mr-1.5">comment</span>
-            <Kbd>{mod}</Kbd>
-            <Kbd>↵</Kbd>
-            <span>apply</span>
-          </p>
-          <p className="sr-only">
-            Keyboard: J or K to move between hunks, Shift J or Shift K between files, A to accept, R to reject, U to
-            reset, Alt A or Alt R for the whole file, Shift A or Shift R for every hunk, Shift with the up or down arrow
-            to select lines, C to comment on them or on the hunk, E to show more unchanged lines, V to mark the file
-            viewed, {mod} Enter to apply.
-          </p>
-          <div className="ml-auto flex items-center gap-2">
-            {/* aria-disabled rather than disabled while comparing: the buttons keep focus. */}
-            <button
-              type="button"
-              aria-disabled={comparing || undefined}
-              aria-keyshortcuts="Shift+R"
-              onClick={() => review.decideAll('rejected')}
-              className={secondaryButton}
-            >
-              Reject all
-            </button>
-            <button
-              type="button"
-              aria-disabled={comparing || undefined}
-              aria-keyshortcuts="Shift+A"
-              onClick={() => review.decideAll('accepted')}
-              className={secondaryButton}
-            >
-              Accept all
-            </button>
-            {onSubmit && (
-              <button
-                data-slot="signoff-diff-submit"
-                {...review.getSubmitProps()}
-                className="bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-              >
-                {label}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-      <LiveRegion>{review.announcement}</LiveRegion>
-    </section>
+        )}
+        <LiveRegion>{review.announcement}</LiveRegion>
+      </section>
+    </WithLabels>
   );
 }
 
@@ -512,6 +513,7 @@ const smallButton =
   'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signoff-ring';
 
 function PathLabel({ path, oldPath }: { path: string; oldPath?: string | undefined }) {
+  const T = useLabels(LABELS).diffReview;
   const slash = path.lastIndexOf('/');
   return (
     <span className="min-w-0 truncate">
@@ -521,7 +523,7 @@ function PathLabel({ path, oldPath }: { path: string; oldPath?: string | undefin
           <span className="text-signoff-fg-subtle" aria-hidden="true">
             {' → '}
           </span>
-          <span className="sr-only"> to </span>
+          <span className="sr-only">{` ${T.renamedTo} `}</span>
         </>
       )}
       {slash > 0 && <span className="text-signoff-fg-subtle">{path.slice(0, slash + 1)}</span>}
@@ -531,26 +533,27 @@ function PathLabel({ path, oldPath }: { path: string; oldPath?: string | undefin
 }
 
 function StatusBadge({ status }: { status: ParsedFileDiff['status'] }) {
-  const badge = STATUS_BADGE[status];
+  const badge = useLabels(LABELS).diffReview.status[status];
   return (
     <span
       className={cn(
         'inline-flex size-[18px] shrink-0 items-center justify-center rounded border text-[10px] font-bold',
-        badge.className,
+        STATUS_BADGE[status],
       )}
-      title={badge.label}
+      title={badge.name}
     >
       <span aria-hidden="true">{badge.letter}</span>
-      <span className="sr-only">{badge.label}:</span>
+      <span className="sr-only">{badge.name}:</span>
     </span>
   );
 }
 
 /** Every file of a multi-file review, to jump to: one tab stop, ↑ and ↓ between files. */
 function FileNavigator({ review }: { review: UseDiffReviewResult }) {
+  const T = useLabels(LABELS).diffReview;
   return (
     <nav
-      aria-label="Files in this review"
+      aria-label={T.navigator}
       data-slot="signoff-diff-files"
       className="border-signoff-border bg-signoff-bg/30 border-b px-2 py-1.5"
     >
@@ -572,13 +575,10 @@ function FileNavigator({ review }: { review: UseDiffReviewResult }) {
                       <span aria-hidden="true">
                         {file.decided}/{total}
                       </span>
-                      <span className="sr-only">
-                        {`, ${file.decided} of ${total} decided`}
-                        {file.viewed && ', viewed'}
-                      </span>
+                      <span className="sr-only">{T.navigatorState(file.decided, total, file.viewed)}</span>
                     </>
                   ) : (
-                    'comparing…'
+                    T.comparingShort
                   )}
                 </span>
                 <span className="text-signoff-accent-fg w-3.5 shrink-0">{file.viewed && <CheckIcon size={13} />}</span>
@@ -601,6 +601,7 @@ function FileSection({
   review: UseDiffReviewResult;
   children: ReactNode;
 }) {
+  const T = useLabels(LABELS).diffReview;
   const parsed = file.parsed;
   const decidable = file.items.length > 0 && !review.readOnly;
   const bodyId = `${useId()}-body`;
@@ -619,7 +620,7 @@ function FileSection({
             type="button"
             aria-expanded={!file.collapsed}
             aria-controls={bodyId}
-            aria-label={`${file.collapsed ? 'Show' : 'Hide'} ${file.path}`}
+            aria-label={T.toggleFile(file.collapsed, file.path)}
             onClick={() => review.setCollapsed(file.id, !file.collapsed)}
             className="text-signoff-fg-subtle hover:text-signoff-fg focus-visible:outline-signoff-ring -ml-1.5 inline-flex size-6 cursor-pointer items-center justify-center rounded focus-visible:outline-2"
           >
@@ -642,7 +643,8 @@ function FileSection({
                   {...review.getViewedProps(file.id)}
                   className="accent-signoff-accent focus-visible:outline-signoff-ring size-3.5 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2"
                 />
-                Viewed<span className="sr-only"> {file.path}</span>
+                {T.viewed}
+                <span className="sr-only"> {file.path}</span>
               </label>
               <button
                 {...review.getFileDecisionProps(file.id, 'rejected')}
@@ -651,7 +653,8 @@ function FileSection({
                   'border-signoff-border text-signoff-fg-muted hover:border-signoff-hot/50 hover:text-signoff-hot-fg',
                 )}
               >
-                Reject file<span className="sr-only"> {file.path}</span>
+                {T.rejectFile}
+                <span className="sr-only"> {file.path}</span>
               </button>
               <button
                 {...review.getFileDecisionProps(file.id, 'accepted')}
@@ -660,22 +663,21 @@ function FileSection({
                   'border-signoff-border text-signoff-fg-muted hover:border-signoff-accent/50 hover:text-signoff-accent-fg',
                 )}
               >
-                Accept file<span className="sr-only"> {file.path}</span>
+                {T.acceptFile}
+                <span className="sr-only"> {file.path}</span>
               </button>
             </span>
           )}
         </span>
       </div>
       <div id={bodyId} hidden={file.collapsed}>
-        {!parsed && <p className="text-signoff-fg-subtle px-4 py-3 text-xs">Comparing changes…</p>}
+        {!parsed && <p className="text-signoff-fg-subtle px-4 py-3 text-xs">{T.comparing}</p>}
         {parsed?.fallback === 'replace' && (
           <p data-slot="signoff-diff-fallback" className="text-signoff-fg-muted px-4 pt-3 pb-1 text-xs">
-            Too many changes to compare line by line: the changed lines are shown as one hunk that replaces them.
+            {T.fallback}
           </p>
         )}
-        {parsed && file.items.length === 0 && (
-          <p className="text-signoff-fg-subtle px-4 py-3 text-xs">No textual changes.</p>
-        )}
+        {parsed && file.items.length === 0 && <p className="text-signoff-fg-subtle px-4 py-3 text-xs">{T.noChanges}</p>}
         {children}
       </div>
     </div>
@@ -687,14 +689,17 @@ const ROW_BG: Record<DiffLine['type'], string> = {
   add: 'bg-signoff-add',
   del: 'bg-signoff-del',
 };
-const SIGN: Record<DiffLine['type'], { glyph: string; sr: string; className: string }> = {
-  context: { glyph: ' ', sr: '', className: '' },
-  add: { glyph: '+', sr: 'Added: ', className: 'text-signoff-accent-fg' },
-  del: { glyph: '−', sr: 'Removed: ', className: 'text-signoff-hot-fg' },
+const SIGN: Record<DiffLine['type'], { glyph: string; className: string }> = {
+  context: { glyph: ' ', className: '' },
+  add: { glyph: '+', className: 'text-signoff-accent-fg' },
+  del: { glyph: '−', className: 'text-signoff-hot-fg' },
 };
 
-/** A line as a screen reader hears it, for chunks that are not on screen. */
-const spoken = (line: DiffLine) => `${SIGN[line.type].sr}${line.content}`;
+/** What a screen reader hears before a line: "Added: ", "Removed: " or nothing. */
+function useLinePrefix() {
+  const { added, removed } = useLabels(LABELS).diffReview;
+  return (type: DiffLine['type']) => (type === 'add' ? added : type === 'del' ? removed : '');
+}
 
 /** Decision buttons for an item: Reset (once decided), Reject and Accept, each a toggle. */
 function DecisionButtons({
@@ -711,6 +716,7 @@ function DecisionButtons({
   actions: ReviewActions;
   commentLabel: string;
 }) {
+  const T = useLabels(LABELS).diffReview;
   const rejected = decision === 'rejected';
   const accepted = decision === 'accepted';
   return (
@@ -728,7 +734,7 @@ function DecisionButtons({
         <button
           type="button"
           onClick={() => actions.decide(id, 'pending')}
-          aria-label={`Reset ${label}`}
+          aria-label={T.resetItem(label)}
           aria-keyshortcuts="U"
           className="text-signoff-fg-subtle hover:bg-signoff-surface-2 hover:text-signoff-fg focus-visible:outline-signoff-ring inline-flex size-7 cursor-pointer items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-1"
         >
@@ -738,7 +744,7 @@ function DecisionButtons({
       <button
         type="button"
         aria-pressed={rejected}
-        aria-label={`Reject ${label}`}
+        aria-label={T.rejectItem(label)}
         aria-keyshortcuts="R"
         onClick={() => actions.decide(id, rejected ? 'pending' : 'rejected')}
         className={cn(
@@ -749,12 +755,12 @@ function DecisionButtons({
         )}
       >
         <XIcon size={12} strokeWidth={2.5} />
-        Reject
+        {T.reject}
       </button>
       <button
         type="button"
         aria-pressed={accepted}
-        aria-label={`Accept ${label}`}
+        aria-label={T.acceptItem(label)}
         aria-keyshortcuts="A"
         onClick={() => actions.decide(id, accepted ? 'pending' : 'accepted')}
         className={cn(
@@ -765,13 +771,14 @@ function DecisionButtons({
         )}
       >
         <CheckIcon size={12} strokeWidth={2.5} />
-        Accept
+        {T.accept}
       </button>
     </span>
   );
 }
 
 function DecisionBadge({ decision }: { decision: HunkDecision }) {
+  const badge = useLabels(LABELS).diffReview.badge;
   if (decision === 'pending') return null;
   return (
     <span
@@ -782,7 +789,7 @@ function DecisionBadge({ decision }: { decision: HunkDecision }) {
           : 'bg-signoff-hot/15 text-signoff-hot-fg',
       )}
     >
-      {decision}
+      {badge[decision]}
     </span>
   );
 }
@@ -817,15 +824,10 @@ const WholeFile = memo(function WholeFile({
   draft: DiffReviewDraft | undefined;
   actions: ReviewActions;
 }) {
+  const T = useLabels(LABELS).diffReview;
   const parsed = file.parsed!;
   const id = `${file.id}:file`;
-  const note = parsed.binary
-    ? 'Binary file, not shown.'
-    : parsed.status === 'renamed'
-      ? `Renamed from ${parsed.oldPath ?? file.path}, without changes.`
-      : parsed.status === 'deleted'
-        ? 'Empty file, deleted.'
-        : 'New empty file.';
+  const note = T.wholeFile(parsed.status, !!parsed.binary, parsed.oldPath ?? file.path);
   return (
     // A roving-tabindex item: focus tracking only, all actions are buttons.
     <div
@@ -844,10 +846,10 @@ const WholeFile = memo(function WholeFile({
         {!readOnly && (
           <DecisionButtons
             id={id}
-            label={`change ${index + 1}`}
+            label={T.itemName('file', index + 1)}
             decision={decision}
             actions={actions}
-            commentLabel={`Comment on ${file.path}`}
+            commentLabel={T.commentOn(file.path)}
           />
         )}
       </div>
@@ -903,7 +905,8 @@ const Hunk = memo(function Hunk({
   draft,
   actions,
 }: HunkProps) {
-  const codeRef = useScrollRegion<HTMLDivElement>(`Hunk ${index + 1} code, ${file.path}`);
+  const T = useLabels(LABELS).diffReview;
+  const codeRef = useScrollRegion<HTMLDivElement>(T.hunkCode(index + 1, file.path));
   const ref = useRef<HTMLDivElement | null>(null);
   const virtualizer = useContext(VirtualizerContext);
   const rejected = decision === 'rejected';
@@ -946,7 +949,7 @@ const Hunk = memo(function Hunk({
     return { after: new Map([...after].map(([row, nodes]) => [row, <Fragment key={row}>{nodes}</Fragment>])), pinned };
   }, [hunk, comments, draft, selection, actions, readOnly]);
 
-  const selectionLabel = selection ? describeRange(hunk, selection.from, selection.to) : undefined;
+  const selectionLabel = selection ? T.lines(rangeOf(hunk, selection.from, selection.to)) : undefined;
 
   return (
     // A roving-tabindex item: focus tracking only, all actions are buttons.
@@ -969,10 +972,10 @@ const Hunk = memo(function Hunk({
         {!readOnly && (
           <DecisionButtons
             id={hunk.id}
-            label={`hunk ${index + 1}`}
+            label={T.itemName('hunk', index + 1)}
             decision={decision}
             actions={actions}
-            commentLabel={selectionLabel ? `Comment on ${selectionLabel}` : `Comment on hunk ${index + 1}`}
+            commentLabel={T.commentOn(selectionLabel ?? T.itemName('hunk', index + 1))}
           />
         )}
       </div>
@@ -1034,15 +1037,14 @@ function spanOf(
   return from === -1 || to < from ? undefined : [from, to];
 }
 
-/** "line 12" or "lines 12 to 14", numbered as a comment on them would be. */
-function describeRange(hunk: DiffHunk, from: number, to: number) {
+/** The lines selected, numbered as a comment on them would be: in the new file, else the original. */
+function rangeOf(hunk: DiffHunk, from: number, to: number) {
   const lines = hunk.lines.slice(from, to + 1);
   const numbers = (side: 'new' | 'old') =>
     lines.map((l) => (side === 'new' ? l.newNumber : l.oldNumber)).filter((n): n is number => n !== undefined);
   const news = numbers('new');
-  const [list, suffix] = news.length ? [news, ''] : [numbers('old'), ' of the original'];
-  const [a, b] = [list[0], list.at(-1)];
-  return `${a === b ? `line ${a}` : `lines ${a} to ${b}`}${suffix}`;
+  const [list, side] = news.length ? [news, 'new' as const] : [numbers('old'), 'old' as const];
+  return { side, startLine: list[0] ?? 0, endLine: list.at(-1) ?? 0 };
 }
 
 function CommentView({
@@ -1058,9 +1060,11 @@ function CommentView({
   editing: DiffReviewDraft | undefined;
   className?: string;
 }) {
+  const T = useLabels(LABELS).diffReview;
   if (editing?.commentId === comment.id)
     return <CommentEditor draft={editing} actions={actions} className={className} />;
-  const where = DIFF_REVIEW_TEXT.where(comment);
+  const where = T.where(comment);
+  const heading = T.commentHeading(where);
   return (
     <div
       data-slot="signoff-diff-comment"
@@ -1070,7 +1074,8 @@ function CommentView({
         <CommentIcon size={13} className="text-signoff-fg-subtle mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-signoff-fg-subtle text-[11px]">
-            <span className="sr-only">Comment </span>On {where}
+            <span className="sr-only">{heading.hidden}</span>
+            {heading.visible}
           </p>
           <p className="text-signoff-fg mt-0.5 text-[13px] leading-relaxed whitespace-pre-wrap">{comment.text}</p>
         </div>
@@ -1080,17 +1085,17 @@ function CommentView({
               type="button"
               onClick={() => actions.edit(comment.id)}
               className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded px-1.5 py-0.5 text-xs focus-visible:outline-2"
-              aria-label={`Edit comment on ${where}`}
+              aria-label={T.editComment(where)}
             >
-              Edit
+              {T.edit}
             </button>
             <button
               type="button"
               onClick={() => actions.remove(comment.id)}
               className="text-signoff-fg-muted hover:text-signoff-hot-fg focus-visible:outline-signoff-ring cursor-pointer rounded px-1.5 py-0.5 text-xs focus-visible:outline-2"
-              aria-label={`Delete comment on ${where}`}
+              aria-label={T.deleteComment(where)}
             >
-              Delete
+              {T.delete}
             </button>
           </span>
         )}
@@ -1108,15 +1113,14 @@ function CommentEditor({
   actions: ReviewActions;
   className?: string | undefined;
 }) {
+  const T = useLabels(LABELS).diffReview;
   const id = `${useId()}-comment`;
-  const where =
-    draft.target === 'file'
-      ? 'the file'
-      : draft.target === 'hunk'
-        ? 'the hunk'
-        : draft.range && draft.range.startLine === draft.range.endLine
-          ? `line ${draft.range.startLine}`
-          : `lines ${draft.range?.startLine} to ${draft.range?.endLine}`;
+  const where = T.where({
+    target: draft.target,
+    side: draft.range?.side,
+    startLine: draft.range?.startLine,
+    endLine: draft.range?.endLine,
+  });
   const empty = draft.text.trim() === '';
   return (
     <div
@@ -1127,7 +1131,7 @@ function CommentEditor({
       )}
     >
       <label htmlFor={id} className="text-signoff-fg-muted text-xs font-medium">
-        Comment on {where}, for the agent
+        {T.commentField(where)}
       </label>
       <textarea
         ref={(el) => actions.registerDraft(el)}
@@ -1148,7 +1152,7 @@ function CommentEditor({
             actions.cancel();
           }
         }}
-        placeholder="What should change here?"
+        placeholder={T.commentPlaceholder}
         className="border-signoff-border-strong bg-signoff-bg text-signoff-fg placeholder:text-signoff-fg-subtle focus-visible:outline-signoff-ring w-full resize-y rounded-lg border px-3 py-2 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-0"
       />
       <div className="flex items-center justify-end gap-2">
@@ -1158,7 +1162,7 @@ function CommentEditor({
           aria-keyshortcuts="Escape"
           className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-2 py-1.5 text-xs focus-visible:outline-2"
         >
-          Cancel
+          {T.cancel}
         </button>
         <button
           type="button"
@@ -1166,7 +1170,7 @@ function CommentEditor({
           aria-disabled={empty || undefined}
           className="bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 focus-visible:outline-signoff-ring inline-flex h-7 cursor-pointer items-center rounded-md px-2.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
         >
-          {draft.commentId ? 'Save comment' : 'Comment'}
+          {draft.commentId ? T.saveComment : T.addComment}
         </button>
       </div>
     </div>
@@ -1254,6 +1258,7 @@ function LineContent({
   rejected: boolean;
   wrap?: boolean;
 }) {
+  const prefix = useLinePrefix();
   const pieces = useMemo(
     () => mergeTokensWithSegments(tokenizeLine(line.content, language), line.segments),
     [line, language],
@@ -1265,7 +1270,7 @@ function LineContent({
         rejected && line.type === 'add' && 'decoration-signoff-hot/50 line-through',
       )}
     >
-      <span className="sr-only">{SIGN[line.type].sr}</span>
+      <span className="sr-only">{prefix(line.type)}</span>
       {pieces.map((p, i) => (
         <span
           key={i}
@@ -1390,6 +1395,7 @@ function UnifiedRows({
   actions,
   readOnly,
 }: RowsProps) {
+  const prefix = useLinePrefix();
   const lines = hunk.lines;
   // Unrendered rows have no width: keep the widest line's, so the sideways scroll does not change.
   const widest = useMemo(() => lines.reduce((n, l) => Math.max(n, l.content.length), 0), [lines]);
@@ -1421,7 +1427,12 @@ function UnifiedRows({
               initiallyNear={rowOffset + start < INITIAL_ROWS}
               pinned={pinnedIn(annotations, start, end)}
               virtualizer={virtualizer}
-              text={() => lines.slice(start, end).map(spoken).join('\n')}
+              text={() =>
+                lines
+                  .slice(start, end)
+                  .map((line) => prefix(line.type) + line.content)
+                  .join('\n')
+              }
             >
               {() => lines.slice(start, end).map((line, i) => row(line, start + i))}
             </Chunk>
@@ -1554,6 +1565,7 @@ function SplitRows({
   actions,
   readOnly,
 }: RowsProps) {
+  const prefix = useLinePrefix();
   const rows = useMemo(() => toSplitRows(hunk.lines), [hunk.lines]);
   const inSelection = (i: number | undefined) =>
     !!selection && i !== undefined && i >= selection.from && i <= selection.to;
@@ -1618,7 +1630,7 @@ function SplitRows({
       .slice(start, end)
       .flatMap((row) => [row.left, row.right === row.left ? undefined : row.right])
       .filter((line): line is DiffLine => line !== undefined)
-      .map(spoken)
+      .map((line) => prefix(line.type) + line.content)
       .join('\n');
   return (
     <div className="font-signoff-mono py-1 text-[12.5px] leading-[1.6]">
@@ -1659,6 +1671,7 @@ function ContextGapView({
   view: DiffViewMode;
   shown: ShownContext | undefined;
 }) {
+  const T = useLabels(LABELS).diffReview;
   const parsed = file.parsed!;
   const size = gap.oldEnd - gap.oldStart + 1;
   const hidden = size - shown.start - shown.end;
@@ -1674,9 +1687,7 @@ function ContextGapView({
       <ContextLines lines={top} view={view} language={parsed.language} />
       {hidden > 0 && !review.readOnly && (
         <div className="bg-signoff-bg/50 text-signoff-fg-subtle flex flex-wrap items-center gap-x-3 gap-y-1 py-1 pr-2 pl-4 text-[11px]">
-          <span className="font-signoff-mono">
-            {hidden} unchanged {hidden === 1 ? 'line' : 'lines'}
-          </span>
+          <span className="font-signoff-mono">{T.unchangedLines(hidden)}</span>
           {hidden > CONTEXT_STEP && !first && (
             <button
               type="button"
@@ -1685,8 +1696,7 @@ function ContextGapView({
               className={button}
             >
               <ArrowDownIcon size={11} />
-              {CONTEXT_STEP} more
-              <span className="sr-only"> unchanged lines after hunk {hunkNumber(gap.before - 1)}</span>
+              <GapLabel {...T.moreAfter(CONTEXT_STEP, hunkNumber(gap.before - 1))} />
             </button>
           )}
           {hidden > CONTEXT_STEP && !last && (
@@ -1697,7 +1707,7 @@ function ContextGapView({
               className={button}
             >
               <ArrowUpIcon size={11} />
-              {CONTEXT_STEP} more<span className="sr-only"> unchanged lines before hunk {hunkNumber(gap.before)}</span>
+              <GapLabel {...T.moreBefore(CONTEXT_STEP, hunkNumber(gap.before))} />
             </button>
           )}
           <button
@@ -1706,12 +1716,22 @@ function ContextGapView({
             onClick={() => review.showContext(file.id, gap, 'all')}
             className={button}
           >
-            Show all<span className="sr-only"> {hidden} unchanged lines</span>
+            <GapLabel {...T.showAll(hidden)} />
           </button>
         </div>
       )}
       <ContextLines lines={bottom} view={view} language={parsed.language} />
     </div>
+  );
+}
+
+/** A gap button's words: what shows, then what only a screen reader hears. */
+function GapLabel({ visible, hidden }: { visible: string; hidden: string }) {
+  return (
+    <>
+      {visible}
+      <span className="sr-only">{hidden}</span>
+    </>
   );
 }
 

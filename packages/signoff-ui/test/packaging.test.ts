@@ -95,6 +95,8 @@ describe('server/client module boundaries', () => {
       'AGENT_STATE_LABEL',
       'TOOL_PHASE_LABEL',
       'TOOL_STATES',
+      'defaultLabels',
+      'mergeLabels',
     ]) {
       expect(core, name).toHaveProperty(name);
       expect((index as Record<string, unknown>)[name], name).toBe((core as Record<string, unknown>)[name]);

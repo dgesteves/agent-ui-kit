@@ -59,6 +59,13 @@ export const GUIDES: DocPage[] = [
       'Keyboard shortcuts scoped to focus, managed focus, announcements, contrast and how they are tested, with axe in jsdom and in Chrome.',
   },
   {
+    slug: 'labels',
+    href: '/docs/labels',
+    title: 'Labels and translations',
+    description:
+      'Every word the components show or announce is a label: translate them all with one provider, or change a few, with a complete Portuguese example.',
+  },
+  {
     slug: 'limits',
     href: '/docs/limits',
     title: 'Performance and limits',
