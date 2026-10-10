@@ -87,7 +87,7 @@ export const COMPONENTS: ComponentDoc[] = [
       'Progress is announced: "Hunk 2 of 4 accepted. 2 remaining."',
       'Changed lines keep their + and − glyphs and are read as "Added:" or "Removed:", so cyan and magenta never carry the meaning alone.',
       'A long review renders only the rows near the screen. The rest keep their place as visually hidden text, read in the same order with the same "Added:" and "Removed:", and every hunk stays rendered, so its name, focus and J and K never depend on scrolling.',
-      'A file still being diffed reads "Comparing changes…" and is `aria-busy`, as is the review until every file is in; a file past `maxEditLength` says it is shown as one replacing hunk.',
+      'A file still being diffed reads "Comparing changes…" and is `aria-busy`; the review itself is not, so its announcements go out meanwhile. A file past `maxEditLength` says it is shown as one replacing hunk.',
     ],
     stateTypes: {
       'data-decision': 'HunkDecision',

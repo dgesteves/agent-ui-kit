@@ -44,6 +44,7 @@ jobs:
 
       - name: DiffReview on large files in Chrome, against each case's budget
         run: pnpm perf
+        timeout-minutes: 10
 
       - name: Typecheck
         run: pnpm typecheck

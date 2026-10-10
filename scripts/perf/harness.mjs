@@ -29,7 +29,12 @@ new PerformanceObserver((list) => {
 
 const container = document.getElementById('root');
 const root = createRoot(container);
-const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+// A frame, or 100 ms if the browser stops painting the page: the harness never waits forever.
+const frame = () =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => resolve());
+    setTimeout(resolve, 100);
+  });
 const time = (fn) => {
   const t = performance.now();
   flushSync(fn);
@@ -43,6 +48,10 @@ result.mountMs = time(() => root.render(h(DiffReview, { files, view, onSubmit() 
 const hunkSelector = '[data-slot="signoff-diff-hunk"]';
 for (;;) {
   if (container.querySelector(hunkSelector) && !container.querySelector('[aria-busy="true"]')) break;
+  if (performance.now() - start > 60_000) {
+    window.__perf = { error: 'the review was not ready after 60 s' };
+    throw new Error(window.__perf.error);
+  }
   await frame();
 }
 result.readyMs = performance.now() - start;
@@ -66,7 +75,8 @@ result.keyMs = keys.sort((a, b) => a - b)[2];
 longTasks.length = 0;
 const frames = [];
 let last = performance.now();
-for (let y = 0; y < document.documentElement.scrollHeight; y += innerHeight) {
+const page = Math.max(innerHeight, 200);
+for (let y = 0, n = 0; y < document.documentElement.scrollHeight && n < 400; y += page, n++) {
   scrollTo(0, y);
   await frame();
   const now = performance.now();

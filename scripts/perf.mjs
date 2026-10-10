@@ -18,6 +18,12 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { build } from 'rolldown';
 
+// However the browser behaves, the check ends: a stuck case fails it rather than the CI job's clock.
+setTimeout(() => {
+  console.error('perf: no result after 8 minutes');
+  process.exit(1);
+}, 8 * 60_000).unref();
+
 const arg = (name) => {
   const at = process.argv.indexOf(name);
   return at === -1 ? undefined : process.argv[at + 1];
@@ -91,14 +97,18 @@ const results = [];
 const over = [];
 try {
   for (const [label, query, budget] of CASES) {
+    const started = Date.now();
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    page.setDefaultTimeout(90_000);
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto(`${base}/?${query}`);
-    await page.waitForFunction(() => window.__perf, null, { timeout: 120_000 });
+    await page.goto(`${base}/?${query}`, { waitUntil: 'commit' });
+    await page.waitForFunction(() => window.__perf, null, { polling: 100 });
     const result = await page.evaluate(() => window.__perf);
     await page.close();
-    if (errors.length) throw new Error(`${label}: ${errors.join('; ')}`);
+    if (errors.length || result.error)
+      throw new Error(`${label}: ${[result.error, ...errors].filter(Boolean).join('; ')}`);
+    console.error(`perf: ${label} in ${((Date.now() - started) / 1000).toFixed(1)} s`);
     const budgets = { ...budget, ...SCROLL_BUDGET };
     for (const [metric, limit] of Object.entries(budgets)) {
       if (result[metric] > limit) over.push(`${label}: ${metric} ${Math.round(result[metric])}, budget ${limit}`);
@@ -131,3 +141,4 @@ if (enforce && over.length) {
   );
   process.exit(1);
 }
+process.exit(0);
