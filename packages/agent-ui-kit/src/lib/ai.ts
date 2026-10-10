@@ -241,20 +241,25 @@ export interface DerivedAgentState {
  *
  * A run that ended (`ready`) with work still unfinished in the message is `stopped`, not `done`:
  * text or reasoning still streaming, or a tool call still preparing, running or partial. That is
- * what `stop()` leaves behind, and what an AG-UI run cancelled or aborted mid-way does.
+ * what `stop()` leaves behind, and what an AG-UI run cancelled or aborted mid-way does. A
+ * client-side tool the app runs itself is the exception: name it in `clientTools`.
  */
 export function deriveAgentState({
   status,
   message,
   pendingClientTools = [],
+  clientTools = [],
 }: {
   status: ChatStatus;
   message?: Pick<UIMessage, 'role' | 'parts'> | undefined;
-  /**
-   * Names of client-side tools whose `input-available` state means "waiting for the user" (or the app),
-   * rather than a call that a stopped run cut off.
-   */
+  /** Names of client-side tools whose `input-available` state means "waiting for the user". */
   pendingClientTools?: readonly string[];
+  /**
+   * Names of client-side tools the app runs itself (`onToolCall`, then `addToolOutput`). `useChat`
+   * is `ready` while one runs: its `input-available` call then reads `working` with the tool's name
+   * as the detail, not `stopped`, until the output lands and the run continues.
+   */
+  clientTools?: readonly string[];
 }): DerivedAgentState {
   if (status === 'error') return { state: 'error' };
   const parts = message?.role === 'assistant' ? message.parts : [];
@@ -273,7 +278,11 @@ export function deriveAgentState({
     if (last.type === 'text') return { state: 'working', detail: 'Writing response' };
     return { state: 'working' };
   }
-  if (status === 'ready' && parts.some(isUnfinishedPart)) return { state: 'stopped' };
+  if (status === 'ready') {
+    const running = tools.find((t) => t.state === 'input-available' && clientTools.includes(getToolPartName(t)));
+    if (running) return { state: 'working', detail: getToolPartName(running) };
+    if (parts.some(isUnfinishedPart)) return { state: 'stopped' };
+  }
   return parts.length > 0 ? { state: 'done' } : { state: 'idle' };
 }
 

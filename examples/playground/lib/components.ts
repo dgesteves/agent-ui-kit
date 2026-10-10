@@ -269,9 +269,15 @@ const last = messages.findLast((m) => m.role === 'assistant');
       shadcn: `${shadcn('AgentStatus', 'agent-status')}\nimport { deriveAgentState } from '@/components/agent-ui/lib/ai';`,
     },
     usage: `const last = messages.findLast((m) => m.role === 'assistant');
-// Waiting on a person (an approval, a client-side tool) wins over "working". A run that ended with
-// text still streaming or a call unfinished, as stop() leaves it, is "stopped" rather than "done".
-const { state, detail } = deriveAgentState({ status, message: last, pendingClientTools: ['review_changes'] });
+// Waiting on a person (an approval, or a client-side tool in pendingClientTools) wins over "working".
+// A run that ended with text still streaming or a call unfinished, as stop() leaves it, is "stopped";
+// a client-side tool the app runs itself (onToolCall), named in clientTools, reads "working" instead.
+const { state, detail } = deriveAgentState({
+  status,
+  message: last,
+  pendingClientTools: ['review_changes'],
+  clientTools: ['get_location'],
+});
 
 <AgentStatus state={state} detail={detail} />`,
     accessibility: [

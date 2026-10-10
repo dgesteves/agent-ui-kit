@@ -1,9 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
-import type { UIMessage } from 'ai';
+import type { ChatStatus, UIMessage } from 'ai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentStatus } from '../src/agent-status';
 import { deriveAgentState } from '../src/lib/ai';
 import { assistant, axe, toolPart } from './utils';
+
+const LOCATE = { toolName: 'get_location', toolCallId: 'call_locate' };
 
 describe('AgentStatus', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -117,6 +119,43 @@ describe('deriveAgentState', () => {
     expect(deriveAgentState({ status: 'ready', message: review, pendingClientTools: ['review_changes'] }).state).toBe(
       'awaiting-approval',
     );
+  });
+
+  it('reads a client-side tool the app is running as working, and the same call cut off as stopped', () => {
+    // onToolCall runs get_location in the app; useChat is `ready` until addToolOutput lands and
+    // sendAutomaticallyWhen continues the run.
+    const steps: Array<[ChatStatus, UIMessage['parts']]> = [
+      ['streaming', [{ type: 'text', text: 'Finding you.', state: 'done' }, toolPart('input-streaming', LOCATE)]],
+      ['ready', [{ type: 'text', text: 'Finding you.', state: 'done' }, toolPart('input-available', LOCATE)]],
+      ['submitted', [{ type: 'text', text: 'Finding you.', state: 'done' }, toolPart('output-available', LOCATE)]],
+    ];
+    const states = steps.map(([status, parts]) =>
+      deriveAgentState({ status, message: assistant(parts), clientTools: ['get_location'] }),
+    );
+    expect(states).toEqual([
+      { state: 'working', detail: 'get_location' },
+      { state: 'working', detail: 'get_location' },
+      { state: 'thinking' },
+    ]);
+
+    // Without clientTools, a call left at input-available once the run is ready was cut off by stop().
+    const waiting = assistant(steps[1]![1]);
+    expect(deriveAgentState({ status: 'ready', message: waiting })).toEqual({ state: 'stopped' });
+    // So is a client-side tool whose input never finished streaming.
+    const cut = assistant([toolPart('input-streaming', LOCATE)]);
+    expect(deriveAgentState({ status: 'ready', message: cut, clientTools: ['get_location'] })).toEqual({
+      state: 'stopped',
+    });
+    // A tool that waits on a person is still a wait, not work.
+    const review = assistant([toolPart('input-available', { toolName: 'review_changes' })]);
+    expect(
+      deriveAgentState({
+        status: 'ready',
+        message: review,
+        pendingClientTools: ['review_changes'],
+        clientTools: ['get_location'],
+      }),
+    ).toEqual({ state: 'awaiting-approval', detail: 'review_changes' });
   });
 
   it('prioritises human-in-the-loop waits', () => {
