@@ -96,6 +96,13 @@ const ITEMS = [
     description:
       'useAgUiAgent: renders any AG-UI agent (LangGraph, CrewAI, Mastra, Pydantic AI) with these components, interrupts as approvals.',
   },
+  {
+    name: 'assistant-ui',
+    entry: 'assistant-ui-tools.tsx',
+    title: 'assistant-ui Tool UIs',
+    description:
+      'signoffTools for MessagePrimitive.Parts: DiffReview for assistant-ui tool calls that propose files, its result sent back with addResult, and the approval card with approval rules for calls at an approval gate.',
+  },
 ];
 
 const read = (file) => readFileSync(file, 'utf8');

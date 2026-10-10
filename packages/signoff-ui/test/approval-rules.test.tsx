@@ -238,6 +238,22 @@ describe('ToolApprovalCard with a policy', () => {
     expect(policy.current.outcomeOf('approval_c-npm ci')).toMatchObject({ decision: 'allow-always', by: 'user' });
   });
 
+  it('answers once when a person makes the rule, even while the call still reads pending', async () => {
+    // A runtime that records the answer a moment later (assistant-ui) re-renders the card with the
+    // new session rule while the part is still pending: the rule must not answer it a second time.
+    const onRespond = vi.fn<(r: ToolApprovalResponse) => void>();
+    function Card() {
+      const policy = useApprovalPolicy();
+      return <ToolApprovalCard part={command('npm ci')} onRespond={onRespond} policy={policy} />;
+    }
+    const user = userEvent.setup();
+    render(<Card />);
+    await user.click(screen.getByRole('button', { name: 'For this session' }));
+    await act(async () => {});
+    expect(onRespond).toHaveBeenCalledTimes(1);
+    expect(onRespond).toHaveBeenCalledWith({ id: 'approval_c-npm ci', approved: true });
+  });
+
   it('edits arguments only where the edit can be applied, and applies it before answering', async () => {
     const user = userEvent.setup();
     const calls: string[] = [];

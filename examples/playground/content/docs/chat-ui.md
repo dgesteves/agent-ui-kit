@@ -64,72 +64,76 @@ AI Elements apps run Tailwind v4, so import `signoff-ui/tailwind.css` after Tail
 
 ## assistant-ui
 
-With the AI SDK runtime, assistant-ui keeps the `UIMessage` it converted each thread message from. `getExternalStoreMessages` hands it back, and `AgentMessage` renders it inside a `Thread`, with approvals answered through the same `useChat`:
+`signoff-ui/assistant-ui` renders the kit for assistant-ui's tool calls, with whatever runtime draws the thread. `signoffTools()` goes in `MessagePrimitive.Parts`' `components.tools`. A call to one of its `review` tools gets a `DiffReview`, and the review goes back as the call's result through `addResult`. Any other call at an approval gate gets the approval card, answered through `respondToApproval`. `SignoffToolsProvider`, optional, passes approval rules from `useApprovalPolicy`, risk levels by tool, and props for the reviews and the cards.
+
+```package-install
+npm i signoff-ui @assistant-ui/react
+```
+
+`@assistant-ui/react` is an optional peer dependency of signoff-ui, needed only for this entry, which uses its types and none of its code. With the shadcn CLI, the binding is the `assistant-ui` item: `npx shadcn@latest add @signoff-ui/assistant-ui`.
+
+With the AI SDK runtime, against the `review_changes` and `run_command` tools of [Getting started](/docs/getting-started#render-a-run):
 
 ```tsx title="components/thread.tsx"
 'use client';
 
-import {
-  AssistantRuntimeProvider,
-  ComposerPrimitive,
-  ThreadPrimitive,
-  getExternalStoreMessages,
-  useAuiState,
-} from '@assistant-ui/react';
-import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
-import { useChat } from '@ai-sdk/react';
-import { lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
-import { createContext, useContext } from 'react';
-import { AgentMessage, deriveAgentState } from 'signoff-ui';
+import { AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPrimitive } from '@assistant-ui/react';
+import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
+import { lastAssistantMessageIsCompleteWithApprovalResponses, lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
+import { useApprovalPolicy } from 'signoff-ui';
+import { SignoffToolsProvider, signoffTools } from 'signoff-ui/assistant-ui';
 
-type Chat = ReturnType<typeof useChat<UIMessage>>;
-const ChatContext = createContext<Chat | null>(null);
+// review_changes gets a DiffReview; any call with an approval gate gets the approval card.
+const tools = signoffTools({ review: ['review_changes'] });
 
 function AssistantMessage() {
-  const chat = useContext(ChatContext)!;
-  const message = useAuiState((s) => s.message);
-  const [ui] = getExternalStoreMessages<UIMessage>(message as never);
-  if (!ui) return null;
-  const isLast = chat.messages.at(-1)?.id === ui.id;
-  const { state } = deriveAgentState({ status: chat.status, message: ui });
   return (
-    <AgentMessage
-      message={ui}
-      streaming={isLast && chat.status === 'streaming'}
-      active={isLast && state !== 'done' && state !== 'stopped' && state !== 'error'}
-      onToolApproval={chat.addToolApprovalResponse}
-    />
+    <MessagePrimitive.Root>
+      <MessagePrimitive.Parts components={{ tools }} />
+    </MessagePrimitive.Root>
   );
 }
 
-function Message() {
-  const role = useAuiState((s) => s.message.role);
-  // Your own user message here.
-  return role === 'assistant' ? <AssistantMessage /> : null;
+function UserMessage() {
+  return (
+    <MessagePrimitive.Root>
+      <MessagePrimitive.Parts />
+    </MessagePrimitive.Root>
+  );
 }
 
 export function Thread() {
-  const chat = useChat<UIMessage>({ sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses });
-  const runtime = useAISDKRuntime(chat);
+  const runtime = useChatRuntime({
+    // Continue the run once the review is in and every approval has an answer.
+    sendAutomaticallyWhen: (chat) =>
+      lastAssistantMessageIsCompleteWithToolCalls(chat) || lastAssistantMessageIsCompleteWithApprovalResponses(chat),
+  });
+  const policy = useApprovalPolicy();
   return (
-    <ChatContext.Provider value={chat}>
-      <AssistantRuntimeProvider runtime={runtime}>
+    <AssistantRuntimeProvider runtime={runtime}>
+      <SignoffToolsProvider policy={policy} tools={{ run_command: { risk: 'high' } }}>
         <ThreadPrimitive.Root>
           <ThreadPrimitive.Viewport>
-            <ThreadPrimitive.Messages>{() => <Message />}</ThreadPrimitive.Messages>
+            <ThreadPrimitive.Messages>
+              {({ message }) => (message.role === 'assistant' ? <AssistantMessage /> : <UserMessage />)}
+            </ThreadPrimitive.Messages>
           </ThreadPrimitive.Viewport>
           <ComposerPrimitive.Root>
             <ComposerPrimitive.Input aria-label="Message the agent" />
             <ComposerPrimitive.Send>Send</ComposerPrimitive.Send>
           </ComposerPrimitive.Root>
         </ThreadPrimitive.Root>
-      </AssistantRuntimeProvider>
-    </ChatContext.Provider>
+      </SignoffToolsProvider>
+    </AssistantRuntimeProvider>
   );
 }
 ```
 
-This ran end to end, a run with an approval and then the resumed answer, with `@assistant-ui/react` 0.15 and `@assistant-ui/react-ai-sdk` 1.4. The binding `getExternalStoreMessages` reads is marked experimental in assistant-ui's types, so check it when you upgrade assistant-ui. Add `renderTool` with a `DiffReview`, and `lastAssistantMessageIsCompleteWithToolCalls` to `sendAutomaticallyWhen`, for reviews.
+This ran end to end against the quickstart's scripted model, the review, an approval for the session and the resumed answer, with `@assistant-ui/react` 0.15 and `@assistant-ui/react-ai-sdk` 1.4. [examples/assistant-ui](https://github.com/dgesteves/signoff-ui/tree/main/examples/assistant-ui) runs the same on assistant-ui's local runtime with a scripted model in the page, no API key and no server. CI builds it from the packed package and drives a review, an approval and a rule's automatic answer in Chrome.
+
+- **Your own components for some tools:** pass `Fallback` to `signoffTools` for calls with no approval gate, or render `ReviewToolUI` and `ApprovalToolUI` inside your own tool components. They take the tool-call props assistant-ui passes.
+- **Approval rules:** with a `policy`, the card offers once, this session and always, and a call a rule already decides is answered without a card once the run has paused for it.
+- **What the cards answer:** plain approve-or-deny gates. A request that asks a question or offers options to select (`display` other than `"decision"`) renders nothing here, so you can render your own for it.
 
 ## AG-UI agents
 

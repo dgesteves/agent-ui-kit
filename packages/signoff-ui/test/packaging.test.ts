@@ -67,6 +67,21 @@ describe('server/client module boundaries', () => {
     expect(isClient('ag-ui.ts')).toBe(false);
     expect(isClient('use-ag-ui-agent.ts')).toBe(true);
     expect(closure('lib/ag-ui.ts').filter((file) => isClient(file) || /from 'react'/.test(code(file)))).toEqual([]);
+    // The assistant-ui entry re-exports its client module.
+    expect(isClient('assistant-ui.ts')).toBe(false);
+    expect(isClient('assistant-ui-tools.tsx')).toBe(true);
+  });
+
+  it('keeps the assistant-ui binding out of the main entry, with only its types from assistant-ui', () => {
+    for (const name of ['signoffTools', 'ReviewToolUI', 'ApprovalToolUI', 'SignoffToolsProvider'])
+      expect(index, name).not.toHaveProperty(name);
+    expect(closure('index.ts')).not.toContain('assistant-ui-tools.tsx');
+    // Nothing of @assistant-ui/react at runtime: the peer is optional, and only the types need it.
+    const imports = modules().flatMap((file) => [
+      ...code(file).matchAll(/^import (type )?[^;]*from '@assistant-ui\/react'/gm),
+    ]);
+    expect(imports.length).toBeGreaterThan(0);
+    expect(imports.filter((m) => !m[1])).toEqual([]);
   });
 
   it('exposes the pure helpers from /core and re-exports them from the main entry', () => {
@@ -106,7 +121,20 @@ describe('server/client module boundaries', () => {
 
 const pkg = JSON.parse(readFileSync(join(src, '../package.json'), 'utf8')) as {
   peerDependencies: Record<string, string>;
+  peerDependenciesMeta: Record<string, { optional?: boolean }>;
+  exports: Record<string, unknown>;
 };
+
+describe('the assistant-ui entry', () => {
+  it('has its own export path, and assistant-ui as an optional peer', () => {
+    expect(pkg.exports['./assistant-ui']).toEqual({
+      types: './dist/assistant-ui.d.ts',
+      default: './dist/assistant-ui.js',
+    });
+    expect(pkg.peerDependencies['@assistant-ui/react']).toBe('^0.15.0');
+    expect(pkg.peerDependenciesMeta['@assistant-ui/react']).toEqual({ optional: true });
+  });
+});
 // npm publishes the repository's README (scripts/npm-readme.mjs).
 const readmes = [readFileSync(join(src, '../../../README.md'), 'utf8')];
 

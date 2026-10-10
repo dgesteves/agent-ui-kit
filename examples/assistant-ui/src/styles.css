@@ -1,0 +1,83 @@
+/* The thread's own layout. The kit's components bring their styles (signoff-ui/styles.css). */
+body {
+  margin: 0;
+  background: var(--signoff-bg);
+  color: var(--signoff-fg);
+  font-family: system-ui, sans-serif;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0;
+  padding: 1rem 1rem 0;
+  font-size: 1rem;
+}
+
+.thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.viewport {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1rem;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+
+.message.user {
+  align-self: flex-end;
+  max-width: 80%;
+  margin-left: auto;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+  background: var(--signoff-surface-2);
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--signoff-border);
+}
+
+.composer textarea {
+  flex: 1;
+  resize: none;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--signoff-border);
+  border-radius: 0.5rem;
+  background: var(--signoff-surface);
+  color: inherit;
+  font: inherit;
+}
+
+.composer button {
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--signoff-accent);
+  color: var(--signoff-on-accent);
+  font: inherit;
+  font-weight: 500;
+}
+
+.composer button:disabled {
+  opacity: 0.5;
+}
