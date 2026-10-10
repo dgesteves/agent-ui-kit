@@ -42,6 +42,9 @@ jobs:
       - name: Bundle size, against each import's budget
         run: pnpm size
 
+      - name: DiffReview on large files in Chrome, against each case's budget
+        run: pnpm perf
+
       - name: Typecheck
         run: pnpm typecheck
 

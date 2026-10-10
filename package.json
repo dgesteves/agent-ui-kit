@@ -28,6 +28,7 @@
     "registry:check": "node scripts/registry.mjs --check",
     "a11y": "node scripts/a11y-audit.mjs",
     "size": "node scripts/size.mjs",
+    "perf": "node scripts/perf.mjs",
     "smoke:nextjs": "node scripts/smoke-nextjs-minimal.mjs",
     "smoke:playground": "node scripts/smoke-playground.mjs",
     "smoke:styles": "node scripts/smoke-styles.mjs"
