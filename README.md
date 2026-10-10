@@ -85,7 +85,8 @@ export function AgentRun() {
   const [input, setInput] = useState('');
   const last = messages.findLast((m) => m.role === 'assistant');
   const { state, detail } = deriveAgentState({ status, message: last });
-  const timing = useRunTiming(status);
+  // A run starts with each message you send and spans its approval round trips.
+  const timing = useRunTiming(status, messages);
 
   return (
     // The kit's own background and text colors, so it reads well on any page. Add `dark` for the dark theme.
@@ -331,7 +332,7 @@ Unified or split review of agent edits with word-level highlights and per-hunk a
   <img src="docs/media/components/run-meter.png" width="100%" alt="The run meter in two variants. Expanded: 41.1k tokens, $0.056 estimated cost, an input/output token bar, 38.7k input of which 28.8k cached, 2.41k output, TTFT 684ms, total 21.8s, cache hit 74%. Compact: a single line with the same numbers.">
 </picture>
 
-Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly; to cover a whole run across approval round trips, sum it on the server with `addUsage` as in the [server recipe](#npm). `useRunTiming(status)` measures TTFT and active time across approval round-trips, excluding time spent waiting on the user. `pricing` is in USD per million tokens: `input` and `output`, plus optional `cachedInput` for cache reads and `cacheWrite` for cache writes (1.25× input on Anthropic, for example), which both default to `input`.
+Tokens in and out, estimated cost, time to first token, active run time and prompt-cache hit rate. Takes the AI SDK `LanguageModelUsage` shape directly; to cover a whole run across approval round trips, sum it on the server with `addUsage` as in the [server recipe](#npm). `useRunTiming(status, messages)` measures TTFT and active time per turn: a run starts with each user message and spans its approval round trips, excluding time spent waiting on the user. Without `messages`, each request is timed on its own; TTFT is left unknown, not 0, for a run that was already streaming when the hook first saw it. `pricing` is in USD per million tokens: `input` and `output`, plus optional `cachedInput` for cache reads and `cacheWrite` for cache writes (1.25× input on Anthropic, for example), which both default to `input`.
 
 ```tsx
 <RunMeter
@@ -643,7 +644,7 @@ Where this kit differs:
 
 - **It reads AI SDK messages as they are.** Hand `AgentMessage` a `UIMessage` from `useChat` and tool parts become one timeline with inline approvals, sources become citations, and usage metadata feeds the meter. There is no runtime to adopt and no per-component data mapping. AG-UI agents get the same treatment through [`useAgUiAgent`](#ag-ui-agents), interrupts included.
 - **Diff review works from file contents.** `DiffReview` takes the old and new text of several files, computes the hunks with word-level highlights, and `onSubmit` returns each file with only the accepted hunks applied, ready to send back as a client-side tool result. assistant-ui's reviewable diff takes one file's hunks, already split, and reports keep or discard per hunk.
-- **Timings are measured, not supplied.** Tool durations are recorded on the client and exclude time spent waiting for an approval; `useRunTiming` reports time to first token and active time across approval round trips, and `RunMeter` prices tokens from your rates and shows the prompt-cache hit rate, the cost lever that matters for agents. (assistant-ui's cost meter displays cost strings you format; its tool timeline is a summary of what was done, without durations or states.)
+- **Timings are measured, not supplied.** Tool durations are recorded on the client and exclude time spent waiting for an approval; `useRunTiming` reports time to first token and active time per turn, across approval round trips, and `RunMeter` prices tokens from your rates and shows the prompt-cache hit rate, the cost lever that matters for agents. (assistant-ui's cost meter displays cost strings you format; its tool timeline is a summary of what was done, without durations or states.)
 - **It works with Tailwind v3, v4 or none, and React 18 or 19.** The npm package ships a precompiled stylesheet scoped to its components, checked in a Tailwind v3 build and next to a global reset; AI Elements, prompt-kit and assistant-ui's Elements need Tailwind v4. The shadcn registry items are there if you prefer to own the code.
 - **Accessibility is audited.** Focus-scoped shortcuts, live-region announcements and contrast are covered by axe in jsdom and in a real browser (see [Accessibility](#accessibility)).
 

@@ -1,6 +1,6 @@
 // Runs the README quickstart (examples/nextjs-minimal) end to end in Chrome: a tool call, a failed
-// tool, an approval, the resumed run with sources, and the run meter. Fails on any page error,
-// including hydration mismatches.
+// tool, an approval, the resumed run with sources, the run meter, and a second turn timed on its
+// own. Fails on any page error, including hydration mismatches.
 //
 //   pnpm build:lib && pnpm --filter nextjs-minimal build
 //   pnpm smoke:nextjs   # starts the built example on :3210, or tests BASE_URL if set
@@ -28,6 +28,23 @@ if (!process.env.BASE_URL) {
   }
 }
 
+/** "352ms", "4.62s" or "1m 05s" (formatDuration) in milliseconds. */
+function parseDuration(text) {
+  const match = /^(?:(\d+)m )?([\d.]+)(ms|s)$/.exec(text.trim());
+  if (!match) throw new Error(`Not a duration: ${text}`);
+  const [, minutes = '0', value, unit] = match;
+  return Number(minutes) * 60_000 + Number(value) * (unit === 's' ? 1000 : 1);
+}
+
+/** The run meter's time to first token and active time, from the sentence it gives screen readers. */
+async function runTotal(page) {
+  const summary = await page.locator('[data-slot="run-meter"] .sr-only').innerText();
+  const ttft = /time to first token ([^,]+)/.exec(summary)?.[1];
+  const total = /total ([^,]+)$/.exec(summary)?.[1];
+  if (!total) throw new Error(`The run meter shows no active time: ${summary}`);
+  return { ttft: ttft && parseDuration(ttft), total: parseDuration(total) };
+}
+
 const browser = await chromium.launch({ channel: 'chrome' });
 const errors = [];
 try {
@@ -52,6 +69,21 @@ try {
   const meter = await page.locator('[data-slot="run-meter"]').innerText();
   if (!/15\.7k/.test(meter)) throw new Error(`The run meter does not show the run's 15.7k input tokens:\n${meter}`);
   console.log('pass  quickstart: tool calls, a failed tool, approval, resumed run, sources, run meter');
+
+  // A second turn is timed on its own: its active time is not added to the first turn's.
+  const first = await runTotal(page);
+  await page.getByRole('textbox', { name: 'Message the agent' }).fill('Thanks. Anything else?');
+  await page.getByRole('button', { name: 'Send' }).click();
+  const done = page.locator('[data-slot="agent-status"][data-state="done"]');
+  await done.waitFor({ state: 'detached' });
+  await done.waitFor({ timeout: 30_000 });
+  const second = await runTotal(page);
+  if (!(second.total < first.total))
+    throw new Error(`The second turn's active time adds up the first's: ${first.total}ms, then ${second.total}ms`);
+  if (second.ttft === undefined) throw new Error('The second turn has no time to first token');
+  console.log(
+    `pass  second turn timed on its own: ${first.total}ms then ${second.total}ms active, TTFT ${second.ttft}ms`,
+  );
 
   await page.goto(`${BASE}/static`, { waitUntil: 'networkidle' });
   await page.locator('[data-slot="diff-review"]').waitFor();

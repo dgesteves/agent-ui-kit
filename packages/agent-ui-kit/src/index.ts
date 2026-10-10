@@ -29,6 +29,7 @@ export {
   useRunTiming,
   useToolTimings,
   type RunTiming,
+  type RunTimingMessage,
 } from './lib/hooks';
 
 export * from './core';
