@@ -107,6 +107,12 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   editable?: boolean;
   /** The argument patterns a session or always rule starts with. Default: from the input. */
   ruleArgs?: Record<string, string> | undefined;
+  /**
+   * Show which calls a session or always decision covers, editable. Default `true`. Pass `false`
+   * when the agent keeps what "always" means, as with ACP's `allow_always`: the card then shows no
+   * argument patterns, and the decision comes without `args`.
+   */
+  ruleScope?: boolean;
   /** Y / N shortcuts while focus is inside the card (and S, A, Shift+N when offered). Default `true`. */
   shortcuts?: boolean;
   /** Also approve with ⌘/Ctrl+Enter from anywhere on the page while pending. Default `false`. */
@@ -363,6 +369,7 @@ export function ApprovalCard({
   onDeny,
   editable = false,
   ruleArgs,
+  ruleScope = true,
   shortcuts = true,
   globalShortcut = false,
   autoFocus = false,
@@ -398,7 +405,7 @@ export function ApprovalCard({
   const mac = useIsMac();
   const mod = all.common.modKey(mac);
   const has = (d: ApprovalDecision) => offered.includes(d);
-  const remembers = has('allow-session') || has('allow-always') || has('deny-always');
+  const remembers = ruleScope && (has('allow-session') || has('allow-always') || has('deny-always'));
 
   // The arguments a decision runs with: the edited ones, once valid and different.
   const editedInput = editable && editing ? editorInput(edited) : undefined;
@@ -457,7 +464,7 @@ export function ApprovalCard({
       decision,
       ...(why ? { reason: why } : {}),
       ...(approving && finalInput !== undefined ? { input: finalInput } : {}),
-      ...(lasting && !scopeArgs.any ? { args: { ...scopeArgs.args } } : {}),
+      ...(lasting && remembers && !scopeArgs.any ? { args: { ...scopeArgs.args } } : {}),
     };
     decide(() => (onDecide ? onDecide(choice) : approving ? onApprove?.() : onDeny?.(why)));
   };

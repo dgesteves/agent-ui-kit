@@ -189,6 +189,14 @@ describe('ApprovalCard editing', () => {
     expect(onDecide).toHaveBeenLastCalledWith({ decision: 'allow-once' });
   });
 
+  it("leaves the scope out when the agent keeps what 'always' means (ruleScope={false})", async () => {
+    const { user, onDecide } = card({ ruleScope: false });
+    expect(screen.queryByText(/Remembered for/)).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Any arguments' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Always' }));
+    expect(onDecide).toHaveBeenLastCalledWith({ decision: 'allow-always' });
+  });
+
   it('has no axe violations while editing and with the rule scope', async () => {
     const { user, container } = card({ editable: true, input: { command: 'ls', cwd: '/repo' } });
     expect(await axe(container)).toHaveNoViolations();
