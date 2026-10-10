@@ -1,5 +1,5 @@
 import { getDescription, getInterface, getSignature, getStylingHooks, getType, type InterfaceDoc } from './api';
-import { componentHref, stateValues, type ComponentDoc } from './components';
+import { componentAbout, componentHref, stateValues, type ComponentDoc } from './components';
 import { SITE_URL } from './site';
 
 /*
@@ -63,9 +63,11 @@ export function componentMarkdown(c: ComponentDoc) {
     c.usage,
     '```',
     '',
-    '## API reference',
-    '',
   ];
+  const about = componentAbout(c.slug);
+  // Site links, absolute outside the site.
+  if (about) out.push('## How it works', '', about.trim().replace(/\]\((\/[^)]*)\)/g, `](${SITE_URL}$1)`), '');
+  out.push('## API reference', '');
   for (const entry of c.api) {
     out.push(`### ${entry.name}`, '', getDescription(entry.name), '');
     if (entry.props) {

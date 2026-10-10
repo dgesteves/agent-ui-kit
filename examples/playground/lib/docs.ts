@@ -27,14 +27,22 @@ export const GUIDES: DocPage[] = [
     slug: 'introduction',
     href: '/docs',
     title: 'Introduction',
-    description: 'What signoff-ui is, why it exists, and how it reads an agent run.',
+    description:
+      'What signoff-ui is: reviewing what an agent changed and approving what it may do, with the result going back to the agent.',
   },
   {
     slug: 'getting-started',
     href: '/docs/getting-started',
     title: 'Getting started',
     description:
-      'Install from npm or the shadcn registry, add the styles, render a first run in Next.js, and theme it. AI SDK 6 or 7, React 18 or 19.',
+      'Install from npm or the shadcn registry, add the styles, and build a Next.js run with a diff review and an approval. AI SDK 6 or 7, React 18 or 19.',
+  },
+  {
+    slug: 'chat-ui',
+    href: '/docs/chat-ui',
+    title: 'Inside your chat UI',
+    description:
+      'Use the review and approval components in assistant-ui, AI Elements or your own chat, with the code for each.',
   },
   {
     slug: 'ag-ui',
@@ -42,6 +50,26 @@ export const GUIDES: DocPage[] = [
     title: 'AG-UI agents',
     description:
       'Render LangGraph, CrewAI, Mastra and other AG-UI agents with the same components, interrupts included, through useAgUiAgent.',
+  },
+  {
+    slug: 'accessibility',
+    href: '/docs/accessibility',
+    title: 'Accessibility',
+    description:
+      'Keyboard shortcuts scoped to focus, managed focus, announcements, contrast and how they are tested, with axe in jsdom and in Chrome.',
+  },
+  {
+    slug: 'limits',
+    href: '/docs/limits',
+    title: 'Performance and limits',
+    description:
+      'Bundle size per import, the stylesheet, known limitations with measured numbers, and what comes next.',
+  },
+  {
+    slug: 'comparison',
+    href: '/docs/comparison',
+    title: 'How it compares',
+    description: 'signoff-ui next to assistant-ui and AI Elements: what each does better, and where this kit differs.',
   },
   {
     slug: 'migrating-from-agent-ui-kit',

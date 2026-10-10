@@ -2,13 +2,14 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import Markdown from 'react-markdown';
 import { getStylingHooks } from '@/lib/api';
-import { componentHref, stateValues, type ComponentDoc } from '@/lib/components';
+import { componentAbout, componentHref, stateValues, type ComponentDoc } from '@/lib/components';
 import type { Heading } from '@/lib/docs';
 import { DEMOS } from '../demos';
 import { ApiReference } from './api-reference';
 import { DocShell } from './article';
 import { CodeBlock } from './code-block';
 import { ComponentInstall } from './component-install';
+import { DocMarkdown } from './markdown';
 import { Preview } from './preview';
 
 /*
@@ -133,6 +134,7 @@ export function componentHeadings(component: ComponentDoc, hasTheming: boolean):
     { id: 'example', text: 'Example', depth: 2 },
     { id: 'installation', text: 'Installation', depth: 2 },
     { id: 'usage', text: 'Usage', depth: 2 },
+    ...(componentAbout(component.slug) ? [{ id: 'how-it-works', text: 'How it works', depth: 2 as const }] : []),
     { id: 'api-reference', text: 'API reference', depth: 2 },
     ...component.api.map((entry) => ({ id: entry.name.toLowerCase(), text: entry.name, depth: 3 as const })),
     ...(component.types ?? []).map((name) => ({ id: name.toLowerCase(), text: name, depth: 3 as const })),
@@ -146,6 +148,7 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
   const hooks = getStylingHooks(component.file);
   const hasTheming = hooks.slots.length > 0;
   const href = componentHref(component.slug);
+  const about = componentAbout(component.slug);
   return (
     <DocShell
       href={href}
@@ -183,6 +186,13 @@ export function ComponentPage({ component }: { component: ComponentDoc }) {
 
       <H2 id="usage">Usage</H2>
       <CodeBlock code={component.usage} language="tsx" />
+
+      {about && (
+        <>
+          <H2 id="how-it-works">How it works</H2>
+          <DocMarkdown markdown={about} />
+        </>
+      )}
 
       <H2 id="api-reference">API reference</H2>
       <p className="text-fg-muted text-[13.5px] leading-relaxed">

@@ -40,7 +40,7 @@ const check = (ok, label, detail = '') => {
 try {
   // Link previews: each page has its title, description and a 1200×630 image that is served.
   for (const [path, title] of [
-    ['/', 'signoff-ui: accessible React components for agent runs'],
+    ['/', 'signoff-ui: review what your agent changed and control what it may do'],
     ['/gallery', 'Components · signoff-ui'],
     ['/docs/getting-started', 'Getting started · signoff-ui docs'],
     ['/docs/components/approval-card', 'ApprovalCard · signoff-ui docs'],
@@ -69,7 +69,7 @@ try {
     'sitemap.xml lists the docs and components, and robots.txt points to it',
   );
 
-  // Docs for LLMs, built from the README and the registry: no HTML, and every component described
+  // Docs for LLMs, built from the README, the docs and the registry: no HTML, and every component described
   // in words (its screenshot's indented <source srcset> lines once stood in for the description).
   for (const [path, heading] of [
     ['/llms.txt', '## Components'],
@@ -77,8 +77,9 @@ try {
   ]) {
     const response = await fetch(BASE + path);
     const text = await response.text();
-    // Code blocks show JSX, which is fine; the prose around them has no HTML.
-    const html = /<\/?(?:img|picture|source|p|div|br)\b[^>]*>/.exec(text.replace(/```[\s\S]*?```/g, ''))?.[0];
+    // Code shows JSX and element names, which is fine; the prose around it has no HTML.
+    const prose = text.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
+    const html = /<\/?(?:img|picture|source|p|div|br)\b[^>]*>/.exec(prose)?.[0];
     check(
       response.ok &&
         response.headers.get('content-type')?.startsWith('text/plain') &&

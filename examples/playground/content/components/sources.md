@@ -1,0 +1,1 @@
+`source-url` and `source-document` parts as numbered chips or cards. In `AgentMessage`, `[n]` markers in the text become links to the matching source. It has no state, so it renders on the server too.

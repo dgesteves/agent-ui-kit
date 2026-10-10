@@ -1,0 +1,1 @@
+The model's reasoning, open while it streams and collapsed once it's done (unless you opened or closed it yourself), with how long the model thought ("Thought for 1.7s"). The text renders through `Markdown`, with the same `allowedImageHosts`.

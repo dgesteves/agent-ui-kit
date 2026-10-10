@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { componentMarkdown } from './component-markdown';
 import { componentHref, COMPONENTS } from './components';
-import { GUIDES } from './docs';
+import { GUIDES, readGuide, toMarkdown } from './docs';
 
 /*
- * /llms.txt and /llms-full.txt (https://llmstxt.org), built from the repository's README and
- * registry.json when the playground builds, so they always match the docs on GitHub.
+ * /llms.txt and /llms-full.txt (https://llmstxt.org), built from the repository's README, the docs
+ * pages and registry.json when the playground builds, so they always match the docs.
  */
 
 const SITE = 'https://agent-ui-kit-demo.vercel.app';
@@ -54,8 +55,6 @@ function sections(markdown: string) {
   return out;
 }
 
-const firstSentence = (text: string) => /^.*?\.(?=\s|$)/.exec(text.trim())?.[0] ?? text.trim();
-
 const anchor = (heading: string) =>
   heading
     .toLowerCase()
@@ -74,22 +73,9 @@ function summary(markdown: string) {
 export function llmsTxt() {
   const markdown = readme();
   const { lead, rest } = summary(markdown);
-  const docs = [...sections(markdown).keys()]
-    .filter((heading) => !['License', 'Roadmap'].includes(heading))
-    .map((heading) => `- [${heading}](${REPO}#${anchor(heading)})`);
-  const components = (sections(markdown).get('Components') ?? '')
-    .split(/^### /m)
-    .slice(1)
-    .map((block) => {
-      const [heading = '', ...body] = block.split('\n');
-      // The first line of prose: past the screenshot's <picture> block, whose <source> lines are indented.
-      const text =
-        body.find((line) => {
-          const trimmed = line.trim();
-          return trimmed && !trimmed.startsWith('<') && !trimmed.startsWith('```');
-        }) ?? '';
-      return `- ${heading.trim()}: ${firstSentence(text)}`;
-    });
+  const readmeSections = [...sections(markdown).keys()]
+    .filter((heading) => !['License', 'Docs'].includes(heading))
+    .map((heading) => `- [README: ${heading}](${REPO}#${anchor(heading)})`);
   return [
     '# signoff-ui',
     '',
@@ -103,17 +89,17 @@ export function llmsTxt() {
       (c) =>
         `- [${c.name}](${SITE}${componentHref(c.slug)}.md): ${c.summary.replace(/`/g, '')} Props, keyboard, theming.`,
     ),
-    `- [Everything in one file](${SITE}/llms-full.txt): the README as plain markdown, and the shadcn registry items`,
-    `- [The quickstart, running](${REPO}/tree/main/examples/nextjs-minimal): a Next.js 16 app against a scripted model`,
-    ...docs,
+    `- [Everything in one file](${SITE}/llms-full.txt): the README, every docs page and the shadcn registry items`,
+    `- [The quickstart, running](${REPO}/tree/main/examples/nextjs-minimal): a Next.js 16 app with a review and an approval, against a scripted model`,
+    ...readmeSections,
     '',
     '## Components',
     '',
-    ...components,
+    ...COMPONENTS.map((c) => `- \`${c.name}\`: ${c.summary}`),
     '',
     '## Optional',
     '',
-    `- [Playground](${SITE}): a scripted agent run with replay and keyboard controls`,
+    `- [Playground](${SITE}): a scripted agent run with a review and an approval, with replay and keyboard controls`,
     `- [Component gallery](${SITE}/gallery): every component in isolation, with install snippets`,
     `- [npm package](https://www.npmjs.com/package/signoff-ui)`,
     `- [Changelog](${REPO}/blob/main/packages/signoff-ui/CHANGELOG.md)`,
@@ -121,11 +107,38 @@ export function llmsTxt() {
   ].join('\n');
 }
 
+/** A page's own Markdown, one heading level down, to sit under a heading of this file. Code is left alone. */
+function nested(markdown: string) {
+  let fenced = false;
+  return markdown
+    .split('\n')
+    .map((line) => {
+      if (line.startsWith('```')) fenced = !fenced;
+      return !fenced && /^#{1,5} /.test(line) ? `#${line}` : line;
+    })
+    .join('\n');
+}
+
 export function llmsFullTxt() {
   const markdown = plain(readme());
+  const guides = GUIDES.map((doc) => nested(toMarkdown(doc, readGuide(doc))).trim());
+  const components = COMPONENTS.map((c) => nested(componentMarkdown(c)).trim());
   const items = registryItems().map(
     (item) =>
       `- \`${item.name}\` (${item.title}): ${item.description} \`npx shadcn@latest add @signoff-ui/${item.name}\``,
   );
-  return [markdown.trimEnd(), '', '## shadcn registry items', '', ...items, ''].join('\n');
+  return [
+    markdown.trimEnd(),
+    '',
+    '## Docs',
+    '',
+    ...guides.flatMap((page) => [page, '']),
+    '## Components',
+    '',
+    ...components.flatMap((page) => [page, '']),
+    '## shadcn registry items',
+    '',
+    ...items,
+    '',
+  ].join('\n');
 }
