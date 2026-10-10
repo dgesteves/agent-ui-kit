@@ -39,11 +39,18 @@ jobs:
       - name: Build library
         run: pnpm build:lib
 
+      - name: Bundle size, against each import's budget
+        run: pnpm size
+
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test
-        run: pnpm test
+      - name: Test, with coverage and its thresholds
+        run: pnpm test:coverage
+
+      - name: Coverage in the job summary
+        if: ${{ !cancelled() }}
+        run: node scripts/coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY"
 
       - name: Package exports (publint, attw)
         run: pnpm --filter @dgesteves/agent-ui-kit lint:package
@@ -62,6 +69,9 @@ jobs:
 
       - name: Playground in Chrome
         run: pnpm smoke:playground
+
+      - name: Accessibility in Chrome (axe with real layout and contrast, dark and light)
+        run: pnpm a11y
 
   ai-sdk-6:
     name: AI SDK 6

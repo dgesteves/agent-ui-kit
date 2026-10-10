@@ -1,16 +1,36 @@
-// Runs axe-core in real Chrome against the running playground, across the run's
-// states (approval pending, diff review, done), the gallery, the docs and a phone viewport, in the
-// dark theme and then the light one.
+// Runs axe-core in real Chrome against the playground, across the run's states (approval
+// pending, diff review, done), the gallery, the docs and a phone viewport, in the dark theme and
+// then the light one.
 // Unlike the jsdom tests, this checks color contrast with real layout.
 //
-//   pnpm --filter playground start   # :3100
-//   pnpm a11y
+//   pnpm build:lib && pnpm registry:build && pnpm build:playground
+//   pnpm a11y   # starts the built playground on :3230, or audits BASE_URL if set
+//   BASE_URL=http://localhost:3100 pnpm a11y   # the one `pnpm dev` serves
+import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { chromium } from 'playwright-core';
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
+const PORT = 3230;
+const BASE = process.env.BASE_URL ?? `http://localhost:${PORT}`;
+
+let server;
+if (!process.env.BASE_URL) {
+  server = spawn('pnpm', ['exec', 'next', 'start', '--port', String(PORT)], {
+    cwd: join(import.meta.dirname, '../examples/playground'),
+    stdio: 'inherit',
+    detached: true,
+  });
+  for (let attempt = 0; ; attempt++) {
+    try {
+      if ((await fetch(BASE)).ok) break;
+    } catch {
+      if (attempt > 60) throw new Error(`The playground did not start on ${BASE}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+}
 const require = createRequire(join(import.meta.dirname, '../packages/agent-ui-kit/package.json'));
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
@@ -95,6 +115,7 @@ await light.goto(`${BASE}/docs/components/approval-card`, { waitUntil: 'networki
 await settle(light);
 await audit(light, 'light · /docs/components/approval-card · 390px viewport');
 await browser.close();
+if (server) process.kill(-server.pid);
 
 if (failures > 0) {
   console.error(`\n${failures} violation type(s) found.`);
