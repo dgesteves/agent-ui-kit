@@ -131,7 +131,7 @@ export function JsonView({ value, label, collapseAfter = 24, className }: JsonVi
   const folded = !showAll && lineCount > collapseAfter;
   const shown = folded ? text.split('\n').slice(0, collapseAfter).join('\n') : text;
   return (
-    <div data-slot="signoff-json-view" className={cn('group/json relative', className)}>
+    <div data-signoff data-slot="signoff-json-view" className={cn('group/json relative', className)}>
       <pre
         role="group"
         aria-label={label}

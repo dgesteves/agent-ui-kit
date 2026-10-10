@@ -10,6 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
 import selectorParser from 'postcss-selector-parser';
+import { KIT } from './kit-scope.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'src/styles');
@@ -46,12 +47,14 @@ execFileSync('tailwindcss', ['-i', join(src, 'standalone.css'), '-o', join(dist,
 });
 
 /*
- * Confine the stylesheet to the kit's own elements. Tailwind writes its theme variables on :root,
- * its @property fallbacks on every element, and utilities as global classes; dropped into an app
- * that has its own Tailwind theme or its own `.border` or `.p-4`, those would restyle the app.
- * Utilities get `:where([data-signoff], [data-signoff] *)`, which adds no specificity.
+ * Confine the stylesheet to the kit's own elements. Tailwind writes its @property fallbacks on
+ * every element and utilities as global classes; dropped into an app that has its own `.border`
+ * or `.p-4`, those would restyle the app, also inside the components, where the app renders its
+ * own content (renderTool, renderData, renderOutput). Every rule gets KIT, which matches the
+ * kit's elements and none of the app's (scripts/kit-scope.mjs) and adds no specificity. The
+ * keyframes are renamed into the kit's namespace, so Tailwind's `pulse` cannot replace the app's.
  */
-const KIT = selectorParser().astSync(':where([data-signoff],[data-signoff] *)').first.first;
+const KIT_SELECTOR = selectorParser().astSync(KIT).first.first;
 
 const scopeSelector = selectorParser((selectors) => {
   selectors.each((selector) => {
@@ -62,26 +65,30 @@ const scopeSelector = selectorParser((selectors) => {
       if (node.type === 'combinator') break;
       if (node.type === 'pseudo' && /^::|^:(before|after|first-line|first-letter)$/.test(node.value)) insertAt = node;
     }
-    if (insertAt) selector.insertBefore(insertAt, KIT.clone());
-    else selector.append(KIT.clone());
+    if (insertAt) selector.insertBefore(insertAt, KIT_SELECTOR.clone());
+    else selector.append(KIT_SELECTOR.clone());
   });
 });
 
 function scope(css) {
   const tree = postcss.parse(css);
+  const keyframes = new Map();
+  tree.walkAtRules('keyframes', (rule) => {
+    if (rule.params.startsWith('signoff-')) return;
+    keyframes.set(rule.params, `signoff-${rule.params}`);
+    rule.params = `signoff-${rule.params}`;
+  });
+  tree.walkDecls(/^animation(-name)?$/, (decl) => {
+    decl.value = decl.value.replace(/[\w-]+/g, (word) => keyframes.get(word) ?? word);
+  });
   tree.walkAtRules('layer', (layer) => {
     if (!layer.nodes) return;
     layer.walkRules((rule) => {
       if (rule.parent.type === 'atrule' && rule.parent.name === 'keyframes') return;
-      if (layer.params === 'theme') {
-        if (rule.selector !== ':root,:host') throw new Error(`theme layer: unexpected selector ${rule.selector}`);
-        rule.selector = ':where([data-signoff])';
-      } else if (layer.params === 'base') {
-        if (!rule.selector.includes('[data-signoff]'))
-          throw new Error(`base layer: unscoped selector ${rule.selector}`);
-      } else {
-        rule.selector = scopeSelector.processSync(rule.selector);
-      }
+      if (layer.params === 'theme') throw new Error(`theme layer: Tailwind emitted theme variables (${rule.selector})`);
+      // The root rule of the reset styles the components' roots only.
+      if (layer.params === 'base' && rule.selector === ':where([data-signoff])') return;
+      rule.selector = scopeSelector.processSync(rule.selector);
     });
   });
   return tree.toString();

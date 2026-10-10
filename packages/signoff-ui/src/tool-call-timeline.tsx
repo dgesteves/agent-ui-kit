@@ -41,7 +41,7 @@ export interface ToolMeta {
    * Not called before any input has arrived; while the input streams it can be partial.
    */
   summary?: (input: unknown, part: ToolPart) => ReactNode;
-  /** Replace the default JSON output view. */
+  /** Replace the default JSON output view. Your content, like `AgentMessage`'s `renderTool`. */
   renderOutput?: (output: unknown, part: ToolPart) => ReactNode;
   /** Risk shown on approval requests for this tool. */
   risk?: RiskLevel | ((input: unknown) => RiskLevel);
@@ -69,7 +69,7 @@ export interface ToolCallTimelineProps extends Omit<ComponentPropsWithoutRef<'di
    * moments of each other, such as parallel calls, are announced together.
    */
   announce?: boolean;
-  /** Extra content under a call, e.g. an approval card. */
+  /** Extra content under a call, e.g. an approval card. Your content, like `renderOutput`'s. */
   renderExtra?: ((part: ToolPart) => ReactNode) | undefined;
   /** Accessible name for the list. Default "Tool calls". */
   label?: string;
@@ -432,7 +432,11 @@ function TimelineItem({
         <Collapsible.Content className="data-[state=closed]:motion-safe:animate-signoff-collapse data-[state=open]:motion-safe:animate-signoff-expand overflow-hidden">
           <ToolCallDetails part={part} meta={meta} />
         </Collapsible.Content>
-        {extra && <div className="mt-2 mb-1 pl-2">{extra}</div>}
+        {extra && (
+          <div className="mt-2 mb-1 pl-2" data-signoff-slot>
+            {extra}
+          </div>
+        )}
       </Collapsible.Root>
     </li>
   );
@@ -444,7 +448,7 @@ export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMet
   const sectionLabel =
     'mb-1.5 font-signoff-mono text-[10.5px] font-medium tracking-[0.08em] text-signoff-fg-subtle uppercase';
   return (
-    <div className="flex flex-col gap-3 px-2 pt-1.5 pb-3">
+    <div data-signoff data-slot="signoff-tool-call-details" className="flex flex-col gap-3 px-2 pt-1.5 pb-3">
       {hasInput && (
         <div>
           <div className={sectionLabel}>{part.state === 'input-streaming' ? 'Input (streaming)' : 'Input'}</div>
@@ -454,7 +458,11 @@ export function ToolCallDetails({ part, meta }: { part: ToolPart; meta?: ToolMet
       {part.state === 'output-available' && (
         <div>
           <div className={sectionLabel}>{part.preliminary ? 'Output (partial)' : 'Output'}</div>
-          {meta?.renderOutput ? meta.renderOutput(part.output, part) : <JsonView value={part.output} label="Output" />}
+          {meta?.renderOutput ? (
+            <div data-signoff-slot>{meta.renderOutput(part.output, part)}</div>
+          ) : (
+            <JsonView value={part.output} label="Output" />
+          )}
         </div>
       )}
       {part.state === 'output-error' && (

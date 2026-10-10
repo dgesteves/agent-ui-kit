@@ -34,7 +34,7 @@ pnpm test             # Vitest, Testing Library and axe in jsdom
 pnpm test:coverage    # the same, with coverage and its thresholds (vitest.config.ts)
 pnpm --filter signoff-ui lint:package   # publint and attw
 pnpm registry:check   # registry.json matches src/
-pnpm smoke:styles     # styles.css in Chrome, next to a global reset and in a Tailwind v3 build
+pnpm smoke:styles     # styles.css in Chrome: a global reset, a Tailwind v3 build, your content in slots
 pnpm build:playground && pnpm smoke:playground
 pnpm a11y             # axe in Chrome, across the built playground, gallery and docs
 pnpm --filter nextjs-minimal build && pnpm smoke:nextjs
@@ -51,7 +51,7 @@ pnpm add --save-dev react@^18.2.0 react-dom@^18.2.0 @types/react@^18 @types/reac
 
 ## Adding a component
 
-1. Add it under `packages/signoff-ui/src/`. Start the file with `'use client'` if it uses hooks, state or event handlers; keep pure helpers in `src/lib/` without it, so Server Components can call them. Style it with Tailwind utilities and the `signoff-*` color tokens (no fixed colors, so themes apply), and give its root `data-signoff` and a `data-slot`.
+1. Add it under `packages/signoff-ui/src/`. Start the file with `'use client'` if it uses hooks, state or event handlers; keep pure helpers in `src/lib/` without it, so Server Components can call them. Style it with Tailwind utilities and the `signoff-*` color tokens (no fixed colors, so themes apply), and give its root `data-signoff` and a `data-slot` starting with `signoff-`. Put content the app passes in to render as its own (a render prop, a custom preview) in an element with `data-signoff-slot`: `styles.css` styles the kit's elements only, and stops at those (`scripts/kit-scope.mjs`).
 2. Export it from `src/index.ts`, and helpers with no React from `src/core.ts` too.
 3. Add tests in `packages/signoff-ui/test/`, including an axe check. Every render must be safe on the server: no clock or random reads while rendering (`test/server-render.test.tsx`).
 4. Add it to `ITEMS` in `scripts/registry.mjs` and run `pnpm registry:generate`, which works out the files and dependencies from its imports.

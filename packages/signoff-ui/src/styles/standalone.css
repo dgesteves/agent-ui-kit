@@ -1,73 +1,68 @@
 /*
- * Build entry for dist/styles.css: a precompiled stylesheet for apps that do
- * not use Tailwind v4. It contains only the utilities the components use, plus
- * a reset scoped to [data-signoff] roots (no global preflight). scripts/build-css.mjs
- * scopes the rest to the kit's elements and removes the cascade layers.
+ * Build entry for dist/styles.css: a precompiled stylesheet for apps that do not use Tailwind v4.
+ * It contains only the utilities the components use, plus a reset for the kit's elements (no
+ * global preflight). Tailwind's theme and the kit's @theme mapping are imported with
+ * theme(inline reference): their values are written into the utilities, and no theme variable is
+ * emitted, so the stylesheet never sets the app's --spacing, --text-* or --font-* and reads only
+ * the kit's own --signoff-* tokens. scripts/build-css.mjs then scopes every rule to the kit's own
+ * elements (scripts/kit-scope.mjs), renames the keyframes into the kit's namespace and removes
+ * the cascade layers.
  */
 @layer theme, base, components, utilities;
 
-@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/theme.css' layer(theme) theme(inline reference);
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import './theme.css';
-@import './tokens.css';
+@import './tokens.css' theme(inline reference);
 
 @source '../';
 
-/*
- * theme.css reads the app's --font-sans and --font-mono for --signoff-font-*. Unset Tailwind's own
- * values for them, which would otherwise be emitted on the kit's elements and hide the app's.
- */
-@theme {
-  --font-sans: initial;
-  --font-mono: initial;
-}
-
+/* The build scopes these to the kit's elements, as it does the utilities. */
 @layer base {
   /* What Tailwind's preflight sets on <html>, so the components read the same with or without it. */
   :where([data-signoff]) {
     line-height: 1.5;
     tab-size: 4;
   }
-  :where([data-signoff]),
-  :where([data-signoff]) *,
-  :where([data-signoff]) ::before,
-  :where([data-signoff]) ::after {
+  *,
+  ::before,
+  ::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     border: 0 solid;
   }
-  :where([data-signoff]) :where(button, input, textarea, select) {
+  :where(button, input, textarea, select) {
     font: inherit;
     letter-spacing: inherit;
     color: inherit;
     background-color: transparent;
     border-radius: 0;
   }
-  :where([data-signoff]) :where(ol, ul, menu) {
+  :where(ol, ul, menu) {
     list-style: none;
   }
-  :where([data-signoff]) :where(h1, h2, h3, h4, h5, h6) {
+  :where(h1, h2, h3, h4, h5, h6) {
     font-size: inherit;
     font-weight: inherit;
   }
-  :where([data-signoff]) :where(a) {
+  :where(a) {
     color: inherit;
     text-decoration: inherit;
   }
-  :where([data-signoff]) :where(code, kbd, samp, pre) {
+  :where(code, kbd, samp, pre) {
     font-family: var(--signoff-font-mono);
     font-size: 1em;
   }
-  :where([data-signoff]) :where(svg, img) {
+  :where(svg, img) {
     display: block;
     vertical-align: middle;
   }
-  :where([data-signoff]) :where(table) {
+  :where(table) {
     border-collapse: collapse;
     text-indent: 0;
   }
-  :where([data-signoff]) [hidden]:where(:not([hidden='until-found'])) {
+  [hidden]:where(:not([hidden='until-found'])) {
     display: none !important;
   }
 }

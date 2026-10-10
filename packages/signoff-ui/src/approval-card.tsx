@@ -38,7 +38,10 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   input?: unknown;
   /** How risky the action is, shown as a badge. Without it the card shows no risk level. */
   risk?: RiskLevel | undefined;
-  /** Custom arguments preview. Defaults to a command line for `{ command }` inputs, else JSON. */
+  /**
+   * Custom arguments preview. Defaults to a command line for `{ command }` inputs, else JSON.
+   * Your content, like `AgentMessage`'s `renderTool`.
+   */
   preview?: ReactNode;
   /**
    * Default "pending". Approve and deny fire once: further presses (a double click, Y then N) are
@@ -357,7 +360,13 @@ export function ApprovalCard({
               </div>
             </div>
 
-            {preview ?? <DefaultPreview input={input} />}
+            {preview === undefined || preview === null ? (
+              <DefaultPreview input={input} />
+            ) : (
+              <div data-signoff-slot className="contents">
+                {preview}
+              </div>
+            )}
 
             {reasonOpen && (
               <div className="flex flex-col gap-1.5">

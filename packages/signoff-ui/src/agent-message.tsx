@@ -30,14 +30,16 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   tools?: Record<string, ToolMeta> | undefined;
   /**
    * Render a tool part yourself. Return `undefined` to use the default timeline,
-   * or `null` to render nothing. Custom-rendered parts split the timeline.
+   * or `null` to render nothing. Custom-rendered parts split the timeline. What you return is
+   * your app's content: it sits in a `data-signoff-slot` element, and `styles.css` leaves it to
+   * your CSS (components you render in it are styled as usual).
    */
   renderTool?: ((part: ToolPart) => ReactNode | undefined) | undefined;
   /** Enables inline approval cards. Pass `useChat().addToolApprovalResponse`. */
   onToolApproval?: ((response: ToolApprovalResponse) => void | PromiseLike<void>) | undefined;
   /** Props forwarded to every approval card, e.g. `{ autoFocus: true }`. */
   approvalProps?: Partial<Omit<ApprovalCardProps, 'toolName' | 'status' | 'onApprove' | 'onDeny'>> | undefined;
-  /** Render `data-*` parts. They are skipped when omitted. */
+  /** Render `data-*` parts. They are skipped when omitted. Your content, like `renderTool`'s. */
   renderData?: ((part: DataPart) => ReactNode) | undefined;
   showSources?: boolean;
   sourcesVariant?: 'chips' | 'cards';
@@ -184,7 +186,11 @@ export function AgentMessage({
           case 'file':
             return <FileAttachment key={segment.key} part={segment.part} imagePolicy={imagePolicy} />;
           case 'node':
-            return <div key={segment.key}>{segment.node}</div>;
+            return (
+              <div key={segment.key} data-signoff-slot>
+                {segment.node}
+              </div>
+            );
         }
       })}
       {sources.length > 0 && (
