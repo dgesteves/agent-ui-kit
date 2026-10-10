@@ -63,4 +63,5 @@ Measured with `pnpm perf`, which CI runs on every pull request with a budget per
 
 The next work is on review and approval:
 
-- Adapters: an AI Elements recipe, an Agent Client Protocol adapter, and AG-UI sub-agents as nested timelines.
+- Adapters: an AI Elements recipe, and AG-UI sub-agents as nested timelines.
+- ACP: accepting some hunks of an edit and rejecting others, with the client writing the reviewed file (`fs/write_text_file`).

@@ -67,6 +67,9 @@ describe('server/client module boundaries', () => {
     expect(isClient('ag-ui.ts')).toBe(false);
     expect(isClient('use-ag-ui-agent.ts')).toBe(true);
     expect(closure('lib/ag-ui.ts').filter((file) => isClient(file) || /from 'react'/.test(code(file)))).toEqual([]);
+    // The ACP entry: pure functions, no React, callable anywhere.
+    expect(isClient('acp.ts')).toBe(false);
+    expect(closure('acp.ts').filter((file) => isClient(file) || /from 'react'/.test(code(file)))).toEqual([]);
     // The assistant-ui entry re-exports its client module.
     expect(isClient('assistant-ui.ts')).toBe(false);
     expect(isClient('assistant-ui-tools.tsx')).toBe(true);
@@ -124,6 +127,12 @@ const pkg = JSON.parse(readFileSync(join(src, '../package.json'), 'utf8')) as {
   peerDependenciesMeta: Record<string, { optional?: boolean }>;
   exports: Record<string, unknown>;
 };
+
+describe('the ACP entry', () => {
+  it('has its own export path', () => {
+    expect(pkg.exports['./acp']).toEqual({ types: './dist/acp.d.ts', default: './dist/acp.js' });
+  });
+});
 
 describe('the assistant-ui entry', () => {
   it('has its own export path, and assistant-ui as an optional peer', () => {

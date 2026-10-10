@@ -237,7 +237,7 @@ try {
   const gallery = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
   await gallery.goto(`${BASE}/gallery`, { waitUntil: 'networkidle' });
   const anchors = ['agent-status', 'tool-call-timeline', 'approval-card', 'diff-review', 'run-meter', 'sources'];
-  anchors.push('theming', 'labels', 'agent-message', 'ag-ui');
+  anchors.push('theming', 'labels', 'agent-message', 'ag-ui', 'acp');
   const missing = await gallery.evaluate((ids) => ids.filter((id) => !document.getElementById(id)), anchors);
   check(missing.length === 0, 'gallery: every section anchor is there', missing.join(', '));
   const portuguese = await gallery.locator('#labels [lang="pt-PT"]').evaluate((el) => ({
@@ -279,6 +279,54 @@ try {
   );
   check(violations.length === 0, 'gallery, light: no axe violations', violations.join('; '));
   await gallery.close();
+
+  // The ACP demo: a scripted agent's turn, its edit shown as a diff on the card that asks permission,
+  // the agent's options as the card's choices, and the turn carrying on after each answer.
+  const acpPage = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+  await acpPage.goto(`${BASE}/gallery#acp`, { waitUntil: 'networkidle' });
+  const acp = acpPage.locator('#acp');
+  await acp.getByRole('button', { name: 'Run the ACP agent' }).click();
+  const editCard = acp.getByRole('group', { name: /Edit lib\/format\.ts/ });
+  await editCard.and(acpPage.locator('[data-status="pending"]')).waitFor({ timeout: 30_000 });
+  const diff = await editCard.locator('[data-slot="signoff-diff-file"]').innerText();
+  const choices = await editCard
+    .locator('button[data-decision]')
+    .evaluateAll((els) => els.map((el) => el.dataset.decision).sort());
+  check(
+    diff.includes('lib/format.ts') && JSON.stringify(choices) === '["allow-always","allow-once","deny-once"]',
+    "gallery: the ACP edit shows its diff and offers the agent's options",
+    `${choices.join(', ')} · ${diff.slice(0, 80)}`,
+  );
+  await acpPage.mouse.move(0, 0);
+  await acpPage.waitForTimeout(800);
+  await acpPage.addScriptTag({ content: readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8') });
+  const acpViolations = await acpPage.evaluate(async () =>
+    (await window.axe.run('#acp', { resultTypes: ['violations'] })).violations.map(
+      (v) =>
+        `${v.id}: ${v.nodes
+          .map((n) => n.target.join(' '))
+          .slice(0, 3)
+          .join(', ')}`,
+    ),
+  );
+  check(
+    acpViolations.length === 0,
+    'gallery: the ACP edit card, with its diff, has no axe violations',
+    acpViolations.join('; '),
+  );
+  await editCard.getByRole('button', { name: 'Always' }).click();
+  const testCard = acp.getByRole('group', { name: /pnpm test lib\/format/ });
+  await testCard.and(acpPage.locator('[data-status="pending"]')).waitFor({ timeout: 30_000 });
+  await testCard.getByRole('button', { name: /^Approve/ }).click();
+  await acp.getByText('now reads').waitFor({ timeout: 30_000 });
+  const acpState = await acp.locator('[data-slot="signoff-agent-status"]').getAttribute('data-state');
+  const edited = await editCard.getAttribute('data-status');
+  check(
+    acpState === 'done' && edited === 'approved',
+    'gallery: the ACP turn carries on after each answer and ends done',
+    `${acpState}, edit ${edited}`,
+  );
+  await acpPage.close();
 
   // A 5,000-line rewrite: Next.js emits the package's diff worker, the page keeps responding while
   // the worker diffs it, the review says it fell back to one replacing hunk, and only the rows near

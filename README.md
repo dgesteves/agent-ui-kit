@@ -132,6 +132,7 @@ The components take AI SDK message parts and plain props, not a runtime, and `st
 - **AI Elements:** keep its conversation, messages and prompt input, and render `ToolApprovalCard` or `DiffReview` for those tool parts in place of `Tool` and `Confirmation`.
 - **assistant-ui:** `signoffTools()` from `signoff-ui/assistant-ui` goes in `MessagePrimitive.Parts`' `components.tools`: a `DiffReview` for the calls that propose files, its review sent back as the call's result, and the approval card, with your approval rules, for calls at an approval gate. [examples/assistant-ui](examples/assistant-ui) runs it with no API key.
 - **AG-UI agents** (LangGraph, CrewAI, Mastra and others): `useAgUiAgent` from `signoff-ui/ag-ui` turns the run into the same message parts, with interrupts as approval cards.
+- **Agent Client Protocol:** `signoff-ui/acp` folds a prompt turn's session updates and permission requests into the same message parts, with the agent's options on the approval card and each edit's diff as `DiffReview` files.
 
 [Inside your chat UI](https://agent-ui-kit-demo.vercel.app/docs/chat-ui) has the code for each.
 

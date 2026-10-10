@@ -336,6 +336,14 @@ describe('Agent Client Protocol mappings', () => {
     expect(fromAcpPermissionRequest({ sessionId: 's', toolCall: { toolCallId: 't2' }, options })).toMatchObject({
       toolName: 'tool',
     });
+    // ACP 1.8's programmatic name, when the agent sends one, is the tool rules match.
+    expect(
+      fromAcpPermissionRequest({
+        sessionId: 's',
+        toolCall: { toolCallId: 't3', title: 'Run npm test', name: 'Bash', kind: 'execute' },
+        options,
+      }),
+    ).toMatchObject({ toolName: 'Bash', title: 'Run npm test' });
   });
 });
 
