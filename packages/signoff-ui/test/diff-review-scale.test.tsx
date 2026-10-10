@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
@@ -113,12 +113,14 @@ describe('DiffReview at scale', () => {
       expect(first.querySelector('[data-line]')).not.toBeNull();
     });
 
-    it('moves through every hunk from the keyboard, rendered or not', async () => {
+    // A hundred hunks in jsdom: slow on shared CI runners, so these two get time.
+    it('moves through every hunk from the keyboard, rendered or not', { timeout: 30_000 }, async () => {
       const user = userEvent.setup();
       render(<DiffReview files={[localEdit()]} autoAdvance={false} />);
       const all = hunks();
       all[0]!.focus();
-      for (let i = 0; i < 99; i++) await user.keyboard('j');
+      for (let i = 0; i < 98; i++) fireEvent.keyDown(document.activeElement!, { key: 'j' });
+      await user.keyboard('j');
       expect(all[99]).toHaveFocus();
       await user.keyboard('a');
       expect(all[99]).toHaveAttribute('data-decision', 'accepted');
@@ -136,7 +138,7 @@ describe('DiffReview at scale', () => {
       expect(far.querySelectorAll('[data-line]')).toHaveLength(14);
     });
 
-    it('has no axe violations with chunks off screen', async () => {
+    it('has no axe violations with chunks off screen', { timeout: 30_000 }, async () => {
       const { container } = render(<DiffReview files={[localEdit()]} onSubmit={() => {}} />);
       expect(await axe(container)).toHaveNoViolations();
     });

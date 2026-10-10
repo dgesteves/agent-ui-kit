@@ -49,6 +49,19 @@ const cases: Array<[string, ReactElement]> = [
   ['ApprovalCard', <ApprovalCard key="6" toolName="run_command" input={{ command: 'pnpm i' }} risk="high" />],
   ['DiffReview', <DiffReview key="7" files={[{ path: 'route.ts', oldContent: ROUTE_OLD, newContent: ROUTE_NEW }]} />],
   [
+    'DiffReview, several files with a rename, a binary file and a comment',
+    <DiffReview
+      key="7c"
+      files={[
+        { path: 'route.ts', oldContent: ROUTE_OLD, newContent: ROUTE_NEW },
+        { path: 'b.md', oldPath: 'a.md', oldContent: '# A\n', newContent: '# A\n' },
+        { path: 'logo.png', oldContent: 'a\u0000', newContent: 'b\u0000' },
+      ]}
+      defaultComments={[{ id: 'c', fileId: 'route.ts', path: 'route.ts', target: 'file', text: 'Split it' }]}
+      defaultViewed={{ 'b.md': true }}
+    />,
+  ],
+  [
     'DiffReview, a file too large to diff while rendering',
     <DiffReview key="7b" files={[{ path: 'big.ts', oldContent: 'a\n'.repeat(400), newContent: 'b\n'.repeat(400) }]} />,
   ],

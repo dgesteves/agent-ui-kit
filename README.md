@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/eb7c6a77-555f-4f6e-badf-230ebeeba45e
 
 ## Why it exists
 
-Coding and editing agents propose changes across several files and ask to run commands that can break things, and someone has to sign off on both. The chat kits most teams use stop short there: assistant-ui's reviewable diff takes one file's hunks, already split, and its apply returns nothing, while AI Elements has no diff at all and a confirm/deny you wire up yourself. `DiffReview` computes the hunks from each file's old and new contents, lets a person accept or reject them from the keyboard, and gives the agent back each file with only the accepted hunks applied. `ApprovalCard` shows exactly what will run and how risky it is, takes a reason with a denial, and tells your `toolApproval` rules' automatic decisions apart from a person's.
+Coding and editing agents propose changes across several files and ask to run commands that can break things, and someone has to sign off on both. The chat kits most teams use stop short there: assistant-ui's reviewable diff takes one file's hunks, already split, and its apply returns nothing, while AI Elements has no diff at all and a confirm/deny you wire up yourself. `DiffReview` computes the hunks from each file's old and new contents, lets a person accept or reject them (or whole files) and comment on lines from the keyboard, and gives the agent back each file with only the accepted hunks applied, the hunks it rejected and every comment with its lines. `ApprovalCard` shows exactly what will run and how risky it is, takes a reason with a denial, and tells your `toolApproval` rules' automatic decisions apart from a person's.
 
 ## Quickstart
 
@@ -68,7 +68,7 @@ const result = streamText({
 });
 ```
 
-**The page.** `AgentMessage` lays out the run with the approval card inline, and `renderTool` puts a `DiffReview` where the proposed edit is. Its `onSubmit` result goes back to the agent as the tool's output, and the run continues once every answer is in:
+**The page.** `AgentMessage` lays out the run with the approval card inline, and `renderTool` puts a `DiffReview` where the proposed edit is. Its `onSubmit` result goes back to the agent as the tool's output, through `reviewToolOutput`: a summary, each file as applied, the hunks rejected and the reviewer's comments. The run continues once every answer is in:
 
 ```tsx
 // app/agent-run.tsx (excerpt)
@@ -87,6 +87,7 @@ import {
   RunMeter,
   deriveAgentState,
   getToolPartName,
+  reviewToolOutput,
   useRunTiming,
   type FileChange,
 } from 'signoff-ui';
@@ -103,13 +104,17 @@ const { messages, status, sendMessage, addToolOutput, addToolApprovalResponse } 
   // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
   active={state !== 'done' && state !== 'stopped' && state !== 'error'}
   onToolApproval={addToolApprovalResponse}
-  // The proposed edit, reviewed hunk by hunk. The agent gets each file as you applied it.
+  // The proposed edit, reviewed hunk by hunk: the agent gets the files as applied, and your comments.
   renderTool={(part) =>
     getToolPartName(part) === 'review_changes' && part.state === 'input-available' ? (
       <DiffReview
         files={(part.input as { files: FileChange[] }).files}
         onSubmit={(review) =>
-          addToolOutput({ tool: 'review_changes', toolCallId: part.toolCallId, output: review })
+          addToolOutput({
+            tool: 'review_changes',
+            toolCallId: part.toolCallId,
+            output: reviewToolOutput(review),
+          })
         }
       />
     ) : undefined
@@ -132,15 +137,15 @@ The components take AI SDK message parts and plain props, not a runtime, and `st
 
 ## Components
 
-| Role       | Component                          | What it does                                                                                                                                                                                                                                                                                                     |
-| ---------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Review     | `DiffReview`                       | Unified or split review of edits across files, computed from their contents or a patch, with word-level highlights. Accept or reject each hunk from the keyboard; `onSubmit` returns each file with only the accepted hunks applied. Large files are diffed in a worker and render only what is near the screen. |
-| Approve    | `ApprovalCard`, `ToolApprovalCard` | What will run, its risk when you rate it, approve or deny with a reason, a second press for `critical` actions, and "Auto-approved" or "Blocked by policy" for automatic decisions.                                                                                                                              |
-| Supporting | `AgentMessage`                     | A whole assistant message: streaming markdown, reasoning, tool calls as one timeline with approvals inline, files and sources.                                                                                                                                                                                   |
-|            | `ToolCallTimeline`                 | Every tool call's state, measured duration and a waterfall, errors inline.                                                                                                                                                                                                                                       |
-|            | `RunMeter`, `AgentStatus`          | Tokens, estimated cost and time to first token; the run's state in one announced pill.                                                                                                                                                                                                                           |
-|            | `Sources`, `Markdown`, `Reasoning` | Citations, streaming-safe markdown and collapsible reasoning.                                                                                                                                                                                                                                                    |
-|            | `useAgUiAgent`                     | An AG-UI agent's run as AI SDK messages, status, usage and approvals.                                                                                                                                                                                                                                            |
+| Role       | Component                          | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Review     | `DiffReview`, `useDiffReview`      | Unified or split review of edits across files, computed from their contents or a patch, with word-level highlights. Accept or reject hunks or whole files and comment on lines from the keyboard; `onSubmit` returns each file with only the accepted hunks applied, the rejected hunks and the comments, and `toPatch()` a unified diff. Large files are diffed in a worker and render only what is near the screen. `useDiffReview` is the same without the markup. |
+| Approve    | `ApprovalCard`, `ToolApprovalCard` | What will run, its risk when you rate it, approve or deny with a reason, a second press for `critical` actions, and "Auto-approved" or "Blocked by policy" for automatic decisions.                                                                                                                                                                                                                                                                                   |
+| Supporting | `AgentMessage`                     | A whole assistant message: streaming markdown, reasoning, tool calls as one timeline with approvals inline, files and sources.                                                                                                                                                                                                                                                                                                                                        |
+|            | `ToolCallTimeline`                 | Every tool call's state, measured duration and a waterfall, errors inline.                                                                                                                                                                                                                                                                                                                                                                                            |
+|            | `RunMeter`, `AgentStatus`          | Tokens, estimated cost and time to first token; the run's state in one announced pill.                                                                                                                                                                                                                                                                                                                                                                                |
+|            | `Sources`, `Markdown`, `Reasoning` | Citations, streaming-safe markdown and collapsible reasoning.                                                                                                                                                                                                                                                                                                                                                                                                         |
+|            | `useAgUiAgent`                     | An AG-UI agent's run as AI SDK messages, status, usage and approvals.                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 Typed against AI SDK 6 and 7 (`ai@^6.0.0 || ^7.0.102`), on React 18 and 19 (`react@^18.2.0 || ^19.0.0`), with Tailwind v4, v3 or no Tailwind, each tested in CI. Keyboard-first and announced to screen readers, with axe checks in jsdom and in Chrome. The kit calls no model and makes no requests of its own, so any model your backend uses works.
 
@@ -158,7 +163,7 @@ signoff-ui does one part of an agent product in depth: the review and approval s
 - **assistant-ui** has a chat runtime and thread, adapters for the AI SDK, LangGraph, AG-UI and more, and an Elements collection far wider than this kit. Its approval card offers "allow always" next to "allow once", which signoff-ui does not have yet, and its task card shows nested sub-agents, which this kit renders flat.
 - **AI Elements** covers the most of the message surface in shadcn style (conversation, prompt input, artifacts, a `Context` usage indicator and more), maintained by Vercel. Its components are written against AI SDK 6.
 
-Where signoff-ui goes further: review from file contents across several files, with the patched files as the result; approvals that tell a person's decision from a policy's; tool durations that leave out time spent waiting for a person; and a stylesheet for Tailwind v3 or no Tailwind. Use either library for the chat, and these components for the sign-off. [The full comparison](https://agent-ui-kit-demo.vercel.app/docs/comparison).
+Where signoff-ui goes further: review from file contents across several files, with the patched files, the rejected hunks and line comments as the result; approvals that tell a person's decision from a policy's; tool durations that leave out time spent waiting for a person; and a stylesheet for Tailwind v3 or no Tailwind. Use either library for the chat, and these components for the sign-off. [The full comparison](https://agent-ui-kit-demo.vercel.app/docs/comparison).
 
 ## License
 

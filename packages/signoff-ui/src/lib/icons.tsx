@@ -112,6 +112,11 @@ export const ArrowDownIcon = (p: IconProps) => (
     <path d="M12 5v14M6 13l6 6 6-6" />
   </Svg>
 );
+export const CommentIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+  </Svg>
+);
 export const UndoIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M9 14 4 9l5-5" />

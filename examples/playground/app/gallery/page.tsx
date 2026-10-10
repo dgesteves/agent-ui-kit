@@ -23,7 +23,14 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
     slug: 'diff-review',
     heading: '<DiffReview />',
     description:
-      'Accept or reject agent edits hunk by hunk, across files, unified or split. Returns each file with the accepted hunks applied. Large files are diffed in a worker and render only what is near the screen.',
+      'Accept or reject agent edits hunk by hunk or file by file, comment on lines, and send the agent what you applied, rejected and said. Large files are diffed in a worker and render only what is near the screen.',
+  },
+  {
+    id: 'use-diff-review',
+    slug: 'use-diff-review',
+    heading: 'useDiffReview(options)',
+    description:
+      'The same review in markup of its own: this list uses the site’s classes and none of the kit’s, and the hook brings the keyboard, decisions, comments and the result.',
   },
   {
     id: 'approval-card',

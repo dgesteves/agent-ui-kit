@@ -32,10 +32,12 @@ const dist = resolve(arg('--dist') ?? join(import.meta.dirname, '../packages/sig
 const enforce = !process.argv.includes('--no-budget');
 const json = process.argv.includes('--json');
 
-// [label, query, budgets]. Times in ms; DOM in elements.
+// [label, query, budgets]. Times in ms; DOM in elements. A local edit renders its hunks in its first
+// task (20 and 100 of them, each with decision and comment buttons and the bar of unchanged lines
+// around it): about 70 and 90 ms on a laptop, and up to about 310 ms on a shared CI runner.
 const CASES = [
-  ['local edit, 1,000 lines', 's=local&n=1000', { readyMs: 400, longestTaskMs: 250, domNodes: 15_000, keyMs: 40 }],
-  ['local edit, 5,000 lines', 's=local&n=5000', { readyMs: 800, longestTaskMs: 250, domNodes: 20_000, keyMs: 40 }],
+  ['local edit, 1,000 lines', 's=local&n=1000', { readyMs: 400, longestTaskMs: 400, domNodes: 15_000, keyMs: 40 }],
+  ['local edit, 5,000 lines', 's=local&n=5000', { readyMs: 800, longestTaskMs: 400, domNodes: 20_000, keyMs: 40 }],
   ['full rewrite, 2,000 lines', 's=rewrite&n=2000', { readyMs: 1000, longestTaskMs: 250, domNodes: 15_000, keyMs: 40 }],
   ['full rewrite, 5,000 lines', 's=rewrite&n=5000', { readyMs: 1500, longestTaskMs: 250, domNodes: 15_000, keyMs: 40 }],
   [
@@ -95,6 +97,68 @@ const base = `http://localhost:${server.address().port}`;
 const browser = await chromium.launch({ channel: 'chrome' });
 const results = [];
 const over = [];
+const breakdowns = [];
+
+/**
+ * Where a case's main-thread time went, from a Chrome trace of loading it again: self time by
+ * kind (script, style, layout, paint, garbage collection) and the busiest trace events. Printed
+ * for a case over budget, so a CI failure says what to look at.
+ */
+async function whereTimeWent(query) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const cdp = await page.context().newCDPSession(page);
+  const events = [];
+  cdp.on('Tracing.dataCollected', ({ value }) => events.push(...value));
+  const done = new Promise((resolve) => cdp.once('Tracing.tracingComplete', resolve));
+  await cdp.send('Tracing.start', { categories: 'devtools.timeline,v8', transferMode: 'ReportEvents' });
+  await page.goto(`${base}/?${query}`, { waitUntil: 'commit' });
+  await page.waitForFunction(() => window.__perf, null, { polling: 100 });
+  await cdp.send('Tracing.end');
+  await done;
+  await page.close();
+  const mains = new Set(
+    events
+      .filter((e) => e.ph === 'M' && e.name === 'thread_name' && e.args?.name === 'CrRendererMain')
+      .map((e) => `${e.pid}:${e.tid}`),
+  );
+  const slices = events
+    .filter((e) => e.ph === 'X' && mains.has(`${e.pid}:${e.tid}`) && e.dur > 0)
+    .sort((a, b) => a.ts - b.ts || b.dur - a.dur);
+  // Self time: an event's duration less its children's, on each thread's stack.
+  const self = new Map();
+  const stacks = new Map();
+  for (const event of slices) {
+    const key = `${event.pid}:${event.tid}`;
+    const stack = stacks.get(key) ?? [];
+    stacks.set(key, stack);
+    while (stack.length && stack.at(-1).ts + stack.at(-1).dur <= event.ts) stack.pop();
+    const parent = stack.at(-1);
+    if (parent) self.set(parent, (self.get(parent) ?? 0) - Math.min(event.dur, parent.ts + parent.dur - event.ts));
+    self.set(event, (self.get(event) ?? 0) + event.dur);
+    stack.push(event);
+  }
+  const KIND = [
+    ['style', /UpdateLayoutTree|RecalculateStyles|ParseAuthorStyleSheet|ScheduleStyleRecalculation/],
+    ['layout', /^Layout$|UpdateLayerTree|IntersectionObserverController/],
+    ['paint', /Paint|Layerize|Commit|CompositeLayers|UpdateLayer/],
+    ['gc', /GC|Scavenge|MarkCompact/i],
+  ];
+  const kinds = new Map();
+  const names = new Map();
+  for (const [event, time] of self) {
+    const kind = KIND.find(([, re]) => re.test(event.name))?.[0] ?? 'script and other';
+    kinds.set(kind, (kinds.get(kind) ?? 0) + time);
+    names.set(event.name, (names.get(event.name) ?? 0) + time);
+  }
+  const top = (map, n) =>
+    [...map]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([name, us]) => `${name} ${Math.round(us / 1000)} ms`)
+      .join(', ');
+  return `${top(kinds, 5)}\n    busiest: ${top(names, 8)}`;
+}
+
 try {
   for (const [label, query, budget] of CASES) {
     const started = Date.now();
@@ -114,6 +178,8 @@ try {
       if (result[metric] > limit) over.push(`${label}: ${metric} ${Math.round(result[metric])}, budget ${limit}`);
     }
     results.push({ label, ...result, budgets });
+    if (enforce && over.some((line) => line.startsWith(`${label}:`)))
+      breakdowns.push(`${label}: ${await whereTimeWent(query)}`);
   }
 } finally {
   await browser.close();
@@ -139,6 +205,8 @@ if (enforce && over.length) {
   console.error(
     `\nOver budget (raise it in scripts/perf.mjs only if the slowdown is worth it):\n  ${over.join('\n  ')}`,
   );
+  if (breakdowns.length)
+    console.error(`\nWhere the main thread's time went, loading each again:\n  ${breakdowns.join('\n  ')}`);
   process.exit(1);
 }
 process.exit(0);

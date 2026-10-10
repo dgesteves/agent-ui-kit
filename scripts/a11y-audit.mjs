@@ -85,6 +85,7 @@ for (const path of [
   '/docs/migrating-from-agent-ui-kit',
   '/docs/components/approval-card',
   '/docs/components/diff-review',
+  '/docs/components/use-diff-review',
   '/docs/components/run-meter',
   '/docs/components/use-ag-ui-agent',
 ]) {
@@ -92,6 +93,16 @@ for (const path of [
   await settle(page);
   await audit(page, `docs ${path}`);
 }
+// A review mid-way: lines selected in a hunk, a comment being written, a file marked viewed.
+await page.goto(`${BASE}/docs/components/diff-review`, { waitUntil: 'networkidle' });
+await page.locator('[data-slot="signoff-diff-hunk"]').nth(1).focus();
+await page.keyboard.press('Shift+ArrowDown');
+await page.keyboard.press('Shift+ArrowDown');
+await page.keyboard.press('c');
+await page.keyboard.type('Keep the existing error format.');
+await page.locator('[data-slot="signoff-diff-file"] input[type="checkbox"]').last().check();
+await settle(page);
+await audit(page, 'docs /docs/components/diff-review · lines selected, a comment being written');
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
 await page.waitForSelector(pending, { timeout: 60_000 });

@@ -2,11 +2,11 @@ Review and approval are where a person has to read carefully and decide quickly,
 
 ## Keyboard first
 
-Every action is a real button. Single-key shortcuts (Y and N on an approval card; J, K, A, R and U in a diff review) only fire while focus is inside the component, which keeps them compliant with WCAG 2.1.4 and out of the way of text fields. They are exposed through `aria-keyshortcuts` and described in visually hidden text. The page-wide ⌘ or Ctrl + Enter approval is opt-in, because it collides with most chat composers.
+Every action is a real button. Single-key shortcuts (Y and N on an approval card; J, K, A, R, U, C, E and V in a diff review) only fire while focus is inside the component, which keeps them compliant with WCAG 2.1.4 and out of the way of text fields. They are exposed through `aria-keyshortcuts` and described in visually hidden text. The page-wide ⌘ or Ctrl + Enter approval is opt-in, because it collides with most chat composers.
 
 ## Focus is managed, never lost
 
-Deciding an approval moves focus to the card instead of dropping it on `<body>`. Diff hunks use a roving tabindex, so the review is one tab stop that arrow and letter keys navigate. Tool calls follow the disclosure pattern with arrow-key movement.
+Deciding an approval moves focus to the card instead of dropping it on `<body>`. Diff hunks use a roving tabindex, so the review is one tab stop that arrow and letter keys navigate; its file list is one more. Writing a comment moves focus to its text area and back to the hunk when it closes. Tool calls follow the disclosure pattern with arrow-key movement.
 
 ## Scrolling content is reachable
 

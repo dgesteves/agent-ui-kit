@@ -36,7 +36,7 @@ If the CLI doesn't know the `@signoff-ui` namespace yet, add it to your `compone
 
 Each item brings the component, the helpers it imports, its npm dependencies and the theme tokens, which `shadcn add` writes into your CSS. Files land in `components/signoff-ui/`.
 
-The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL, with no setup (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from the repository (`dgesteves/signoff-ui/agent-message`).
+The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `use-diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL, with no setup (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from the repository (`dgesteves/signoff-ui/agent-message`).
 
 Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them. The files pass a new Next.js app's ESLint config with no warnings, which CI checks.
 
@@ -82,7 +82,7 @@ A Next.js App Router app with AI SDK 7: a client component, a page and a route. 
 npm i signoff-ui ai @ai-sdk/react @ai-sdk/openai zod
 ```
 
-The client renders the last assistant message, its status and its cost, with a minimal composer. `renderTool` puts a `DiffReview` where the agent proposes its edit, and the review's result goes back as the tool's output. The wrapper paints the kit's own background and text colors (`bg-signoff-bg text-signoff-fg`), so the run reads well whatever your page's colors are. Without Tailwind, give it `background: var(--signoff-bg); color: var(--signoff-fg)` instead.
+The client renders the last assistant message, its status and its cost, with a minimal composer. `renderTool` puts a `DiffReview` where the agent proposes its edit, and the review's result goes back as the tool's output, shaped for the model by `reviewToolOutput`. The wrapper paints the kit's own background and text colors (`bg-signoff-bg text-signoff-fg`), so the run reads well whatever your page's colors are. Without Tailwind, give it `background: var(--signoff-bg); color: var(--signoff-fg)` instead.
 
 ```tsx title="app/agent-run.tsx"
 'use client';
@@ -102,6 +102,7 @@ import {
   RunMeter,
   deriveAgentState,
   getToolPartName,
+  reviewToolOutput,
   useRunTiming,
   type FileChange,
 } from 'signoff-ui';
@@ -132,13 +133,17 @@ export function AgentRun() {
           // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
           active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={addToolApprovalResponse}
-          // The proposed edit, reviewed hunk by hunk. The agent gets each file as you applied it.
+          // The proposed edit, reviewed hunk by hunk: the agent gets the files as applied, and your comments.
           renderTool={(part) =>
             getToolPartName(part) === 'review_changes' && part.state === 'input-available' ? (
               <DiffReview
                 files={(part.input as { files: FileChange[] }).files}
                 onSubmit={(review) =>
-                  addToolOutput({ tool: 'review_changes', toolCallId: part.toolCallId, output: review })
+                  addToolOutput({
+                    tool: 'review_changes',
+                    toolCallId: part.toolCallId,
+                    output: reviewToolOutput(review),
+                  })
                 }
               />
             ) : undefined
@@ -267,7 +272,7 @@ export async function POST(req: Request) {
 
 What each part is for:
 
-- **`review_changes` without `execute`.** The AI SDK ends the step at the call and leaves it to the client. `DiffReview`'s `onSubmit` gets each file with only the accepted hunks applied (`content`), and the hunk ids that were accepted, rejected or left pending; `addToolOutput` sends that to the model as the tool's result.
+- **`review_changes` without `execute`.** The AI SDK ends the step at the call and leaves it to the client. `DiffReview`'s `onSubmit` gets each file with only the accepted hunks applied (`content`) and its decision, the rejected hunks with their lines, and the comments with theirs. `reviewToolOutput` turns that into one summary sentence and those lists, and `addToolOutput` sends it to the model as the tool's result.
 - **`sendAutomaticallyWhen`.** Continues the run once the review is in (`lastAssistantMessageIsCompleteWithToolCalls`) and once every approval has an answer (`lastAssistantMessageIsCompleteWithApprovalResponses`).
 - **`pendingClientTools`.** `useChat` is `ready` while the review waits on you; naming the tool makes `deriveAgentState` read it as waiting, not done.
 - **`stopWhen`.** The AI SDK stops after one step by default, so without it the run ends at the first tool call and never reaches the review.

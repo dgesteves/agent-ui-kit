@@ -28,7 +28,7 @@ export function MessageParts({
   message: UIMessage;
   /** `useChat().addToolApprovalResponse` */
   onApproval: (response: ToolApprovalResponse) => void;
-  /** Calls `useChat().addToolOutput` with the review as the tool's output. */
+  /** Calls `useChat().addToolOutput` with `reviewToolOutput(review)` as the tool's output. */
   onReview: (toolCallId: string, review: DiffReviewResult) => void;
 }) {
   return message.parts.map((part, index) => {

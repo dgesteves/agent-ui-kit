@@ -7,57 +7,53 @@ import {
   memo,
   useContext,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
-  type KeyboardEvent,
+  type MouseEvent,
   type ReactNode,
 } from 'react';
-import {
-  computeReviewResult,
-  DEFAULT_MAX_EDIT_LENGTH,
-  parseWithin,
-  type DiffHunk,
-  type DiffLine,
-  type DiffReviewResult,
-  type FileChange,
-  type HunkDecision,
-  type ParsedFileDiff,
-} from './lib/diff';
-import { defaultDiffWorker, parseInBackground, type DiffWorkerFactory } from './lib/diff-async';
+import type { DiffHunk, DiffLine, HunkDecision, ParsedFileDiff } from './lib/diff';
+import { gapLines, type ContextGap, type DiffReviewComment } from './lib/review';
 import { mergeTokensWithSegments, TOKEN_CLASS, tokenizeLine } from './lib/highlight';
-import { useIsMac } from './lib/hooks';
 import { useScrollRegion } from './lib/scroll-region';
-import { CheckIcon, UndoIcon, XIcon } from './lib/icons';
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronIcon, CommentIcon, UndoIcon, XIcon } from './lib/icons';
 import { Kbd, LiveRegion } from './lib/primitives';
-import { cn, hasModifier, isPromiseLike, isTypingTarget, type HeadingLevel } from './lib/utils';
+import { cn, type HeadingLevel } from './lib/utils';
+import {
+  CONTEXT_STEP,
+  DIFF_REVIEW_TEXT,
+  useDiffReview,
+  type DiffReviewDraft,
+  type DiffReviewFileState,
+  type ShownContext,
+  type UseDiffReviewOptions,
+  type UseDiffReviewResult,
+} from './use-diff-review';
 
-export type { DiffReviewFileResult, DiffReviewResult, FileChange, HunkDecision } from './lib/diff';
 export type { DiffWorkerFactory } from './lib/diff-async';
+export type { FileChange, HunkDecision } from './lib/diff';
+export type {
+  DiffReviewComment,
+  DiffReviewFileResult,
+  DiffReviewRejectedHunk,
+  DiffReviewResult,
+  DiffReviewResultComment,
+  FileDecision,
+} from './lib/review';
 export type DiffViewMode = 'unified' | 'split';
 
-export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'>, 'title' | 'onSubmit' | 'children'> {
-  files: readonly FileChange[];
+export interface DiffReviewProps
+  extends
+    Omit<ComponentPropsWithoutRef<'section'>, 'title' | 'onSubmit' | 'children'>,
+    Omit<UseDiffReviewOptions, 'readOnly' | 'context' | 'maxEditLength' | 'autoAdvance' | 'collapseViewed'> {
   title?: ReactNode;
   view?: DiffViewMode | undefined;
   defaultView?: DiffViewMode;
   onViewChange?: ((view: DiffViewMode) => void) | undefined;
-  /**
-   * Controlled decisions keyed by hunk id: `${path}:${index}`. A repeated path gets `${path}#2:${index}`,
-   * `#3` and so on, skipping a suffix another file's path already has.
-   */
-  decisions?: Readonly<Record<string, HunkDecision>> | undefined;
-  defaultDecisions?: Readonly<Record<string, HunkDecision>> | undefined;
-  onDecisionsChange?: ((decisions: Record<string, HunkDecision>) => void) | undefined;
-  /**
-   * Called with the reviewed result. Pending hunks are not applied. Fires once per set of decisions,
-   * so a double click or a repeated ⌘/Ctrl+Enter sends one review. Submitting again needs a changed
-   * decision, changed `files`, the returned promise to settle, or the handler to throw. Files compare
-   * by content and decisions by value: an equal new array or object does not count as a change.
-   */
-  onSubmit?: ((result: DiffReviewResult) => void | PromiseLike<void>) | undefined;
   submitLabel?: string;
   /** Hide review controls, e.g. once the review has been submitted. */
   readOnly?: boolean;
@@ -69,98 +65,12 @@ export interface DiffReviewProps extends Omit<ComponentPropsWithoutRef<'section'
    * costs about the square of this number. Default 2,000.
    */
   maxEditLength?: number;
-  /**
-   * Where files too large to diff while rendering are diffed: by default in the package's own
-   * worker, which bundlers with worker support emit (webpack 5 and Next.js, Vite, Parcel). Pass a
-   * function that starts your own `Worker` running `signoff-ui`'s diff worker, or `false` to diff
-   * them on the main thread after the first paint. Without a working worker the latter is the fallback.
-   */
-  diffWorker?: DiffWorkerFactory | false;
-  /** After accepting or rejecting with the keyboard, move to the next pending hunk. Default `true`. */
+  /** After accepting or rejecting with the keyboard, move to the next undecided hunk. Default `true`. */
   autoAdvance?: boolean;
+  /** Fold a file away once it is marked viewed. Default `true`. */
+  collapseViewed?: boolean;
   /** Heading level for the title, to fit your document outline. Default 3. */
   headingLevel?: HeadingLevel;
-}
-
-interface FlatHunk {
-  file: ParsedFileDiff;
-  hunk: DiffHunk;
-  /** Position across all files, 0-based. */
-  order: number;
-}
-
-const sameChange = (a: FileChange, b: FileChange) =>
-  a.path === b.path &&
-  a.oldPath === b.oldPath &&
-  a.oldContent === b.oldContent &&
-  a.newContent === b.newContent &&
-  a.patch === b.patch &&
-  a.language === b.language;
-
-/** Equal when every hunk has the same decision, counting a missing one as pending. */
-function sameDecisions(a: Readonly<Record<string, HunkDecision>>, b: Readonly<Record<string, HunkDecision>>) {
-  if (a === b) return true;
-  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    if ((a[id] ?? 'pending') !== (b[id] ?? 'pending')) return false;
-  }
-  return true;
-}
-
-interface ParsedFiles {
-  files: readonly FileChange[];
-  context: number;
-  maxEditLength: number;
-  ids: string[];
-  /** One per file; `undefined` while the file is diffed in the background. */
-  parsed: (ParsedFileDiff | undefined)[];
-}
-
-/**
- * A diff that needs at most this many lines added plus removed is computed while rendering, on
- * the server too: at most a few milliseconds. A larger one renders as "Comparing…" until the
- * worker has it. Deterministic, so the server and the hydrating client agree.
- */
-const SYNC_EDIT_LENGTH = 300;
-
-/**
- * One id per file: its path, or for a repeated path `path#2`, `path#3`… skipping any id already
- * taken, since a real path can look like a repeat (`a.ts`, `a.ts`, `a.ts#2`).
- */
-function fileIds(files: readonly FileChange[]): string[] {
-  const used = new Set<string>();
-  const next = new Map<string, number>();
-  return files.map(({ path }) => {
-    let id = path;
-    if (used.has(id)) {
-      let n = next.get(path) ?? 2;
-      while (used.has(`${path}#${n}`)) n++;
-      next.set(path, n + 1);
-      id = `${path}#${n}`;
-    }
-    used.add(id);
-    return id;
-  });
-}
-
-/** Parse each change, reusing `previous` parses of unchanged files (diffing is the expensive part). */
-function parseFiles(
-  files: readonly FileChange[],
-  context: number,
-  maxEditLength: number,
-  previous?: ParsedFiles,
-): ParsedFiles {
-  // Two changes must not share hunk ids, or deciding one hunk decides the other too.
-  const ids = fileIds(files);
-  const sameOptions = previous?.context === context && previous.maxEditLength === maxEditLength;
-  const parsed = files.map((f, i) => {
-    const id = ids[i]!;
-    const before = previous?.files[i];
-    if (sameOptions && before && previous.ids[i] === id && sameChange(before, f)) return previous.parsed[i];
-    return parseWithin(f, { context, id, maxEditLength }, SYNC_EDIT_LENGTH);
-  });
-  // Keep the previous array when nothing changed, so memoized work downstream is kept too.
-  const same = previous && parsed.length === previous.parsed.length && parsed.every((p, i) => p === previous.parsed[i]);
-  return { files, context, maxEditLength, ids, parsed: same ? previous.parsed : parsed };
 }
 
 const STATUS_BADGE: Record<ParsedFileDiff['status'], { letter: string; label: string; className: string }> = {
@@ -228,21 +138,34 @@ function createVirtualizer(rowHeight: number, heights: Virtualizer['heights']): 
 
 const VirtualizerContext = createContext<Virtualizer | null>(null);
 
+/** What memoized hunks call: stable functions that always reach the latest render of the review. */
 interface ReviewActions {
-  focusHunk(order: number): void;
-  activate(order: number): void;
-  decide(order: number, decision: HunkDecision): void;
-  register(id: string, el: HTMLDivElement | null): void;
+  register(id: string, el: HTMLElement | null): void;
+  activate(index: number): void;
+  decide(id: string, decision: HunkDecision): void;
+  comment(itemId: string): void;
+  edit(commentId: string): void;
+  remove(commentId: string): void;
+  lineNumber: UseDiffReviewResult['getLineNumberProps'];
+  registerDraft(el: HTMLTextAreaElement | null): void;
+  setText(text: string): void;
+  save(): void;
+  cancel(): void;
 }
 
 /**
- * Review agent file edits hunk by hunk, in unified or split view, with word-level
- * highlights. Keyboard: J/K or arrows move between hunks, A accepts, R rejects,
- * U resets, Shift+A / Shift+R decide all, ⌘/Ctrl+Enter applies.
+ * Review agent file edits hunk by hunk, in unified or split view, with word-level highlights, and
+ * send back what was accepted, what was rejected and what the reviewer said about it.
+ *
+ * Keyboard: J/K or the arrows move between hunks and Shift+J/K between files; A accepts, R rejects,
+ * U resets, Alt+A / Alt+R decide the file and Shift+A / Shift+R everything; Shift+arrows select lines
+ * and C comments on them (or on the hunk); E shows more context; V marks the file viewed;
+ * ⌘/Ctrl+Enter applies.
  *
  * Large files stay responsive: a big diff is computed in a worker while the file shows
  * "Comparing…", one past `maxEditLength` becomes a single replacing hunk, and long reviews
- * render only the rows near the screen.
+ * render only the rows near the screen. For your own markup, `useDiffReview` is this component's
+ * state and keyboard without it.
  */
 export function DiffReview({
   files,
@@ -250,85 +173,48 @@ export function DiffReview({
   view: viewProp,
   defaultView = 'unified',
   onViewChange,
-  decisions: decisionsProp,
+  decisions,
   defaultDecisions,
   onDecisionsChange,
+  comments,
+  defaultComments,
+  onCommentsChange,
+  viewed,
+  defaultViewed,
+  onViewedChange,
   onSubmit,
   submitLabel,
   readOnly = false,
   context = 3,
-  maxEditLength = DEFAULT_MAX_EDIT_LENGTH,
-  diffWorker = defaultDiffWorker,
+  maxEditLength,
+  diffWorker,
   autoAdvance = true,
+  collapseViewed = true,
   headingLevel = 3,
   className,
   ...props
 }: DiffReviewProps) {
   const Heading = `h${headingLevel}` as const;
-  // Parsed by content rather than by `files` identity, so an inline array (a new one on every
-  // parent render) does not re-diff every file on every decision.
-  const [parsedFiles, setParsedFiles] = useState<ParsedFiles>(() => parseFiles(files, context, maxEditLength));
-  let current = parsedFiles;
-  if (parsedFiles.files !== files || parsedFiles.context !== context || parsedFiles.maxEditLength !== maxEditLength) {
-    current = parseFiles(files, context, maxEditLength, parsedFiles);
-    setParsedFiles(current);
-  }
-  const all = current.parsed;
-  const comparing = all.some((p) => p === undefined);
-  const parsed = useMemo(() => all.filter((p): p is ParsedFileDiff => p !== undefined), [all]);
-
-  // Files too large to diff while rendering, diffed in the background; a newer change replaces an older one.
-  const [failure, setFailure] = useState<{ error: unknown }>();
-  const jobs = useRef(new Map<string, FileChange>());
-  const mounted = useRef(false);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-  useEffect(() => {
-    const { files: changes, ids, parsed: results, context: ctx, maxEditLength: limit } = parsedFiles;
-    results.forEach((result, i) => {
-      if (result) return;
-      const change = changes[i]!;
-      const id = ids[i]!;
-      const running = jobs.current.get(id);
-      if (running && sameChange(running, change)) return;
-      jobs.current.set(id, change);
-      parseInBackground(change, { context: ctx, id, maxEditLength: limit }, diffWorker).then(
-        (file) => {
-          if (jobs.current.get(id) !== change) return;
-          jobs.current.delete(id);
-          if (!mounted.current) return;
-          setParsedFiles((prev) => {
-            const k = prev.ids.indexOf(id);
-            const stale =
-              k === -1 ||
-              prev.parsed[k] !== undefined ||
-              !sameChange(prev.files[k]!, change) ||
-              prev.context !== ctx ||
-              prev.maxEditLength !== limit;
-            if (stale) return prev;
-            const next = [...prev.parsed];
-            next[k] = file;
-            return { ...prev, parsed: next };
-          });
-        },
-        (error: unknown) => {
-          if (jobs.current.get(id) === change) jobs.current.delete(id);
-          // Thrown while rendering, as a file that fails to parse synchronously is.
-          if (mounted.current) setFailure({ error });
-        },
-      );
-    });
-  }, [parsedFiles, diffWorker]);
-
-  const flat = useMemo<FlatHunk[]>(() => {
-    const list: FlatHunk[] = [];
-    for (const file of parsed) for (const hunk of file.hunks) list.push({ file, hunk, order: list.length });
-    return list;
-  }, [parsed]);
+  const review = useDiffReview({
+    files,
+    decisions,
+    defaultDecisions,
+    onDecisionsChange,
+    comments,
+    defaultComments,
+    onCommentsChange,
+    viewed,
+    defaultViewed,
+    onViewedChange,
+    onSubmit,
+    readOnly,
+    context,
+    maxEditLength,
+    diffWorker,
+    autoAdvance,
+    collapseViewed,
+  });
+  const { items, counts, comparing, isMac } = review;
 
   const [viewState, setViewState] = useState<DiffViewMode>(defaultView);
   const view = viewProp ?? viewState;
@@ -337,41 +223,17 @@ export function DiffReview({
     onViewChange?.(v);
   };
 
-  const [decisionState, setDecisionState] = useState<Record<string, HunkDecision>>(() => ({ ...defaultDecisions }));
-  const decisions = decisionsProp ?? decisionState;
-  const setDecisions = (next: Record<string, HunkDecision>) => {
-    if (decisionsProp === undefined) setDecisionState(next);
-    onDecisionsChange?.(next);
-  };
-
-  const [activeState, setActive] = useState(0);
-  // Clamped, so a hunk stays in the tab order when `files` shrinks below the active one.
-  const active = Math.min(activeState, Math.max(0, flat.length - 1));
-  const [announcement, setAnnouncement] = useState('');
-  const hunkEls = useRef(new Map<string, HTMLDivElement>());
-  const mac = useIsMac();
-
-  const counts = useMemo(() => {
-    let accepted = 0;
-    let rejected = 0;
-    for (const { hunk } of flat) {
-      const d = decisions[hunk.id];
-      if (d === 'accepted') accepted++;
-      else if (d === 'rejected') rejected++;
-    }
-    return { accepted, rejected, pending: flat.length - accepted - rejected, total: flat.length };
-  }, [flat, decisions]);
-
   // Rows per hunk in the current view, and where each hunk's rows start in the review.
   const layout = useMemo(() => {
     const offsets = new Map<string, number>();
     let rows = 0;
-    for (const { hunk } of flat) {
-      offsets.set(hunk.id, rows);
-      rows += view === 'split' ? splitRowCount(hunk.lines) : hunk.lines.length;
+    for (const item of items) {
+      if (!item.hunk) continue;
+      offsets.set(item.id, rows);
+      rows += view === 'split' ? splitRowCount(item.hunk.lines) : item.hunk.lines.length;
     }
     return { offsets, rows };
-  }, [flat, view]);
+  }, [items, view]);
   const virtualize = layout.rows > VIRTUALIZE_ROWS;
   const rootRef = useRef<HTMLElement>(null);
   const [rowHeight, setRowHeight] = useState(ROW_HEIGHT);
@@ -385,127 +247,41 @@ export function DiffReview({
     if (measured > 0 && Math.abs(measured - rowHeight) > 0.5) setRowHeight(measured);
   }, [virtualize, view, rowHeight]);
 
-  // Handlers for the memoized hunks: stable functions that always see the latest render.
-  const latest = useRef<Omit<ReviewActions, 'register'> | null>(null);
-  const decide = (item: FlatHunk, decision: HunkDecision, advance: boolean) => {
-    const next = { ...decisions, [item.hunk.id]: decision };
-    setDecisions(next);
-    const remaining = flat.filter((f) => (next[f.hunk.id] ?? 'pending') === 'pending').length;
-    const verb = decision === 'pending' ? 'reset' : decision;
-    setAnnouncement(
-      `Hunk ${item.order + 1} of ${flat.length} ${verb}. ${remaining === 0 ? 'All hunks reviewed.' : `${remaining} remaining.`}`,
-    );
-    if (advance && decision !== 'pending') {
-      const after = flat.slice(item.order + 1).find((f) => (next[f.hunk.id] ?? 'pending') === 'pending');
-      const wrap = after ?? flat.find((f) => (next[f.hunk.id] ?? 'pending') === 'pending');
-      if (wrap) focusHunk(wrap.order);
-    }
-  };
-  const focusHunk = (index: number) => {
-    const target = flat[Math.max(0, Math.min(flat.length - 1, index))];
-    if (!target) return;
-    setActive(target.order);
-    hunkEls.current.get(target.hunk.id)?.focus();
-  };
+  const latest = useRef(review);
   useIsoLayoutEffect(() => {
-    latest.current = {
-      focusHunk,
-      activate: setActive,
-      decide: (order, decision) => {
-        const item = flat[order];
-        if (item) decide(item, decision, false);
-      },
-    };
+    latest.current = review;
   });
   const [actions] = useState<ReviewActions>(() => ({
-    focusHunk: (order) => latest.current?.focusHunk(order),
-    activate: (order) => latest.current?.activate(order),
-    decide: (order, decision) => latest.current?.decide(order, decision),
-    register: (id, el) => {
-      if (el) hunkEls.current.set(id, el);
-      else hunkEls.current.delete(id);
-    },
+    register: review.registerItem,
+    activate: review.activate,
+    decide: (id, decision) => latest.current.decide(id, decision),
+    comment: (itemId) => latest.current.startComment({ itemId }),
+    edit: (commentId) => latest.current.startComment({ commentId }),
+    remove: (commentId) => latest.current.removeComment(commentId),
+    lineNumber: (index, line) => latest.current.getLineNumberProps(index, line),
+    registerDraft: review.registerDraft,
+    setText: (text) => latest.current.setDraftText(text),
+    save: () => latest.current.saveDraft(),
+    cancel: () => latest.current.cancelDraft(),
   }));
 
-  const decideAll = (decision: Exclude<HunkDecision, 'pending'>) => {
-    const next: Record<string, HunkDecision> = {};
-    for (const { hunk } of flat) next[hunk.id] = decision;
-    setDecisions(next);
-    setAnnouncement(`All ${flat.length} hunks ${decision}.`);
-  };
+  // Comments by the hunk (or whole-file item) they are on, kept per array so memoized hunks keep theirs.
+  const commentsByItem = useMemo(() => {
+    const map = new Map<string, DiffReviewComment[]>();
+    for (const comment of review.comments) {
+      const key = comment.hunkId ?? `${comment.fileId}:file`;
+      map.set(key, [...(map.get(key) ?? []), comment]);
+    }
+    return map;
+  }, [review.comments]);
 
-  // One submission per set of decisions, so a double click or a repeated Ctrl+Enter sends it once.
-  // Re-armed when the files change by content or a decision changes by value: an equal `files` array
-  // or controlled `decisions` object passed on every render must not re-arm it.
-  const submitted = useRef(false);
-  const reviewed = useRef({ parsed, decisions });
-  useEffect(() => {
-    const previous = reviewed.current;
-    if (previous.parsed !== parsed || !sameDecisions(previous.decisions, decisions)) submitted.current = false;
-    reviewed.current = { parsed, decisions };
-  }, [parsed, decisions]);
-  const submit = () => {
-    // Every file has to be compared before the review means anything.
-    if (!onSubmit || submitted.current || comparing) return;
-    submitted.current = true;
-    let result: void | PromiseLike<void>;
-    try {
-      result = onSubmit(computeReviewResult(parsed, decisions));
-    } catch (error) {
-      // A failed handler sent nothing: let the user try again.
-      submitted.current = false;
-      throw error;
-    }
-    if (isPromiseLike(result)) {
-      void Promise.resolve(result).finally(() => {
-        submitted.current = false;
-      });
-    }
-  };
-
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (readOnly || isTypingTarget(event.target)) return;
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      submit();
-      return;
-    }
-    if (hasModifier(event)) return;
-    const insideHunk = (event.target as HTMLElement).closest('[data-slot="signoff-diff-hunk"]');
-    const item = flat[active];
-    const key = event.key;
-    if (key === 'j' || key === 'ArrowDown' || key === 'k' || key === 'ArrowUp') {
-      // Arrow keys only navigate when a hunk (not e.g. the view toggle) has focus.
-      if (key.startsWith('Arrow') && !insideHunk) return;
-      event.preventDefault();
-      focusHunk(insideHunk ? active + (key === 'j' || key === 'ArrowDown' ? 1 : -1) : active);
-      return;
-    }
-    if (event.shiftKey && (key === 'A' || key === 'R')) {
-      event.preventDefault();
-      if (!comparing) decideAll(key === 'A' ? 'accepted' : 'rejected');
-      return;
-    }
-    if (!item || !insideHunk || event.shiftKey) return;
-    if (key === 'a') {
-      event.preventDefault();
-      decide(item, 'accepted', autoAdvance);
-    } else if (key === 'r' || key === 'x') {
-      event.preventDefault();
-      decide(item, 'rejected', autoAdvance);
-    } else if (key === 'u') {
-      event.preventDefault();
-      decide(item, 'pending', false);
-    }
-  };
-
-  const additions = parsed.reduce((n, f) => n + f.additions, 0);
-  const deletions = parsed.reduce((n, f) => n + f.deletions, 0);
+  const additions = review.files.reduce((n, f) => n + (f.parsed?.additions ?? 0), 0);
+  const deletions = review.files.reduce((n, f) => n + (f.parsed?.deletions ?? 0), 0);
+  const hunkCount = items.filter((item) => item.hunk).length;
+  const viewedCount = review.files.filter((f) => f.viewed).length;
   const label = submitLabel ?? (counts.accepted > 0 ? `Apply ${counts.accepted} of ${counts.total}` : 'Apply changes');
-  const mod = mac ? '⌘' : 'Ctrl';
-  const orders = useMemo(() => new Map(flat.map((f) => [f.hunk.id, f.order])), [flat]);
-  // A file that failed to diff in the background fails the render, as one diffed while rendering does.
-  if (failure) throw failure.error;
+  const mod = isMac ? '⌘' : 'Ctrl';
+  const indexOf = useMemo(() => new Map(items.map((item, i) => [item.id, i])), [items]);
 
   return (
     // Review shortcuts are scoped to focus within the diff (WCAG 2.1.4); every action is also a button.
@@ -514,7 +290,7 @@ export function DiffReview({
       data-signoff
       data-slot="signoff-diff-review"
       aria-label={typeof title === 'string' ? title : 'Review changes'}
-      onKeyDown={onKeyDown}
+      {...review.getRootProps()}
       className={cn(
         'rounded-signoff border-signoff-border bg-signoff-surface font-signoff-sans text-signoff-fg overflow-hidden border',
         className,
@@ -525,7 +301,8 @@ export function DiffReview({
         <div className="min-w-0 flex-1">
           <Heading className="text-signoff-fg text-sm font-semibold">{title}</Heading>
           <p className="font-signoff-mono text-signoff-fg-subtle mt-0.5 text-xs">
-            {all.length} {all.length === 1 ? 'file' : 'files'} · {flat.length} {flat.length === 1 ? 'hunk' : 'hunks'}
+            {review.files.length} {review.files.length === 1 ? 'file' : 'files'} · {hunkCount}{' '}
+            {hunkCount === 1 ? 'hunk' : 'hunks'}
             {comparing && ' so far'} · <span className="text-signoff-accent-fg">+{additions}</span>{' '}
             <span className="text-signoff-hot-fg">−{deletions}</span>
           </p>
@@ -549,33 +326,73 @@ export function DiffReview({
         </ToggleGroup.Root>
       </div>
 
+      {review.files.length > 1 && <FileNavigator review={review} />}
+
       <VirtualizerContext.Provider value={virtualize ? virtualizer : null}>
-        {all.map((file, i) => {
-          const change = current.files[i]!;
-          const id = current.ids[i]!;
-          return (
-            <FileSection key={id} path={change.path} file={file}>
-              {file?.hunks.map((hunk) => {
-                const order = orders.get(hunk.id)!;
+        {review.files.map((file) => (
+          <FileSection key={file.id} file={file} review={review}>
+            {file.items.map((item) => {
+              const index = indexOf.get(item.id)!;
+              const itemProps = review.getItemProps(index);
+              const selection = review.selection?.item.id === item.id ? review.selection : undefined;
+              const draft = review.draft && draftItem(review.draft) === item.id ? review.draft : undefined;
+              if (!item.hunk) {
                 return (
-                  <Hunk
-                    key={hunk.id}
-                    hunk={hunk}
+                  <WholeFile
+                    key={item.id}
                     file={file}
-                    order={order}
-                    total={flat.length}
-                    view={view}
-                    decision={decisions[hunk.id] ?? 'pending'}
-                    active={order === active}
+                    index={index}
+                    name={itemProps['aria-label']}
+                    active={itemProps.tabIndex === 0}
+                    decision={itemProps['data-decision']}
                     readOnly={readOnly}
-                    rowOffset={layout.offsets.get(hunk.id) ?? 0}
+                    comments={commentsByItem.get(item.id)}
+                    draft={draft}
                     actions={actions}
                   />
                 );
-              })}
-            </FileSection>
-          );
-        })}
+              }
+              const gap = (before: number) => {
+                const found = file.gaps.find((g) => g.before === before);
+                return (
+                  found && (
+                    <ContextGapView
+                      key={`gap-${before}`}
+                      review={review}
+                      file={file}
+                      gap={found}
+                      view={view}
+                      shown={review.shown[`${file.id}:${before}`]}
+                    />
+                  )
+                );
+              };
+              const hunk = item.hunk;
+              const last = hunk.index === file.parsed!.hunks.length - 1;
+              return (
+                <Fragment key={item.id}>
+                  {gap(hunk.index)}
+                  <Hunk
+                    hunk={hunk}
+                    file={file.parsed!}
+                    index={index}
+                    name={itemProps['aria-label']}
+                    view={view}
+                    decision={itemProps['data-decision']}
+                    active={itemProps.tabIndex === 0}
+                    readOnly={readOnly}
+                    rowOffset={layout.offsets.get(item.id) ?? 0}
+                    selection={selection && { from: selection.from, to: selection.to, head: selection.head }}
+                    comments={commentsByItem.get(item.id)}
+                    draft={draft}
+                    actions={actions}
+                  />
+                  {last && gap(hunk.index + 1)}
+                </Fragment>
+              );
+            })}
+          </FileSection>
+        ))}
       </VirtualizerContext.Provider>
 
       {!readOnly && (
@@ -586,6 +403,18 @@ export function DiffReview({
                 {counts.accepted + counts.rejected}/{counts.total}
               </span>{' '}
               reviewed
+              {review.files.length > 1 && (
+                <span className="text-signoff-fg-subtle">
+                  {' '}
+                  · {viewedCount} of {review.files.length} files viewed
+                </span>
+              )}
+              {review.comments.length > 0 && (
+                <span className="text-signoff-fg-subtle">
+                  {' '}
+                  · {review.comments.length} {review.comments.length === 1 ? 'comment' : 'comments'}
+                </span>
+              )}
               {comparing ? (
                 <span className="text-signoff-fg-subtle"> · comparing files…</span>
               ) : (
@@ -596,11 +425,11 @@ export function DiffReview({
               )}
             </p>
             <div aria-hidden="true" className="flex h-1 w-40 gap-0.5 overflow-hidden rounded-full">
-              {flat.map(({ hunk }) => {
-                const d = decisions[hunk.id] ?? 'pending';
+              {items.map((item) => {
+                const d = review.decisions[item.id] ?? 'pending';
                 return (
                   <span
-                    key={hunk.id}
+                    key={item.id}
                     className={cn(
                       'h-full flex-1 transition-colors',
                       d === 'accepted'
@@ -622,20 +451,25 @@ export function DiffReview({
             <span className="mr-1.5">accept</span>
             <Kbd>R</Kbd>
             <span className="mr-1.5">reject</span>
+            <Kbd>C</Kbd>
+            <span className="mr-1.5">comment</span>
             <Kbd>{mod}</Kbd>
             <Kbd>↵</Kbd>
             <span>apply</span>
           </p>
           <p className="sr-only">
-            Keyboard: J or K to move between hunks, A to accept, R to reject, U to reset, Shift A or Shift R for all
-            hunks, {mod} Enter to apply.
+            Keyboard: J or K to move between hunks, Shift J or Shift K between files, A to accept, R to reject, U to
+            reset, Alt A or Alt R for the whole file, Shift A or Shift R for every hunk, Shift with the up or down arrow
+            to select lines, C to comment on them or on the hunk, E to show more unchanged lines, V to mark the file
+            viewed, {mod} Enter to apply.
           </p>
           <div className="ml-auto flex items-center gap-2">
             {/* aria-disabled rather than disabled while comparing: the buttons keep focus. */}
             <button
               type="button"
               aria-disabled={comparing || undefined}
-              onClick={() => !comparing && decideAll('rejected')}
+              aria-keyshortcuts="Shift+R"
+              onClick={() => review.decideAll('rejected')}
               className={secondaryButton}
             >
               Reject all
@@ -643,18 +477,16 @@ export function DiffReview({
             <button
               type="button"
               aria-disabled={comparing || undefined}
-              onClick={() => !comparing && decideAll('accepted')}
+              aria-keyshortcuts="Shift+A"
+              onClick={() => review.decideAll('accepted')}
               className={secondaryButton}
             >
               Accept all
             </button>
             {onSubmit && (
               <button
-                type="button"
                 data-slot="signoff-diff-submit"
-                aria-disabled={comparing || undefined}
-                onClick={submit}
-                aria-keyshortcuts={mac ? 'Meta+Enter' : 'Control+Enter'}
+                {...review.getSubmitProps()}
                 className="bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 focus-visible:outline-signoff-ring inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
               >
                 {label}
@@ -663,209 +495,192 @@ export function DiffReview({
           </div>
         </div>
       )}
-      <LiveRegion>{announcement}</LiveRegion>
+      <LiveRegion>{review.announcement}</LiveRegion>
     </section>
   );
+}
+
+/** The item a draft is written on: its hunk, or for a file comment, the file's whole-file item or first hunk. */
+function draftItem(draft: DiffReviewDraft) {
+  return draft.hunkId ?? `${draft.fileId}:file`;
 }
 
 const secondaryButton =
   'inline-flex h-8 cursor-pointer items-center rounded-lg border border-signoff-border-strong px-3 text-[13px] font-medium text-signoff-fg-muted transition-colors hover:bg-signoff-surface-2 hover:text-signoff-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signoff-ring aria-disabled:cursor-not-allowed aria-disabled:opacity-60';
 
-/** A file's header and hunks, or "Comparing…" while it is diffed in the background. */
+const smallButton =
+  'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signoff-ring';
+
+function PathLabel({ path, oldPath }: { path: string; oldPath?: string | undefined }) {
+  const slash = path.lastIndexOf('/');
+  return (
+    <span className="min-w-0 truncate">
+      {oldPath && oldPath !== path && (
+        <>
+          <span className="text-signoff-fg-subtle">{oldPath}</span>
+          <span className="text-signoff-fg-subtle" aria-hidden="true">
+            {' → '}
+          </span>
+          <span className="sr-only"> to </span>
+        </>
+      )}
+      {slash > 0 && <span className="text-signoff-fg-subtle">{path.slice(0, slash + 1)}</span>}
+      <span className="text-signoff-fg font-medium">{path.slice(slash + 1)}</span>
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: ParsedFileDiff['status'] }) {
+  const badge = STATUS_BADGE[status];
+  return (
+    <span
+      className={cn(
+        'inline-flex size-[18px] shrink-0 items-center justify-center rounded border text-[10px] font-bold',
+        badge.className,
+      )}
+      title={badge.label}
+    >
+      <span aria-hidden="true">{badge.letter}</span>
+      <span className="sr-only">{badge.label}:</span>
+    </span>
+  );
+}
+
+/** Every file of a multi-file review, to jump to: one tab stop, ↑ and ↓ between files. */
+function FileNavigator({ review }: { review: UseDiffReviewResult }) {
+  return (
+    <nav
+      aria-label="Files in this review"
+      data-slot="signoff-diff-files"
+      className="border-signoff-border bg-signoff-bg/30 border-b px-2 py-1.5"
+    >
+      <ol className="flex max-h-48 flex-col overflow-y-auto">
+        {review.files.map((file) => {
+          const total = file.items.length;
+          return (
+            <li key={file.id}>
+              <button
+                {...review.getNavigatorItemProps(file.id)}
+                disabled={total === 0}
+                className="font-signoff-mono hover:bg-signoff-surface-2 focus-visible:outline-signoff-ring aria-[current=true]:bg-signoff-surface-2 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-left text-xs focus-visible:outline-2 focus-visible:-outline-offset-2 disabled:cursor-default"
+              >
+                {file.parsed && <StatusBadge status={file.parsed.status} />}
+                <PathLabel path={file.path} oldPath={file.parsed?.oldPath} />
+                <span className="text-signoff-fg-subtle ml-auto shrink-0 tabular-nums">
+                  {file.parsed ? (
+                    <>
+                      <span aria-hidden="true">
+                        {file.decided}/{total}
+                      </span>
+                      <span className="sr-only">
+                        {`, ${file.decided} of ${total} decided`}
+                        {file.viewed && ', viewed'}
+                      </span>
+                    </>
+                  ) : (
+                    'comparing…'
+                  )}
+                </span>
+                <span className="text-signoff-accent-fg w-3.5 shrink-0">{file.viewed && <CheckIcon size={13} />}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** A file's header and body: its hunks, or "Comparing…" while it is diffed in the background. */
 function FileSection({
-  path,
   file,
+  review,
   children,
 }: {
-  path: string;
-  file: ParsedFileDiff | undefined;
+  file: DiffReviewFileState;
+  review: UseDiffReviewResult;
   children: ReactNode;
 }) {
-  const badge = file ? STATUS_BADGE[file.status] : undefined;
-  const slash = path.lastIndexOf('/');
+  const parsed = file.parsed;
+  const decidable = file.items.length > 0 && !review.readOnly;
+  const bodyId = `${useId()}-body`;
   return (
     <div
       data-slot="signoff-diff-file"
-      data-fallback={file?.fallback}
-      aria-busy={file ? undefined : true}
+      data-fallback={parsed?.fallback}
+      data-viewed={file.viewed || undefined}
+      data-decision={file.decision}
+      aria-busy={parsed ? undefined : true}
       className="border-signoff-border border-b last:border-b-0"
     >
-      <div className="border-signoff-border bg-signoff-surface-2/60 font-signoff-mono flex items-center gap-2.5 border-b px-4 py-2 text-xs">
-        {badge && (
-          <span
-            className={cn(
-              'inline-flex size-[18px] items-center justify-center rounded border text-[10px] font-bold',
-              badge.className,
-            )}
-            title={badge.label}
+      <div className="border-signoff-border bg-signoff-surface-2/60 font-signoff-mono flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-b px-4 py-2 text-xs">
+        {file.items.length > 0 && (
+          <button
+            type="button"
+            aria-expanded={!file.collapsed}
+            aria-controls={bodyId}
+            aria-label={`${file.collapsed ? 'Show' : 'Hide'} ${file.path}`}
+            onClick={() => review.setCollapsed(file.id, !file.collapsed)}
+            className="text-signoff-fg-subtle hover:text-signoff-fg focus-visible:outline-signoff-ring -ml-1.5 inline-flex size-6 cursor-pointer items-center justify-center rounded focus-visible:outline-2"
           >
-            <span aria-hidden="true">{badge.letter}</span>
-            <span className="sr-only">{badge.label}:</span>
-          </span>
+            <ChevronIcon size={13} className={cn('transition-transform', !file.collapsed && 'rotate-90')} />
+          </button>
         )}
-        <span className="min-w-0 truncate">
-          {slash > 0 && <span className="text-signoff-fg-subtle">{path.slice(0, slash + 1)}</span>}
-          <span className="text-signoff-fg font-medium">{path.slice(slash + 1)}</span>
-        </span>
-        {file && (
-          <span className="ml-auto shrink-0 tabular-nums">
-            <span className="text-signoff-accent-fg">+{file.additions}</span>{' '}
-            <span className="text-signoff-hot-fg">−{file.deletions}</span>
-          </span>
-        )}
-      </div>
-      {!file && <p className="text-signoff-fg-subtle px-4 py-3 text-xs">Comparing changes…</p>}
-      {file?.fallback === 'replace' && (
-        <p data-slot="signoff-diff-fallback" className="text-signoff-fg-muted px-4 pt-3 pb-1 text-xs">
-          Too many changes to compare line by line: the changed lines are shown as one hunk that replaces them.
-        </p>
-      )}
-      {file?.hunks.length === 0 && <p className="text-signoff-fg-subtle px-4 py-3 text-xs">No textual changes.</p>}
-      {children}
-    </div>
-  );
-}
-
-interface HunkProps {
-  hunk: DiffHunk;
-  file: ParsedFileDiff;
-  order: number;
-  total: number;
-  view: DiffViewMode;
-  decision: HunkDecision;
-  active: boolean;
-  readOnly: boolean;
-  /** Rows of the review before this hunk's, for which chunks render at first. */
-  rowOffset: number;
-  actions: ReviewActions;
-}
-
-/** Memoized: a decision re-renders the hunk it changed and the ones gaining or losing focus. */
-const Hunk = memo(function Hunk({
-  hunk,
-  file,
-  order,
-  total,
-  view,
-  decision,
-  active,
-  readOnly,
-  rowOffset,
-  actions,
-}: HunkProps) {
-  const codeRef = useScrollRegion<HTMLDivElement>(`Hunk ${order + 1} code, ${file.path}`);
-  const virtualizer = useContext(VirtualizerContext);
-  const lastLine = hunk.newLines > 0 ? hunk.newStart + hunk.newLines - 1 : hunk.newStart;
-  const name = `Hunk ${order + 1} of ${total}, ${file.path}, lines ${hunk.newStart} to ${lastLine}, ${decision === 'pending' ? 'not reviewed' : decision}`;
-  const rejected = decision === 'rejected';
-  return (
-    // A roving-tabindex item: focus tracking only, all actions are buttons.
-    <div
-      ref={(el) => actions.register(hunk.id, el)}
-      role="group"
-      aria-label={name}
-      tabIndex={active ? 0 : -1}
-      data-slot="signoff-diff-hunk"
-      data-decision={decision}
-      onFocus={() => actions.activate(order)}
-      className={cn(
-        'border-signoff-border/70 focus-visible:outline-signoff-ring relative border-b last:border-b-0 focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2',
-        "before:absolute before:inset-y-0 before:left-0 before:z-[1] before:w-[3px] before:content-['']",
-        decision === 'accepted' && 'before:bg-signoff-accent',
-        rejected && 'before:bg-signoff-hot',
-      )}
-    >
-      <div className="bg-signoff-bg/35 flex min-h-9 items-center gap-2 py-1 pr-2 pl-4">
-        <span className="font-signoff-mono text-signoff-fg-subtle min-w-0 truncate text-[11px]">{hunk.header}</span>
-        {decision !== 'pending' && (
-          <span
-            className={cn(
-              'font-signoff-mono rounded-full px-1.5 py-px text-[10px] font-semibold tracking-wide uppercase',
-              decision === 'accepted'
-                ? 'bg-signoff-accent/15 text-signoff-accent-fg'
-                : 'bg-signoff-hot/15 text-signoff-hot-fg',
-            )}
-          >
-            {decision}
-          </span>
-        )}
-        {!readOnly && (
-          <span className="ml-auto flex shrink-0 items-center gap-1">
-            {decision !== 'pending' && (
+        {parsed && <StatusBadge status={parsed.status} />}
+        <PathLabel path={file.path} oldPath={parsed?.oldPath} />
+        <span className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-x-2.5 gap-y-1.5">
+          {parsed && parsed.hunks.length > 0 && (
+            <span className="tabular-nums">
+              <span className="text-signoff-accent-fg">+{parsed.additions}</span>{' '}
+              <span className="text-signoff-hot-fg">−{parsed.deletions}</span>
+            </span>
+          )}
+          {decidable && (
+            <span className="flex items-center gap-1.5 font-sans">
+              <label className="text-signoff-fg-muted hover:text-signoff-fg flex cursor-pointer items-center gap-1.5 px-1 text-xs">
+                <input
+                  {...review.getViewedProps(file.id)}
+                  className="accent-signoff-accent focus-visible:outline-signoff-ring size-3.5 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2"
+                />
+                Viewed<span className="sr-only"> {file.path}</span>
+              </label>
               <button
-                type="button"
-                onClick={() => actions.decide(order, 'pending')}
-                aria-label={`Reset hunk ${order + 1}`}
-                className="text-signoff-fg-subtle hover:bg-signoff-surface-2 hover:text-signoff-fg focus-visible:outline-signoff-ring inline-flex size-7 cursor-pointer items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-1"
+                {...review.getFileDecisionProps(file.id, 'rejected')}
+                className={cn(
+                  smallButton,
+                  'border-signoff-border text-signoff-fg-muted hover:border-signoff-hot/50 hover:text-signoff-hot-fg',
+                )}
               >
-                <UndoIcon size={13} />
+                Reject file<span className="sr-only"> {file.path}</span>
               </button>
-            )}
-            <button
-              type="button"
-              aria-pressed={rejected}
-              aria-label={`Reject hunk ${order + 1}`}
-              onClick={() => actions.decide(order, rejected ? 'pending' : 'rejected')}
-              className={cn(
-                hunkButton,
-                rejected
-                  ? 'border-signoff-hot/60 bg-signoff-hot/15 text-signoff-hot-fg'
-                  : 'border-signoff-border text-signoff-fg-muted hover:border-signoff-hot/50 hover:text-signoff-hot-fg',
-              )}
-            >
-              <XIcon size={12} strokeWidth={2.5} />
-              Reject
-            </button>
-            <button
-              type="button"
-              aria-pressed={decision === 'accepted'}
-              aria-label={`Accept hunk ${order + 1}`}
-              onClick={() => actions.decide(order, decision === 'accepted' ? 'pending' : 'accepted')}
-              className={cn(
-                hunkButton,
-                decision === 'accepted'
-                  ? 'border-signoff-accent/60 bg-signoff-accent/15 text-signoff-accent-fg'
-                  : 'border-signoff-border text-signoff-fg-muted hover:border-signoff-accent/50 hover:text-signoff-accent-fg',
-              )}
-            >
-              <CheckIcon size={12} strokeWidth={2.5} />
-              Accept
-            </button>
-          </span>
-        )}
+              <button
+                {...review.getFileDecisionProps(file.id, 'accepted')}
+                className={cn(
+                  smallButton,
+                  'border-signoff-border text-signoff-fg-muted hover:border-signoff-accent/50 hover:text-signoff-accent-fg',
+                )}
+              >
+                Accept file<span className="sr-only"> {file.path}</span>
+              </button>
+            </span>
+          )}
+        </span>
       </div>
-      {/* Long lines scroll sideways; while they do, the code is a named group the keyboard can reach. */}
-      <div
-        ref={codeRef}
-        className={cn(
-          'focus-visible:outline-signoff-ring overflow-x-auto transition-opacity focus-visible:outline-2 focus-visible:-outline-offset-2',
-          rejected && 'opacity-55',
+      <div id={bodyId} hidden={file.collapsed}>
+        {!parsed && <p className="text-signoff-fg-subtle px-4 py-3 text-xs">Comparing changes…</p>}
+        {parsed?.fallback === 'replace' && (
+          <p data-slot="signoff-diff-fallback" className="text-signoff-fg-muted px-4 pt-3 pb-1 text-xs">
+            Too many changes to compare line by line: the changed lines are shown as one hunk that replaces them.
+          </p>
         )}
-      >
-        {view === 'unified' ? (
-          <UnifiedRows
-            hunk={hunk}
-            language={file.language}
-            rejected={rejected}
-            virtualizer={virtualizer}
-            rowOffset={rowOffset}
-          />
-        ) : (
-          <SplitRows
-            hunk={hunk}
-            language={file.language}
-            rejected={rejected}
-            virtualizer={virtualizer}
-            rowOffset={rowOffset}
-          />
+        {parsed && file.items.length === 0 && (
+          <p className="text-signoff-fg-subtle px-4 py-3 text-xs">No textual changes.</p>
         )}
+        {children}
       </div>
     </div>
   );
-});
-
-const hunkButton =
-  'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signoff-ring';
+}
 
 const ROW_BG: Record<DiffLine['type'], string> = {
   context: '',
@@ -881,16 +696,494 @@ const SIGN: Record<DiffLine['type'], { glyph: string; sr: string; className: str
 /** A line as a screen reader hears it, for chunks that are not on screen. */
 const spoken = (line: DiffLine) => `${SIGN[line.type].sr}${line.content}`;
 
+/** Decision buttons for an item: Reset (once decided), Reject and Accept, each a toggle. */
+function DecisionButtons({
+  id,
+  label,
+  decision,
+  actions,
+  commentLabel,
+}: {
+  id: string;
+  /** "hunk 2" or "change 3", for the buttons' names. */
+  label: string;
+  decision: HunkDecision;
+  actions: ReviewActions;
+  commentLabel: string;
+}) {
+  const rejected = decision === 'rejected';
+  const accepted = decision === 'accepted';
+  return (
+    <span className="ml-auto flex shrink-0 items-center gap-1">
+      <button
+        type="button"
+        onClick={() => actions.comment(id)}
+        aria-label={commentLabel}
+        aria-keyshortcuts="C"
+        className="text-signoff-fg-subtle hover:bg-signoff-surface-2 hover:text-signoff-fg focus-visible:outline-signoff-ring inline-flex size-7 cursor-pointer items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-1"
+      >
+        <CommentIcon size={13} />
+      </button>
+      {decision !== 'pending' && (
+        <button
+          type="button"
+          onClick={() => actions.decide(id, 'pending')}
+          aria-label={`Reset ${label}`}
+          aria-keyshortcuts="U"
+          className="text-signoff-fg-subtle hover:bg-signoff-surface-2 hover:text-signoff-fg focus-visible:outline-signoff-ring inline-flex size-7 cursor-pointer items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-1"
+        >
+          <UndoIcon size={13} />
+        </button>
+      )}
+      <button
+        type="button"
+        aria-pressed={rejected}
+        aria-label={`Reject ${label}`}
+        aria-keyshortcuts="R"
+        onClick={() => actions.decide(id, rejected ? 'pending' : 'rejected')}
+        className={cn(
+          smallButton,
+          rejected
+            ? 'border-signoff-hot/60 bg-signoff-hot/15 text-signoff-hot-fg'
+            : 'border-signoff-border text-signoff-fg-muted hover:border-signoff-hot/50 hover:text-signoff-hot-fg',
+        )}
+      >
+        <XIcon size={12} strokeWidth={2.5} />
+        Reject
+      </button>
+      <button
+        type="button"
+        aria-pressed={accepted}
+        aria-label={`Accept ${label}`}
+        aria-keyshortcuts="A"
+        onClick={() => actions.decide(id, accepted ? 'pending' : 'accepted')}
+        className={cn(
+          smallButton,
+          accepted
+            ? 'border-signoff-accent/60 bg-signoff-accent/15 text-signoff-accent-fg'
+            : 'border-signoff-border text-signoff-fg-muted hover:border-signoff-accent/50 hover:text-signoff-accent-fg',
+        )}
+      >
+        <CheckIcon size={12} strokeWidth={2.5} />
+        Accept
+      </button>
+    </span>
+  );
+}
+
+function DecisionBadge({ decision }: { decision: HunkDecision }) {
+  if (decision === 'pending') return null;
+  return (
+    <span
+      className={cn(
+        'font-signoff-mono rounded-full px-1.5 py-px text-[10px] font-semibold tracking-wide uppercase',
+        decision === 'accepted'
+          ? 'bg-signoff-accent/15 text-signoff-accent-fg'
+          : 'bg-signoff-hot/15 text-signoff-hot-fg',
+      )}
+    >
+      {decision}
+    </span>
+  );
+}
+
+const itemClass = (decision: HunkDecision) =>
+  cn(
+    'border-signoff-border/70 focus-visible:outline-signoff-ring relative border-b last:border-b-0 focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2',
+    "before:absolute before:inset-y-0 before:left-0 before:z-[1] before:w-[3px] before:content-['']",
+    decision === 'accepted' && 'before:bg-signoff-accent',
+    decision === 'rejected' && 'before:bg-signoff-hot',
+  );
+
+/** A file with nothing to diff but something to decide: binary, a rename, or created or deleted empty. */
+const WholeFile = memo(function WholeFile({
+  file,
+  index,
+  name,
+  active,
+  decision,
+  readOnly,
+  comments,
+  draft,
+  actions,
+}: {
+  file: DiffReviewFileState;
+  index: number;
+  name: string;
+  active: boolean;
+  decision: HunkDecision;
+  readOnly: boolean;
+  comments: DiffReviewComment[] | undefined;
+  draft: DiffReviewDraft | undefined;
+  actions: ReviewActions;
+}) {
+  const parsed = file.parsed!;
+  const id = `${file.id}:file`;
+  const note = parsed.binary
+    ? 'Binary file, not shown.'
+    : parsed.status === 'renamed'
+      ? `Renamed from ${parsed.oldPath ?? file.path}, without changes.`
+      : parsed.status === 'deleted'
+        ? 'Empty file, deleted.'
+        : 'New empty file.';
+  return (
+    // A roving-tabindex item: focus tracking only, all actions are buttons.
+    <div
+      ref={(el) => actions.register(id, el)}
+      role="group"
+      aria-label={name}
+      tabIndex={active ? 0 : -1}
+      data-slot="signoff-diff-hunk"
+      data-decision={decision}
+      onFocus={() => actions.activate(index)}
+      className={itemClass(decision)}
+    >
+      <div className="bg-signoff-bg/35 flex min-h-9 items-center gap-2 py-1 pr-2 pl-4">
+        <span className="text-signoff-fg-muted min-w-0 truncate text-xs">{note}</span>
+        <DecisionBadge decision={decision} />
+        {!readOnly && (
+          <DecisionButtons
+            id={id}
+            label={`change ${index + 1}`}
+            decision={decision}
+            actions={actions}
+            commentLabel={`Comment on ${file.path}`}
+          />
+        )}
+      </div>
+      {comments?.map((comment) => (
+        <CommentView key={comment.id} comment={comment} actions={actions} readOnly={readOnly} editing={draft} />
+      ))}
+      {draft && !draft.commentId && <CommentEditor draft={draft} actions={actions} />}
+    </div>
+  );
+});
+
+/** Inside a hunk's code, a comment stays put while the code scrolls sideways, as wide as what shows. */
+const inCode = 'sticky left-0 col-span-3 w-[100cqw]';
+
+interface HunkProps {
+  hunk: DiffHunk;
+  file: ParsedFileDiff;
+  index: number;
+  name: string;
+  view: DiffViewMode;
+  decision: HunkDecision;
+  active: boolean;
+  readOnly: boolean;
+  /** Rows of the review before this hunk's, for which chunks render at first. */
+  rowOffset: number;
+  /** Lines selected in this hunk, by index. */
+  selection: { from: number; to: number; head: number } | undefined;
+  comments: DiffReviewComment[] | undefined;
+  draft: DiffReviewDraft | undefined;
+  actions: ReviewActions;
+}
+
+/** What renders after a row: the comments that end on it, and the editor when its range ends there. */
+interface Annotations {
+  after: Map<number, ReactNode>;
+  /** Rows a chunk must keep rendered: a selected line, a comment or the editor. */
+  pinned: Set<number>;
+}
+
+/** Memoized: a decision re-renders the hunk it changed and the ones gaining or losing focus. */
+const Hunk = memo(function Hunk({
+  hunk,
+  file,
+  index,
+  name,
+  view,
+  decision,
+  active,
+  readOnly,
+  rowOffset,
+  selection,
+  comments,
+  draft,
+  actions,
+}: HunkProps) {
+  const codeRef = useScrollRegion<HTMLDivElement>(`Hunk ${index + 1} code, ${file.path}`);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const virtualizer = useContext(VirtualizerContext);
+  const rejected = decision === 'rejected';
+  const head = selection?.head;
+
+  // The selected line in view as the keyboard moves it.
+  useEffect(() => {
+    if (head === undefined) return;
+    ref.current?.querySelector(`[data-line-index="${head}"]`)?.scrollIntoView?.({ block: 'nearest' });
+  }, [head]);
+
+  const annotations = useMemo<Annotations>(() => {
+    const after = new Map<number, ReactNode[]>();
+    const pinned = new Set<number>();
+    const add = (row: number, node: ReactNode) => {
+      after.set(row, [...(after.get(row) ?? []), node]);
+      pinned.add(row);
+    };
+    const end = hunk.lines.length - 1;
+    for (const comment of comments ?? []) {
+      const span = comment.target === 'lines' ? spanOf(hunk, comment) : undefined;
+      add(
+        span?.[1] ?? end,
+        <CommentView
+          key={comment.id}
+          comment={comment}
+          actions={actions}
+          readOnly={readOnly}
+          editing={draft}
+          className={inCode}
+        />,
+      );
+    }
+    if (draft && !draft.commentId) {
+      const span =
+        draft.target === 'lines' && draft.range ? spanOf(hunk, { target: 'lines', ...draft.range }) : undefined;
+      add(span?.[1] ?? end, <CommentEditor key="draft" draft={draft} actions={actions} className={inCode} />);
+    }
+    if (selection) for (let i = selection.from; i <= selection.to; i++) pinned.add(i);
+    return { after: new Map([...after].map(([row, nodes]) => [row, <Fragment key={row}>{nodes}</Fragment>])), pinned };
+  }, [hunk, comments, draft, selection, actions, readOnly]);
+
+  const selectionLabel = selection ? describeRange(hunk, selection.from, selection.to) : undefined;
+
+  return (
+    // A roving-tabindex item: focus tracking only, all actions are buttons.
+    <div
+      ref={(el) => {
+        ref.current = el;
+        actions.register(hunk.id, el);
+      }}
+      role="group"
+      aria-label={name}
+      tabIndex={active ? 0 : -1}
+      data-slot="signoff-diff-hunk"
+      data-decision={decision}
+      onFocus={() => actions.activate(index)}
+      className={itemClass(decision)}
+    >
+      <div className="bg-signoff-bg/35 flex min-h-9 items-center gap-2 py-1 pr-2 pl-4">
+        <span className="font-signoff-mono text-signoff-fg-subtle min-w-0 truncate text-[11px]">{hunk.header}</span>
+        <DecisionBadge decision={decision} />
+        {!readOnly && (
+          <DecisionButtons
+            id={hunk.id}
+            label={`hunk ${index + 1}`}
+            decision={decision}
+            actions={actions}
+            commentLabel={selectionLabel ? `Comment on ${selectionLabel}` : `Comment on hunk ${index + 1}`}
+          />
+        )}
+      </div>
+      {/* Long lines scroll sideways; while they do, the code is a named group the keyboard can reach. */}
+      <div
+        ref={codeRef}
+        className="focus-visible:outline-signoff-ring @container overflow-x-auto focus-visible:outline-2 focus-visible:-outline-offset-2"
+      >
+        {view === 'unified' ? (
+          <UnifiedRows
+            hunk={hunk}
+            index={index}
+            language={file.language}
+            rejected={rejected}
+            virtualizer={virtualizer}
+            rowOffset={rowOffset}
+            selection={selection}
+            annotations={annotations}
+            actions={actions}
+            readOnly={readOnly}
+          />
+        ) : (
+          <SplitRows
+            hunk={hunk}
+            index={index}
+            language={file.language}
+            rejected={rejected}
+            virtualizer={virtualizer}
+            rowOffset={rowOffset}
+            selection={selection}
+            annotations={annotations}
+            actions={actions}
+            readOnly={readOnly}
+          />
+        )}
+      </div>
+    </div>
+  );
+});
+
+/** Indices of the lines a comment or draft covers. */
+function spanOf(
+  hunk: DiffHunk,
+  where: {
+    target: DiffReviewComment['target'];
+    side?: 'new' | 'old' | undefined;
+    startLine?: number;
+    endLine?: number;
+  },
+): [number, number] | undefined {
+  const { side, startLine, endLine } = where;
+  if (!side || startLine === undefined || endLine === undefined) return undefined;
+  const num = (l: DiffLine) => (side === 'new' ? l.newNumber : l.oldNumber);
+  const from = hunk.lines.findIndex((l) => num(l) === startLine);
+  let to = -1;
+  hunk.lines.forEach((l, i) => {
+    if (num(l) === endLine) to = i;
+  });
+  return from === -1 || to < from ? undefined : [from, to];
+}
+
+/** "line 12" or "lines 12 to 14", numbered as a comment on them would be. */
+function describeRange(hunk: DiffHunk, from: number, to: number) {
+  const lines = hunk.lines.slice(from, to + 1);
+  const numbers = (side: 'new' | 'old') =>
+    lines.map((l) => (side === 'new' ? l.newNumber : l.oldNumber)).filter((n): n is number => n !== undefined);
+  const news = numbers('new');
+  const [list, suffix] = news.length ? [news, ''] : [numbers('old'), ' of the original'];
+  const [a, b] = [list[0], list.at(-1)];
+  return `${a === b ? `line ${a}` : `lines ${a} to ${b}`}${suffix}`;
+}
+
+function CommentView({
+  comment,
+  actions,
+  readOnly,
+  editing,
+  className,
+}: {
+  comment: DiffReviewComment;
+  actions: ReviewActions;
+  readOnly: boolean;
+  editing: DiffReviewDraft | undefined;
+  className?: string;
+}) {
+  if (editing?.commentId === comment.id)
+    return <CommentEditor draft={editing} actions={actions} className={className} />;
+  const where = DIFF_REVIEW_TEXT.where(comment);
+  return (
+    <div
+      data-slot="signoff-diff-comment"
+      className={cn('border-signoff-border bg-signoff-surface font-signoff-sans border-y px-4 py-2.5', className)}
+    >
+      <div className="flex items-start gap-2">
+        <CommentIcon size={13} className="text-signoff-fg-subtle mt-0.5 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-signoff-fg-subtle text-[11px]">
+            <span className="sr-only">Comment </span>On {where}
+          </p>
+          <p className="text-signoff-fg mt-0.5 text-[13px] leading-relaxed whitespace-pre-wrap">{comment.text}</p>
+        </div>
+        {!readOnly && (
+          <span className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => actions.edit(comment.id)}
+              className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded px-1.5 py-0.5 text-xs focus-visible:outline-2"
+              aria-label={`Edit comment on ${where}`}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => actions.remove(comment.id)}
+              className="text-signoff-fg-muted hover:text-signoff-hot-fg focus-visible:outline-signoff-ring cursor-pointer rounded px-1.5 py-0.5 text-xs focus-visible:outline-2"
+              aria-label={`Delete comment on ${where}`}
+            >
+              Delete
+            </button>
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentEditor({
+  draft,
+  actions,
+  className,
+}: {
+  draft: DiffReviewDraft;
+  actions: ReviewActions;
+  className?: string | undefined;
+}) {
+  const id = `${useId()}-comment`;
+  const where =
+    draft.target === 'file'
+      ? 'the file'
+      : draft.target === 'hunk'
+        ? 'the hunk'
+        : draft.range && draft.range.startLine === draft.range.endLine
+          ? `line ${draft.range.startLine}`
+          : `lines ${draft.range?.startLine} to ${draft.range?.endLine}`;
+  const empty = draft.text.trim() === '';
+  return (
+    <div
+      data-slot="signoff-diff-comment-editor"
+      className={cn(
+        'border-signoff-border bg-signoff-surface font-signoff-sans flex flex-col gap-2 border-y px-4 py-3',
+        className,
+      )}
+    >
+      <label htmlFor={id} className="text-signoff-fg-muted text-xs font-medium">
+        Comment on {where}, for the agent
+      </label>
+      <textarea
+        ref={(el) => actions.registerDraft(el)}
+        id={id}
+        rows={3}
+        value={draft.text}
+        onChange={(event) => actions.setText(event.target.value)}
+        onKeyDown={(event) => {
+          // The Enter that commits an IME composition (Japanese, Chinese, Korean…) is not a submit.
+          if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+            event.preventDefault();
+            event.stopPropagation();
+            actions.save();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            actions.cancel();
+          }
+        }}
+        placeholder="What should change here?"
+        className="border-signoff-border-strong bg-signoff-bg text-signoff-fg placeholder:text-signoff-fg-subtle focus-visible:outline-signoff-ring w-full resize-y rounded-lg border px-3 py-2 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-0"
+      />
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => actions.cancel()}
+          aria-keyshortcuts="Escape"
+          className="text-signoff-fg-muted hover:text-signoff-fg focus-visible:outline-signoff-ring cursor-pointer rounded-md px-2 py-1.5 text-xs focus-visible:outline-2"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => actions.save()}
+          aria-disabled={empty || undefined}
+          className="bg-signoff-accent text-signoff-on-accent hover:bg-signoff-accent/90 focus-visible:outline-signoff-ring inline-flex h-7 cursor-pointer items-center rounded-md px-2.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        >
+          {draft.commentId ? 'Save comment' : 'Comment'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Rows of a virtualized hunk, `CHUNK_ROWS` at a time. Near the viewport a chunk renders its rows;
  * away from it, only its height (measured once it has rendered) and its lines as hidden text.
- * A chunk that holds focus stays rendered.
+ * A chunk that holds focus, a selected line, a comment or the editor stays rendered.
  */
 function Chunk({
   hunk,
   id,
   rows,
   initiallyNear,
+  pinned,
   virtualizer,
   text,
   className,
@@ -901,13 +1194,15 @@ function Chunk({
   id: string;
   rows: number;
   initiallyNear: boolean;
+  pinned: boolean;
   virtualizer: Virtualizer;
   text: () => string;
   className?: string;
   children: () => ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [near, setNear] = useState(initiallyNear);
+  const [nearState, setNear] = useState(initiallyNear);
+  const near = nearState || pinned;
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -942,6 +1237,11 @@ function chunks(count: number): Array<[number, number]> {
   for (let start = 0; start < count; start += CHUNK_ROWS) out.push([start, Math.min(count, start + CHUNK_ROWS)]);
   return out;
 }
+
+const pinnedIn = (annotations: Annotations, start: number, end: number) => {
+  for (const row of annotations.pinned) if (row >= start && row < end) return true;
+  return false;
+};
 
 function LineContent({
   line,
@@ -983,16 +1283,79 @@ function LineContent({
   );
 }
 
-function UnifiedRow({ line, language, rejected }: { line: DiffLine; language: string; rejected: boolean }) {
-  const sign = SIGN[line.type];
+/**
+ * A line number. Click selects the line, Shift-click extends the selection; the keyboard selects with
+ * Shift and the arrows from the hunk, so the numbers stay out of the tab order and the reading.
+ */
+function LineNumber({
+  value,
+  onSelect,
+  className,
+}: {
+  value: number | undefined;
+  onSelect: ((event: MouseEvent) => void) | undefined;
+  className: string;
+}) {
+  if (!onSelect || value === undefined)
+    return (
+      <span aria-hidden="true" className={className}>
+        {value ?? ''}
+      </span>
+    );
   return (
-    <div data-line={line.type} className={cn('flex', ROW_BG[line.type])}>
-      <span aria-hidden="true" className="text-signoff-fg-subtle w-11 shrink-0 pr-2 text-right select-none">
-        {line.oldNumber ?? ''}
-      </span>
-      <span aria-hidden="true" className="text-signoff-fg-subtle w-11 shrink-0 pr-2 text-right select-none">
-        {line.newNumber ?? ''}
-      </span>
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-hidden="true"
+      onClick={onSelect}
+      className={cn(className, 'hover:text-signoff-fg cursor-pointer')}
+    >
+      {value}
+    </button>
+  );
+}
+
+interface RowOptions {
+  /** The hunk's item index, for the line numbers' selection; `undefined` for unchanged context lines. */
+  index?: number | undefined;
+  actions?: ReviewActions | undefined;
+  selected?: boolean;
+  head?: boolean;
+}
+
+const gutter = 'text-signoff-fg-subtle shrink-0 pr-2 text-right select-none';
+
+function UnifiedRow({
+  line,
+  lineIndex,
+  language,
+  rejected,
+  index,
+  actions,
+  selected = false,
+  head = false,
+}: { line: DiffLine; lineIndex?: number; language: string; rejected: boolean } & RowOptions) {
+  const sign = SIGN[line.type];
+  const select =
+    actions && index !== undefined && lineIndex !== undefined
+      ? (event: MouseEvent) => actions.lineNumber(index, lineIndex).onClick(event)
+      : undefined;
+  return (
+    <div
+      data-line={line.type}
+      data-line-index={lineIndex}
+      data-selected={selected || undefined}
+      className={cn(
+        'flex',
+        ROW_BG[line.type],
+        rejected && 'opacity-55',
+        selected && 'shadow-[inset_3px_0_0_var(--signoff-ring)]',
+        selected && !ROW_BG[line.type] && 'bg-signoff-accent/8',
+        head && 'outline-signoff-ring outline-1 -outline-offset-1',
+      )}
+    >
+      <LineNumber value={line.oldNumber} onSelect={select} className={cn(gutter, 'w-11')} />
+      <LineNumber value={line.newNumber} onSelect={select} className={cn(gutter, 'w-11')} />
       <span aria-hidden="true" className={cn('w-5 shrink-0 text-center select-none', sign.className)}>
         {sign.glyph}
       </span>
@@ -1003,18 +1366,48 @@ function UnifiedRow({ line, language, rejected }: { line: DiffLine; language: st
 
 interface RowsProps {
   hunk: DiffHunk;
+  index: number;
   language: string;
   rejected: boolean;
   /** Set when the review is long enough to render only what is near the screen. */
   virtualizer: Virtualizer | null;
   rowOffset: number;
+  selection: { from: number; to: number; head: number } | undefined;
+  annotations: Annotations;
+  actions: ReviewActions;
+  readOnly: boolean;
 }
 
-function UnifiedRows({ hunk, language, rejected, virtualizer, rowOffset }: RowsProps) {
+function UnifiedRows({
+  hunk,
+  index,
+  language,
+  rejected,
+  virtualizer,
+  rowOffset,
+  selection,
+  annotations,
+  actions,
+  readOnly,
+}: RowsProps) {
   const lines = hunk.lines;
   // Unrendered rows have no width: keep the widest line's, so the sideways scroll does not change.
   const widest = useMemo(() => lines.reduce((n, l) => Math.max(n, l.content.length), 0), [lines]);
-  const row = (line: DiffLine, i: number) => <UnifiedRow key={i} line={line} language={language} rejected={rejected} />;
+  const row = (line: DiffLine, i: number) => (
+    <Fragment key={i}>
+      <UnifiedRow
+        line={line}
+        lineIndex={i}
+        language={language}
+        rejected={rejected}
+        index={index}
+        actions={readOnly ? undefined : actions}
+        selected={!!selection && i >= selection.from && i <= selection.to}
+        head={selection?.head === i}
+      />
+      {annotations.after.get(i)}
+    </Fragment>
+  );
   return (
     <div className="font-signoff-mono min-w-max py-1 text-[12.5px] leading-[1.6]">
       {virtualizer ? (
@@ -1026,6 +1419,7 @@ function UnifiedRows({ hunk, language, rejected, virtualizer, rowOffset }: RowsP
               id={`u${start}`}
               rows={end - start}
               initiallyNear={rowOffset + start < INITIAL_ROWS}
+              pinned={pinnedIn(annotations, start, end)}
               virtualizer={virtualizer}
               text={() => lines.slice(start, end).map(spoken).join('\n')}
             >
@@ -1040,7 +1434,13 @@ function UnifiedRows({ hunk, language, rejected, virtualizer, rowOffset }: RowsP
   );
 }
 
-type SplitRow = { left?: DiffLine | undefined; right?: DiffLine | undefined };
+type SplitRow = {
+  left?: DiffLine | undefined;
+  right?: DiffLine | undefined;
+  /** Indices into the hunk's lines. */
+  leftIndex?: number | undefined;
+  rightIndex?: number | undefined;
+};
 
 function toSplitRows(lines: readonly DiffLine[]): SplitRow[] {
   const rows: SplitRow[] = [];
@@ -1048,15 +1448,23 @@ function toSplitRows(lines: readonly DiffLine[]): SplitRow[] {
   while (i < lines.length) {
     const line = lines[i]!;
     if (line.type === 'context') {
-      rows.push({ left: line, right: line });
+      rows.push({ left: line, right: line, leftIndex: i, rightIndex: i });
       i++;
       continue;
     }
-    const dels: DiffLine[] = [];
-    const adds: DiffLine[] = [];
-    while (lines[i]?.type === 'del') dels.push(lines[i++]!);
-    while (lines[i]?.type === 'add') adds.push(lines[i++]!);
-    for (let k = 0; k < Math.max(dels.length, adds.length); k++) rows.push({ left: dels[k], right: adds[k] });
+    const dels: number[] = [];
+    const adds: number[] = [];
+    while (lines[i]?.type === 'del') dels.push(i++);
+    while (lines[i]?.type === 'add') adds.push(i++);
+    for (let k = 0; k < Math.max(dels.length, adds.length); k++) {
+      const [l, r] = [dels[k], adds[k]];
+      rows.push({
+        left: l === undefined ? undefined : lines[l],
+        right: r === undefined ? undefined : lines[r],
+        leftIndex: l,
+        rightIndex: r,
+      });
+    }
   }
   return rows;
 }
@@ -1082,26 +1490,47 @@ function splitRowCount(lines: readonly DiffLine[]): number {
 
 function SplitCell({
   line,
+  lineIndex,
   side,
   language,
   rejected,
   hidden = false,
+  index,
+  actions,
+  selected = false,
+  head = false,
 }: {
   line: DiffLine | undefined;
+  lineIndex?: number | undefined;
   side: 'left' | 'right';
   language: string;
   rejected: boolean;
   /** Context lines appear on both sides; hide the duplicate from assistive tech. */
   hidden?: boolean;
-}) {
+} & RowOptions) {
   if (!line) return <div aria-hidden="true" className="bg-signoff-bg/30" />;
   const number = side === 'left' ? line.oldNumber : line.newNumber;
   const sign = SIGN[line.type];
+  const select =
+    actions && index !== undefined && lineIndex !== undefined
+      ? (event: MouseEvent) => actions.lineNumber(index, lineIndex).onClick(event)
+      : undefined;
   return (
-    <div data-line={line.type} aria-hidden={hidden || undefined} className={cn('flex min-w-0', ROW_BG[line.type])}>
-      <span aria-hidden="true" className="text-signoff-fg-subtle w-10 shrink-0 pr-2 text-right select-none">
-        {number ?? ''}
-      </span>
+    <div
+      data-line={line.type}
+      data-line-index={hidden ? undefined : lineIndex}
+      data-selected={selected || undefined}
+      aria-hidden={hidden || undefined}
+      className={cn(
+        'flex min-w-0',
+        ROW_BG[line.type],
+        rejected && 'opacity-55',
+        selected && 'shadow-[inset_3px_0_0_var(--signoff-ring)]',
+        selected && !ROW_BG[line.type] && 'bg-signoff-accent/8',
+        head && 'outline-signoff-ring outline-1 -outline-offset-1',
+      )}
+    >
+      <LineNumber value={number} onSelect={select} className={cn(gutter, 'w-10')} />
       <span aria-hidden="true" className={cn('w-4 shrink-0 text-center select-none', sign.className)}>
         {sign.glyph}
       </span>
@@ -1113,19 +1542,69 @@ function SplitCell({
 const SPLIT_GRID = 'grid grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]';
 
 /** Split view: one shared grid so the two columns stay aligned; long lines wrap. */
-function SplitRows({ hunk, language, rejected, virtualizer, rowOffset }: RowsProps) {
+function SplitRows({
+  hunk,
+  index,
+  language,
+  rejected,
+  virtualizer,
+  rowOffset,
+  selection,
+  annotations,
+  actions,
+  readOnly,
+}: RowsProps) {
   const rows = useMemo(() => toSplitRows(hunk.lines), [hunk.lines]);
-  const cells = (row: SplitRow, i: number) => (
-    <Fragment key={i}>
-      <SplitCell line={row.left} side="left" language={language} rejected={rejected} />
+  const inSelection = (i: number | undefined) =>
+    !!selection && i !== undefined && i >= selection.from && i <= selection.to;
+  // A comment goes after the row holding the last line it covers.
+  const lastRowOf = useMemo(() => {
+    const map = new Map<number, number>();
+    rows.forEach((row, r) => {
+      if (row.leftIndex !== undefined) map.set(row.leftIndex, r);
+      if (row.rightIndex !== undefined) map.set(row.rightIndex, r);
+    });
+    return map;
+  }, [rows]);
+  const afterRow = useMemo(() => {
+    const map = new Map<number, ReactNode[]>();
+    for (const [line, node] of annotations.after) {
+      const r = lastRowOf.get(line) ?? rows.length - 1;
+      map.set(r, [...(map.get(r) ?? []), node]);
+    }
+    return map;
+  }, [annotations, lastRowOf, rows.length]);
+  const pinnedRows = useMemo(
+    () => new Set([...annotations.pinned].map((line) => lastRowOf.get(line) ?? rows.length - 1)),
+    [annotations, lastRowOf, rows.length],
+  );
+  const cells = (row: SplitRow, r: number) => (
+    <Fragment key={r}>
+      <SplitCell
+        line={row.left}
+        lineIndex={row.leftIndex}
+        side="left"
+        language={language}
+        rejected={rejected}
+        index={index}
+        actions={readOnly ? undefined : actions}
+        selected={inSelection(row.leftIndex)}
+        head={selection?.head === row.leftIndex && row.left !== undefined}
+      />
       <span aria-hidden="true" className="bg-signoff-border" />
       <SplitCell
         line={row.right}
+        lineIndex={row.rightIndex}
         side="right"
         language={language}
         rejected={rejected}
         hidden={row.left !== undefined && row.left === row.right}
+        index={index}
+        actions={readOnly ? undefined : actions}
+        selected={inSelection(row.rightIndex)}
+        head={selection?.head === row.rightIndex && row.left !== row.right && row.right !== undefined}
       />
+      {afterRow.get(r)}
     </Fragment>
   );
   if (!virtualizer) {
@@ -1150,12 +1629,114 @@ function SplitRows({ hunk, language, rejected, virtualizer, rowOffset }: RowsPro
           id={`s${start}`}
           rows={end - start}
           initiallyNear={rowOffset + start < INITIAL_ROWS}
+          pinned={[...pinnedRows].some((r) => r >= start && r < end)}
           virtualizer={virtualizer}
           text={() => text(start, end)}
           className={SPLIT_GRID}
         >
           {() => rows.slice(start, end).map((row, i) => cells(row, start + i))}
         </Chunk>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Unchanged lines between hunks, before the first or after the last: those shown so far, and a bar
+ * to show more. Its buttons are outside the tab order, like the line numbers: from a hunk, E shows
+ * more lines around it; a screen reader reaches the buttons by reading.
+ */
+function ContextGapView({
+  review,
+  file,
+  gap,
+  view,
+  shown = { start: 0, end: 0 },
+}: {
+  review: UseDiffReviewResult;
+  file: DiffReviewFileState;
+  gap: ContextGap;
+  view: DiffViewMode;
+  shown: ShownContext | undefined;
+}) {
+  const parsed = file.parsed!;
+  const size = gap.oldEnd - gap.oldStart + 1;
+  const hidden = size - shown.start - shown.end;
+  const top = shown.start > 0 ? gapLines(parsed, gap, gap.oldStart, gap.oldStart + shown.start - 1) : [];
+  const bottom = shown.end > 0 ? gapLines(parsed, gap, gap.oldEnd - shown.end + 1, gap.oldEnd) : [];
+  const first = gap.before === 0;
+  const last = gap.before === parsed.hunks.length;
+  const hunkNumber = (i: number) => review.items.findIndex((item) => item.id === parsed.hunks[i]?.id) + 1;
+  const button =
+    'text-signoff-fg-muted hover:text-signoff-fg hover:bg-signoff-surface-2 focus-visible:outline-signoff-ring inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 focus-visible:outline-2';
+  return (
+    <div data-slot="signoff-diff-gap" className="border-signoff-border/70 border-b">
+      <ContextLines lines={top} view={view} language={parsed.language} />
+      {hidden > 0 && !review.readOnly && (
+        <div className="bg-signoff-bg/50 text-signoff-fg-subtle flex flex-wrap items-center gap-x-3 gap-y-1 py-1 pr-2 pl-4 text-[11px]">
+          <span className="font-signoff-mono">
+            {hidden} unchanged {hidden === 1 ? 'line' : 'lines'}
+          </span>
+          {hidden > CONTEXT_STEP && !first && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => review.showContext(file.id, gap, 'start')}
+              className={button}
+            >
+              <ArrowDownIcon size={11} />
+              {CONTEXT_STEP} more
+              <span className="sr-only"> unchanged lines after hunk {hunkNumber(gap.before - 1)}</span>
+            </button>
+          )}
+          {hidden > CONTEXT_STEP && !last && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => review.showContext(file.id, gap, 'end')}
+              className={button}
+            >
+              <ArrowUpIcon size={11} />
+              {CONTEXT_STEP} more<span className="sr-only"> unchanged lines before hunk {hunkNumber(gap.before)}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => review.showContext(file.id, gap, 'all')}
+            className={button}
+          >
+            Show all<span className="sr-only"> {hidden} unchanged lines</span>
+          </button>
+        </div>
+      )}
+      <ContextLines lines={bottom} view={view} language={parsed.language} />
+    </div>
+  );
+}
+
+/** Unchanged lines shown around hunks, in the review's layout. */
+function ContextLines({ lines, view, language }: { lines: DiffLine[]; view: DiffViewMode; language: string }) {
+  if (lines.length === 0) return null;
+  if (view === 'unified') {
+    return (
+      <div className="font-signoff-mono overflow-x-auto py-0.5 text-[12.5px] leading-[1.6]">
+        <div className="min-w-max">
+          {lines.map((line, i) => (
+            <UnifiedRow key={i} line={line} language={language} rejected={false} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className={cn('font-signoff-mono py-0.5 text-[12.5px] leading-[1.6]', SPLIT_GRID)}>
+      {lines.map((line, i) => (
+        <Fragment key={i}>
+          <SplitCell line={line} side="left" language={language} rejected={false} />
+          <span aria-hidden="true" className="bg-signoff-border" />
+          <SplitCell line={line} side="right" language={language} rejected={false} hidden />
+        </Fragment>
       ))}
     </div>
   );

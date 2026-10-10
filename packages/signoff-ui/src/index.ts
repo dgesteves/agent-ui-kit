@@ -10,6 +10,15 @@ export {
   type ToolApprovalResponse,
 } from './approval-card';
 export { DiffReview, type DiffReviewProps, type DiffViewMode, type DiffWorkerFactory } from './diff-review';
+export {
+  useDiffReview,
+  type DiffReviewDraft,
+  type DiffReviewFileState,
+  type DiffReviewSelection,
+  type ShownContext,
+  type UseDiffReviewOptions,
+  type UseDiffReviewResult,
+} from './use-diff-review';
 export { Markdown, type MarkdownProps } from './markdown';
 export { Reasoning, type ReasoningProps } from './reasoning';
 export { RunMeter, type RunMeterProps } from './run-meter';

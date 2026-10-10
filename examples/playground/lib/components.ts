@@ -65,35 +65,96 @@ export const COMPONENTS: ComponentDoc[] = [
         defaults: { file: 'diff-review.tsx', functions: ['DiffReview'] },
       },
     ],
-    types: ['FileChange', 'DiffReviewResult', 'DiffReviewFileResult', 'HunkDecision', 'DiffViewMode'],
-    imports: { npm: npm('DiffReview'), shadcn: shadcn('DiffReview', 'diff-review') },
+    types: [
+      'FileChange',
+      'DiffReviewResult',
+      'DiffReviewFileResult',
+      'DiffReviewRejectedHunk',
+      'DiffReviewComment',
+      'DiffReviewResultComment',
+      'FileDecision',
+      'HunkDecision',
+      'DiffViewMode',
+    ],
+    imports: { npm: npm('DiffReview, reviewToolOutput'), shadcn: shadcn('DiffReview', 'diff-review') },
     usage: `<DiffReview
   files={[{ path: 'app/api/chat/route.ts', oldContent, newContent }]}
-  // Each file comes back with only the accepted hunks applied.
-  onSubmit={(result) => addToolOutput({ tool: 'review_changes', toolCallId, output: result })}
+  // The agent gets each file as applied, the rejected hunks and every comment.
+  onSubmit={(result) =>
+    addToolOutput({ tool: 'review_changes', toolCallId, output: reviewToolOutput(result) })
+  }
 />`,
     keyboard: [
       { keys: ['J', 'K'], action: 'Next or previous hunk (↓ and ↑ too, from a hunk)' },
+      { keys: ['⇧J', '⇧K'], action: 'First hunk of the next or previous file' },
       { keys: ['A'], action: 'Accept the hunk, and move to the next undecided one' },
       { keys: ['R'], action: 'Reject the hunk, and move on (X works too)' },
       { keys: ['U'], action: 'Reset the hunk' },
+      { keys: ['⌥A', '⌥R'], action: 'Accept or reject every hunk in the file (Alt on Windows and Linux)' },
       { keys: ['⇧A', '⇧R'], action: 'Accept or reject every hunk' },
-      { keys: ['⌘/Ctrl', '↵'], action: 'Apply the review' },
+      { keys: ['⇧↓', '⇧↑'], action: 'Select lines in the hunk, from its first or last changed line' },
+      { keys: ['↓', '↑'], action: 'With lines selected, move the selection by a line' },
+      { keys: ['Esc'], action: 'Clear the selection, or cancel the comment being written' },
+      { keys: ['C'], action: 'Comment on the selected lines, or on the hunk' },
+      { keys: ['⌘/Ctrl', '↵'], action: 'In a comment, save it; elsewhere, apply the review' },
+      { keys: ['E'], action: 'Show 20 more unchanged lines above and below the hunk' },
+      { keys: ['V'], action: 'Mark the file viewed, fold it and go to the next file' },
     ],
     accessibility: [
       'A `<section>` named by its title. Hunks use a roving tabindex, so the whole review is one tab stop that J, K and the arrows move through.',
-      'Each hunk is a group named like "Hunk 2 of 4, app/api/chat/route.ts, lines 12 to 20, accepted".',
-      'Every shortcut is also a button: "Accept hunk 2", "Reject hunk 2" and "Reset hunk 2" with `aria-pressed`, the layout toggle and Apply. Shortcuts only work while focus is inside the review.',
-      'Progress is announced: "Hunk 2 of 4 accepted. 2 remaining."',
+      'Each hunk is a group named like "Hunk 2 of 4, app/api/chat/route.ts, lines 12 to 20, accepted"; a file decided as a whole, like "Change 5 of 6, logo.png, binary file, not reviewed".',
+      'Every shortcut is also a button: "Accept hunk 2", "Reject hunk 2", "Reset hunk 2" with `aria-pressed`, "Comment on hunk 2", "Accept file app/route.ts", the "Viewed app/route.ts" checkbox, the layout toggle and Apply. Shortcuts only work while focus is inside the review.',
+      'Selected lines are announced as they change, line by line: "Added: const ip = … Lines 15 to 17 selected." The comment editor is a labelled text area ("Comment on lines 15 to 17, for the agent") that takes focus, and focus returns to the hunk when it closes.',
+      'The file list is a navigation landmark ("Files in this review") with one tab stop: the arrow keys, Home and End move through it, and each entry reads its path, how many changes are decided and whether it is viewed. A folded file has an expand button with `aria-expanded`.',
+      'Line numbers and the buttons that show unchanged lines are clickable but out of the tab order (Shift and the arrows select lines, E shows context); the numbers are hidden from screen readers, which read the lines themselves.',
+      'Progress, decisions, comments, viewed marks and shown context are announced: "Hunk 2 of 4 accepted. 2 remaining."',
       'Changed lines keep their + and − glyphs and are read as "Added:" or "Removed:", so cyan and magenta never carry the meaning alone.',
       'A long review renders only the rows near the screen. The rest keep their place as visually hidden text, read in the same order with the same "Added:" and "Removed:", and every hunk stays rendered, so its name, focus and J and K never depend on scrolling.',
       'A file still being diffed reads "Comparing changes…" and is `aria-busy`; the review itself is not, so its announcements go out meanwhile. A file past `maxEditLength` says it is shown as one replacing hunk.',
     ],
     stateTypes: {
-      'data-decision': 'HunkDecision',
+      'data-decision': 'HunkDecision, on hunks; FileDecision, on files',
       'data-fallback': "'replace', for a file past maxEditLength",
+      'data-viewed': 'set on a file marked viewed',
+      'data-selected': 'set on a selected line',
       'data-rendered': 'set while the rows are rendered, near the screen',
     },
+  },
+  {
+    slug: 'use-diff-review',
+    name: 'useDiffReview',
+    summary: 'DiffReview without its markup: the review’s state, keyboard and result, for your own design system.',
+    galleryId: 'use-diff-review',
+    item: 'use-diff-review',
+    file: 'use-diff-review.ts',
+    api: [{ name: 'useDiffReview', parameters: 'UseDiffReviewOptions', returns: 'UseDiffReviewResult' }],
+    types: ['DiffReviewFileState', 'DiffReviewSelection', 'DiffReviewDraft', 'ReviewItem'],
+    imports: {
+      npm: npm('useDiffReview, reviewToolOutput'),
+      shadcn: shadcn('useDiffReview', 'use-diff-review'),
+    },
+    usage: `function MyReview({ files, onSubmit }: { files: FileChange[]; onSubmit: (r: DiffReviewResult) => void }) {
+  const review = useDiffReview({ files, onSubmit });
+  return (
+    <section aria-label="Review" {...review.getRootProps()}>
+      {review.items.map((item, i) => (
+        <div key={item.id} {...review.getItemProps(i)}>
+          <MyHunk hunk={item.hunk} />
+          <button {...review.getDecisionProps(i, 'accepted')}>Keep</button>
+          <button {...review.getDecisionProps(i, 'rejected')}>Drop</button>
+        </div>
+      ))}
+      {review.draft && <textarea aria-label="Comment" {...review.getDraftProps()} />}
+      <button {...review.getSubmitProps()}>Apply</button>
+      <p role="status">{review.announcement}</p>
+    </section>
+  );
+}`,
+    accessibility: [
+      'The hook has no markup of its own. Its getters bring what `DiffReview` relies on: a roving tabindex and a name for each item (`getItemProps`), `aria-pressed` on decision buttons, `aria-keyshortcuts`, `aria-disabled` on Apply while files are being compared, and a roving tabindex for a file list (`getNavigatorItemProps`).',
+      'Every key `DiffReview` has works once `getRootProps()` is on the element around the review and `getItemProps(i)` on each item. Render `announcement` in a polite live region: it says what each decision, selection, comment and viewed mark did.',
+      'Give the comment editor a label: `getDraftProps()` gives it focus, its value and its keys (⌘ or Ctrl + Enter saves, Escape cancels).',
+    ],
   },
   {
     slug: 'approval-card',
