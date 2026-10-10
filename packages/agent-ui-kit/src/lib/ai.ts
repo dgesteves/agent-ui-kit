@@ -123,6 +123,19 @@ export function getToolParts(parts: readonly AnyUIPart[]): ToolPart[] {
   return parts.filter(isToolPart);
 }
 
+/**
+ * Calls that only the model or a tool can still finish: input still streaming, running, or partial
+ * output. Once the run has ended, these were cut off. An approved call waiting for the app to send
+ * the continuation (`approval-responded`) is not one: `useChat` sends it after a render.
+ */
+export function isInterruptibleToolPart(part: ToolPart): boolean {
+  return (
+    part.state === 'input-streaming' ||
+    part.state === 'input-available' ||
+    (part.state === 'output-available' && part.preliminary === true)
+  );
+}
+
 export type ApprovalStatus = 'pending' | 'approved' | 'denied';
 
 /** The approval state of a tool part, or `undefined` for parts outside the approval flow. */
@@ -203,7 +216,7 @@ export function toSourceItem(source: SourcePart | SourceItem): SourceItem {
   return source as SourceItem;
 }
 
-export type AgentState = 'idle' | 'thinking' | 'working' | 'awaiting-approval' | 'done' | 'error';
+export type AgentState = 'idle' | 'thinking' | 'working' | 'awaiting-approval' | 'done' | 'stopped' | 'error';
 
 export const AGENT_STATE_LABEL: Record<AgentState, string> = {
   idle: 'Idle',
@@ -211,6 +224,7 @@ export const AGENT_STATE_LABEL: Record<AgentState, string> = {
   working: 'Working',
   'awaiting-approval': 'Waiting for approval',
   done: 'Done',
+  stopped: 'Stopped',
   error: 'Error',
 };
 
@@ -224,16 +238,28 @@ export interface DerivedAgentState {
  * Map `useChat` status plus the latest assistant message to a single agent state.
  * Human-in-the-loop waits (approvals, client-side tools awaiting output) take
  * precedence over transport status, because the run cannot progress without the user.
+ *
+ * A run that ended (`ready`) with work still unfinished in the message is `stopped`, not `done`:
+ * text or reasoning still streaming, or a tool call still preparing, running or partial. That is
+ * what `stop()` leaves behind, and what an AG-UI run cancelled or aborted mid-way does. A
+ * client-side tool the app runs itself is the exception: name it in `clientTools`.
  */
 export function deriveAgentState({
   status,
   message,
   pendingClientTools = [],
+  clientTools = [],
 }: {
   status: ChatStatus;
   message?: Pick<UIMessage, 'role' | 'parts'> | undefined;
   /** Names of client-side tools whose `input-available` state means "waiting for the user". */
   pendingClientTools?: readonly string[];
+  /**
+   * Names of client-side tools the app runs itself (`onToolCall`, then `addToolOutput`). `useChat`
+   * is `ready` while one runs: its `input-available` call then reads `working` with the tool's name
+   * as the detail, not `stopped`, until the output lands and the run continues.
+   */
+  clientTools?: readonly string[];
 }): DerivedAgentState {
   if (status === 'error') return { state: 'error' };
   const parts = message?.role === 'assistant' ? message.parts : [];
@@ -252,5 +278,16 @@ export function deriveAgentState({
     if (last.type === 'text') return { state: 'working', detail: 'Writing response' };
     return { state: 'working' };
   }
+  if (status === 'ready') {
+    const running = tools.find((t) => t.state === 'input-available' && clientTools.includes(getToolPartName(t)));
+    if (running) return { state: 'working', detail: getToolPartName(running) };
+    if (parts.some(isUnfinishedPart)) return { state: 'stopped' };
+  }
   return parts.length > 0 ? { state: 'done' } : { state: 'idle' };
+}
+
+/** A part the run left unfinished: text or reasoning still streaming, or an interrupted tool call. */
+function isUnfinishedPart(part: AnyUIPart): boolean {
+  if (part.type === 'text' || part.type === 'reasoning') return part.state === 'streaming';
+  return isToolPart(part) && isInterruptibleToolPart(part);
 }

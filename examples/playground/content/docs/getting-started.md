@@ -99,7 +99,7 @@ export function AgentRun() {
           message={last}
           streaming={status === 'streaming'}
           // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
-          active={state !== 'done' && state !== 'error'}
+          active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={addToolApprovalResponse}
         />
       )}

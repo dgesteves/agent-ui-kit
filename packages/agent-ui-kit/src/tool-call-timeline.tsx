@@ -15,6 +15,7 @@ import {
   getToolPartName,
   getToolPhase,
   isAutomaticApproval,
+  isInterruptibleToolPart,
   isSettledPhase,
   isToolPart,
   TOOL_PHASE_LABEL,
@@ -137,18 +138,6 @@ function StatusNode({ phase, interrupted }: { phase: ToolPhase; interrupted: boo
         </span>
       );
   }
-}
-
-/**
- * Calls that only the model or a tool can still finish. An approved call waiting for the app to send
- * the continuation (`approval-responded`) is excluded: `useChat` sends it after a render.
- */
-function isInterruptible(part: ToolPart): boolean {
-  return (
-    part.state === 'input-streaming' ||
-    part.state === 'input-available' ||
-    (part.state === 'output-available' && part.preliminary === true)
-  );
 }
 
 function getDuration(t: ToolTiming | undefined, now: number): number | undefined {
@@ -298,7 +287,7 @@ export function ToolCallTimeline({
             meta={tools?.[getToolPartName(part)]}
             timing={timings[part.toolCallId]}
             clock={clock}
-            interrupted={!active && isInterruptible(part)}
+            interrupted={!active && isInterruptibleToolPart(part)}
             bounds={waterfall && hydrated ? bounds : undefined}
             hydrated={hydrated}
             isLast={index === toolParts.length - 1}

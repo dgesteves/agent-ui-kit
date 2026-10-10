@@ -38,7 +38,7 @@ export function AgentRun() {
         <AgentMessage
           message={last}
           streaming={status === 'streaming'}
-          active={state !== 'done' && state !== 'error'}
+          active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={respond}
         />
       ) : null}
@@ -65,7 +65,7 @@ Create the agent once, outside the component or in a `useMemo`: the hook subscri
 | `interrupts` | Open interrupts; those bound to a tool call show as approval cards          |
 | `respond`    | Answers a tool-call interrupt; pass it as `AgentMessage`'s `onToolApproval` |
 | `resolve`    | Answers any interrupt with your own payload                                 |
-| `stop`       | Aborts the run in progress                                                  |
+| `stop`       | Aborts the run in progress; it ends as cancelled, so it reads as `stopped`  |
 
 ## How events map
 
@@ -80,6 +80,7 @@ Create the agent once, outside the component or in a `useMemo`: the hook subscri
 | `RUN_FINISHED` with an `interrupt` outcome bound to a tool call     | `approval-requested`, the interrupt's `message` as `approval.requestReason`                     |
 | `respond({ id, approved, reason })`                                 | `approval-responded` or `output-denied`; the agent resumes with `payload: { approved, reason }` |
 | `RUN_STARTED`, content, `RUN_FINISHED`, `RUN_ERROR`                 | `status`: `submitted`, `streaming`, then `ready` or `error`                                     |
+| `RUN_FINISHED` with a `cancelled` outcome, or `stop()`              | `status: 'ready'`, with what was streaming left cut off: `deriveAgentState` reads `stopped`     |
 | `usage` on `RUN_FINISHED` and `RUN_ERROR`                           | `usage`, summed over runs, with cache and reasoning tokens                                      |
 | `STEP_STARTED`                                                      | `step`                                                                                          |
 | activity message                                                    | a `data-${activityType}` part, rendered by `renderData`                                         |

@@ -23,7 +23,8 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   /**
    * Whether the run can still make progress, including while it waits on the user. Default `true`.
    * Pass `false` once it has ended (stopped, failed, or an older message): tool calls that never
-   * settled read "Stopped" instead of running forever. See `ToolCallTimeline`'s `active`.
+   * settled read "Stopped" instead of running forever, and text left streaming loses its caret.
+   * See `ToolCallTimeline`'s `active`.
    */
   active?: boolean;
   tools?: Record<string, ToolMeta> | undefined;
@@ -89,24 +90,17 @@ export function AgentMessage({
   const segments = useMemo(() => {
     const out: Segment[] = [];
     const lastIndex = parts.length - 1;
+    // Text a stopped run left streaming (`stop()` sends no end) is no longer being written.
+    const isStreaming = (part: { state?: 'streaming' | 'done' | undefined }, i: number) =>
+      active && (part.state ? part.state === 'streaming' : streaming && i === lastIndex);
     parts.forEach((part, i) => {
       const key = `${i}`;
       if (part.type === 'text') {
         if (!part.text) return;
-        out.push({
-          kind: 'text',
-          key,
-          text: part.text,
-          streaming: part.state ? part.state === 'streaming' : streaming && i === lastIndex,
-        });
+        out.push({ kind: 'text', key, text: part.text, streaming: isStreaming(part, i) });
       } else if (part.type === 'reasoning') {
         if (!part.text && part.state !== 'streaming') return;
-        out.push({
-          kind: 'reasoning',
-          key,
-          text: part.text,
-          streaming: part.state ? part.state === 'streaming' : streaming && i === lastIndex,
-        });
+        out.push({ kind: 'reasoning', key, text: part.text, streaming: isStreaming(part, i) });
       } else if (isToolPart(part)) {
         const custom = renderTool?.(part);
         if (custom !== undefined) {
@@ -130,7 +124,7 @@ export function AgentMessage({
       }
     });
     return out;
-  }, [parts, streaming, renderTool, renderData]);
+  }, [parts, streaming, active, renderTool, renderData]);
 
   return (
     <article

@@ -54,9 +54,14 @@ export interface UseAgUiAgentResult {
   respond: (response: AgUiApprovalResponse) => Promise<void>;
   /** Answer any interrupt with your own payload (match its `responseSchema`). */
   resolve: (entry: AgUiResumeEntry) => Promise<void>;
-  /** Abort the run in progress. */
+  /**
+   * Abort the run in progress. It ends like a cancelled run: what was streaming stays cut off, which
+   * `deriveAgentState` reads as `stopped`.
+   */
   stop: () => void;
 }
+
+const CANCELLED = { type: 'RUN_FINISHED', outcome: { type: 'cancelled' } };
 
 interface Snapshot {
   messages: readonly AgUiMessage[];
@@ -101,11 +106,9 @@ function createStore(agent: AgUiAgentLike) {
           },
           onRunFinalized: ({ messages }) => {
             set({ messages: [...messages] });
-            // Aborted runs end without RUN_FINISHED.
+            // Aborted runs end without RUN_FINISHED: as a cancelled run, what was streaming stays cut off.
             update((run) =>
-              run.status === 'submitted' || run.status === 'streaming'
-                ? reduceAgUiRun(run, { type: 'RUN_FINISHED' })
-                : run,
+              run.status === 'submitted' || run.status === 'streaming' ? reduceAgUiRun(run, CANCELLED) : run,
             );
           },
         });

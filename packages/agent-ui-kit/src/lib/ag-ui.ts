@@ -88,7 +88,10 @@ export interface AgUiRunState {
   answers: Record<string, AgUiResumeEntry>;
   /** Tool-call interrupts and their decisions, by tool call id. Kept across runs. */
   approvals: Record<string, AgUiApproval>;
-  /** Text and reasoning messages, and tool calls, still streaming. */
+  /**
+   * Text and reasoning messages, and tool calls, still streaming. A cancelled run (`RUN_FINISHED`
+   * with a `cancelled` outcome) leaves them as they were, cut off, until the next run starts.
+   */
   streaming: { messages: string[]; toolCalls: string[] };
 }
 
@@ -171,20 +174,25 @@ export function reduceAgUiRun(run: AgUiRunState, event: AgUiEvent): AgUiRunState
     case 'STEP_FINISHED':
       return run.step === e.stepName ? { ...run, step: undefined } : run;
     case 'RUN_FINISHED': {
-      const ended = endRun(run, e.usage);
+      // A cancelled run stopped part-way: what was still streaming stays unfinished, as after the AI
+      // SDK's stop(), so deriveAgentState reads it as stopped rather than done.
+      const ended = endRun(run, e.usage, e.outcome?.type === 'cancelled');
       return e.outcome?.type === 'interrupt' ? withInterrupts(ended, e.outcome.interrupts ?? []) : ended;
     }
     case 'RUN_ERROR':
+      // HttpAgent reports its own abortRun() as an error with code `abort`: the run was stopped, not failed.
+      if (e.code === 'abort') return endRun(run, e.usage, true);
       return { ...endRun(run, e.usage), status: 'error', error: { message: e.message ?? 'Run failed', code: e.code } };
     default:
       return run;
   }
 }
 
-function endRun(run: AgUiRunState, usage: readonly AgUiTokenUsage[] | undefined): AgUiRunState {
+function endRun(run: AgUiRunState, usage: readonly AgUiTokenUsage[] | undefined, cancelled = false): AgUiRunState {
   let total = run.usage;
   for (const entry of usage ?? []) total = addUsage(total, fromAgUiUsage(entry));
-  return { ...run, status: 'ready', step: undefined, usage: total, streaming: { messages: [], toolCalls: [] } };
+  const streaming = cancelled ? run.streaming : { messages: [], toolCalls: [] };
+  return { ...run, status: 'ready', step: undefined, usage: total, streaming };
 }
 
 /** An AG-UI `TokenUsage` entry as AI SDK usage. */

@@ -198,7 +198,7 @@ function Run({ onReset }: { onReset: () => void }) {
           </button>
         )}
         <AgentStatus state={state} detail={step ? `${step} · ${detail ?? 'thinking'}` : detail} size="sm" />
-        {prompt && (state === 'done' || state === 'error') ? (
+        {prompt && (state === 'done' || state === 'stopped' || state === 'error') ? (
           <button
             type="button"
             onClick={onReset}
@@ -212,7 +212,7 @@ function Run({ onReset }: { onReset: () => void }) {
         <AgentMessage
           message={last}
           streaming={status === 'streaming'}
-          active={state !== 'done' && state !== 'error'}
+          active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           tools={toolMeta}
           onToolApproval={respond}
         />
