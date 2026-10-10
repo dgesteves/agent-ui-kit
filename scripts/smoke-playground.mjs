@@ -192,6 +192,22 @@ try {
   );
   await run.close();
 
+  // Replay mid-run starts over once the stopped run has settled, so the new run's time to first
+  // token is measured from its own request (the script pauses 680ms first, 170ms at 4x), not 0ms.
+  const replay = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' });
+  await replay.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
+  const calls = replay.locator('[data-slot="tool-call-trigger"]');
+  await calls.first().waitFor({ timeout: 60_000 });
+  await replay.getByRole('button', { name: 'Replay', exact: true }).first().click();
+  await calls.first().waitFor({ state: 'detached', timeout: 10_000 });
+  await calls.first().waitFor({ timeout: 60_000 });
+  const ttft = await replay
+    .locator('aside [data-slot="run-meter"]')
+    .evaluate((el) => /TTFT\s*([\d.]+)(ms|s)/.exec(el.textContent ?? '')?.slice(1));
+  const ttftMs = ttft && Number(ttft[0]) * (ttft[1] === 's' ? 1000 : 1);
+  check(ttftMs >= 100, 'replay: the new run times its first token from its own request', `TTFT ${ttft?.join('')}`);
+  await replay.close();
+
   // The gallery: the anchors launch posts link to, npm snippets that bring the styles, and the
   // header's theme switch, which re-themes the page and the frames, with no axe violations
   // (contrast included) and remembered on the next visit.

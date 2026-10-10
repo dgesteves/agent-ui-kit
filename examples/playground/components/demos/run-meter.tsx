@@ -41,8 +41,8 @@ export function RunMeterDemo() {
           <p className="text-aui-fg-muted mt-4 max-w-sm text-[13px] leading-relaxed">
             Pass <code className="text-aui-fg font-mono text-[12px]">totalUsage</code> from{' '}
             <code className="text-aui-fg font-mono text-[12px]">streamText</code> through message metadata, and timing
-            from <code className="text-aui-fg font-mono text-[12px]">useRunTiming(status)</code>. Cost is an estimate
-            from the pricing you supply.
+            from <code className="text-aui-fg font-mono text-[12px]">useRunTiming(status, messages)</code>. Cost is an
+            estimate from the pricing you supply.
           </p>
         </figure>
       </div>

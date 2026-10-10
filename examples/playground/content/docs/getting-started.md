@@ -88,7 +88,8 @@ export function AgentRun() {
   const [input, setInput] = useState('');
   const last = messages.findLast((m) => m.role === 'assistant');
   const { state, detail } = deriveAgentState({ status, message: last });
-  const timing = useRunTiming(status);
+  // A run starts with each message you send and spans its approval round trips.
+  const timing = useRunTiming(status, messages);
 
   return (
     <div className="bg-aui-bg text-aui-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">

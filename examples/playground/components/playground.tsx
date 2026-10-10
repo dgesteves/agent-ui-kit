@@ -98,23 +98,40 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
       lastAssistantMessageIsCompleteWithToolCalls({ messages }),
   });
   const { messages, status, sendMessage, setMessages, stop, addToolApprovalResponse, addToolOutput } = chat;
+  const running = status === 'submitted' || status === 'streaming';
 
   const startRun = useCallback(() => {
-    void stop();
     setMessages([]);
     setPaused(false);
     setRunId((n) => n + 1);
     void sendMessage({ text: PROMPT });
-  }, [stop, setMessages, sendMessage]);
+  }, [setMessages, sendMessage]);
 
   // Follow the run once the reader has scrolled to its end or started a run themselves.
   // Not from the start: on a phone, following the run that starts on load scrolls past the headline.
   const endRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(false);
+  // Replay during a run stops it, then starts over once it has settled. Sent straight away, the new
+  // request would have the stopped one's end ('ready') land in the middle of it, and its timing too.
+  const [restarting, setRestarting] = useState(false);
   const replay = useCallback(() => {
     stickRef.current = true;
-    startRun();
-  }, [startRun]);
+    if (!running) {
+      startRun();
+      return;
+    }
+    setPaused(false);
+    setRestarting(true);
+    void stop();
+  }, [running, startRun, stop]);
+  useEffect(() => {
+    if (!restarting || running) return;
+    const id = setTimeout(() => {
+      setRestarting(false);
+      startRun();
+    }, 0);
+    return () => clearTimeout(id);
+  }, [restarting, running, startRun]);
 
   // The mock run starts on load; live mode waits for a prompt.
   useEffect(() => {
@@ -126,10 +143,9 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
   const lastAssistant = messages.findLast((m) => m.role === 'assistant');
   const userMessage = messages.find((m) => m.role === 'user');
   const derived = deriveAgentState({ status, message: lastAssistant, pendingClientTools: CLIENT_TOOLS });
-  // Paused playback counts as idle time, like waiting on the human.
-  const timing = useRunTiming(paused ? 'ready' : status, runId);
+  // Paused playback counts as idle time, like waiting on the human. A run starts with each prompt.
+  const timing = useRunTiming(paused ? 'ready' : status, messages);
   const usage = lastAssistant?.metadata?.usage;
-  const running = status === 'submitted' || status === 'streaming';
   const writing = derived.state === 'working' && derived.detail === 'Writing response';
   const statusLabel =
     paused && running

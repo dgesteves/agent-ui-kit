@@ -15,7 +15,8 @@ export function AgentRun() {
   const [input, setInput] = useState('');
   const last = messages.findLast((m) => m.role === 'assistant');
   const { state, detail } = deriveAgentState({ status, message: last });
-  const timing = useRunTiming(status);
+  // A run starts with each message you send and spans its approval round trips.
+  const timing = useRunTiming(status, messages);
 
   return (
     // The kit's own background and text colors, so it reads well on any page. Add `dark` for the dark theme.

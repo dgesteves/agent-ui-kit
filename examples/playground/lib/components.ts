@@ -227,13 +227,17 @@ const last = messages.findLast((m) => m.role === 'assistant');
     item: 'run-meter',
     file: 'run-meter.tsx',
     stateTypes: { 'data-variant': "'compact' | 'expanded'" },
-    api: [{ name: 'RunMeter', props: 'RunMeterProps', defaults: { file: 'run-meter.tsx', functions: ['RunMeter'] } }],
+    api: [
+      { name: 'RunMeter', props: 'RunMeterProps', defaults: { file: 'run-meter.tsx', functions: ['RunMeter'] } },
+      { name: 'useRunTiming', returns: 'RunTiming' },
+    ],
     types: ['ModelPricing', 'RunUsage'],
     imports: {
       npm: npm('RunMeter, useRunTiming'),
       shadcn: `${shadcn('RunMeter', 'run-meter')}\nimport { useRunTiming } from '@/components/agent-ui/lib/hooks';`,
     },
-    usage: `const timing = useRunTiming(status);
+    usage: `// A run starts with each user message and spans its approval round trips.
+const timing = useRunTiming(status, messages);
 
 <RunMeter
   variant="expanded"
