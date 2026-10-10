@@ -32,19 +32,37 @@ export {
 } from './lib/ai';
 export {
   applyHunks,
-  computeReviewResult,
   DEFAULT_MAX_EDIT_LENGTH,
   inferLanguage,
   parseFileChange,
   type DiffHunk,
   type DiffLine,
-  type DiffReviewFileResult,
-  type DiffReviewResult,
   type FileChange,
+  type FileStatus,
   type HunkDecision,
   type ParseFileChangeOptions,
   type ParsedFileDiff,
 } from './lib/diff';
+export {
+  computeReviewResult,
+  contextGaps,
+  reviewItems,
+  reviewResumeEntry,
+  reviewToolOutput,
+  toPatch,
+  type CommentSide,
+  type ContextGap,
+  type DiffReviewComment,
+  type DiffReviewFileResult,
+  type DiffReviewRejectedHunk,
+  type DiffReviewResult,
+  type DiffReviewResultComment,
+  type DiffReviewResumeEntry,
+  type DiffReviewToolOutput,
+  type DiffReviewToolOutputOptions,
+  type FileDecision,
+  type ReviewItem,
+} from './lib/review';
 export { formatCost, formatDuration, formatTokens, humanizeToolName } from './lib/format';
 export { addUsage, estimateCost, type CostBreakdown, type ModelPricing } from './lib/usage';
 export { cn, type HeadingLevel } from './lib/utils';

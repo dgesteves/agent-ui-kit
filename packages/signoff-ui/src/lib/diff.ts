@@ -13,6 +13,11 @@ export interface FileChange {
   patch?: string | undefined;
   /** Language id for highlighting, inferred from the extension when omitted. */
   language?: string | undefined;
+  /**
+   * A binary file: shown as "Binary file, not shown" and decided as a whole. Detected when omitted:
+   * contents with a NUL character in their first 8,000, or a patch that says `Binary files … differ`.
+   */
+  binary?: boolean | undefined;
 }
 
 export type DiffLineType = 'context' | 'add' | 'del';
@@ -30,6 +35,8 @@ export interface DiffLine {
   newNumber?: number | undefined;
   /** Word-level segments, present on add/del lines that pair with a counterpart. */
   segments?: DiffSegment[] | undefined;
+  /** The last line of its file, with no newline after it (jsdiff's "No newline at end of file"). */
+  noNewline?: true | undefined;
 }
 
 export interface DiffHunk {
@@ -61,6 +68,8 @@ export interface ParsedFileDiff {
   /** Original contents, when known. Needed to compute the reviewed result. */
   oldContent?: string | undefined;
   newContent?: string | undefined;
+  /** A binary file: no hunks, decided as a whole. */
+  binary?: true | undefined;
   /**
    * `'replace'` when the diff went over `maxEditLength`: the changed region, from the first
    * changed line to the last, is one hunk that replaces it, with no word-level highlights.
@@ -100,7 +109,12 @@ function toDiffLines(hunk: StructuredPatchHunk, words: boolean): DiffLine[] {
   for (const raw of hunk.lines) {
     const marker = raw[0];
     const content = raw.slice(1);
-    if (marker === '\\') continue; // "\ No newline at end of file"
+    if (marker === '\\') {
+      // "\ No newline at end of file": the line before it ends its file.
+      const last = lines.at(-1);
+      if (last) last.noNewline = true;
+      continue;
+    }
     if (marker === '+') lines.push({ type: 'add', content, newNumber: newNo++ });
     else if (marker === '-') lines.push({ type: 'del', content, oldNumber: oldNo++ });
     else lines.push({ type: 'context', content, oldNumber: oldNo++, newNumber: newNo++ });
@@ -265,13 +279,19 @@ function diffContents(
   }
   if (budget < maxEditLength) return undefined;
 
-  // Over the limit: the changed region, replaced.
-  const ctx = (lines: string[]) => lines.map((line) => ` ${line}`);
+  // Over the limit: the changed region, replaced. A side's last line gets jsdiff's marker when its
+  // file ends without a newline, so the hunk reads as structuredPatch's would.
+  const NO_NEWLINE = '\\ No newline at end of file';
+  const run = (source: Lines, start: number, end: number, sign: string) => {
+    const out = source.lines.slice(start, end).map((line) => sign + line);
+    if (end === source.lines.length && end > start && !source.eol) out.push(NO_NEWLINE);
+    return out;
+  };
   const lines = [
-    ...ctx(a.lines.slice(from, prefix)),
-    ...a.lines.slice(prefix, a.lines.length - suffix).map((line) => `-${line}`),
-    ...b.lines.slice(prefix, b.lines.length - suffix).map((line) => `+${line}`),
-    ...ctx(a.lines.slice(a.lines.length - suffix, oldTo)),
+    ...run(a, from, prefix, ' '),
+    ...run(a, prefix, a.lines.length - suffix, '-'),
+    ...run(b, prefix, b.lines.length - suffix, '+'),
+    ...run(a, a.lines.length - suffix, oldTo, ' '),
   ];
   const hunk: StructuredPatchHunk = {
     oldStart: from + 1,
@@ -306,9 +326,19 @@ export function parseWithin(
   const context = options.context ?? 3;
   const oldContent = change.oldContent ?? (change.patch ? undefined : '');
   const newContent = change.newContent ?? (change.patch ? undefined : '');
+  const patched =
+    change.patch && (oldContent === undefined || newContent === undefined) ? parsePatch(change.patch)[0] : undefined;
+  const binary =
+    change.binary ??
+    (isBinaryText(oldContent) ||
+      isBinaryText(newContent) ||
+      !!patched?.isBinary ||
+      (!!change.patch && /^GIT binary patch$/m.test(change.patch)));
   let hunks: StructuredPatchHunk[];
   let fallback: ContentDiff['fallback'];
-  if (oldContent !== undefined && newContent !== undefined) {
+  if (binary) {
+    hunks = [];
+  } else if (oldContent !== undefined && newContent !== undefined) {
     const diffed = diffContents(
       oldContent,
       newContent,
@@ -319,10 +349,8 @@ export function parseWithin(
     if (!diffed) return undefined;
     hunks = diffed.hunks;
     fallback = diffed.fallback;
-  } else if (change.patch) {
-    hunks = parsePatch(change.patch)[0]?.hunks ?? [];
   } else {
-    hunks = [];
+    hunks = patched?.hunks ?? [];
   }
 
   const parsed: DiffHunk[] = hunks.map((h, index) => {
@@ -347,13 +375,14 @@ export function parseWithin(
   else if (change.oldContent === '' || (change.oldContent === undefined && !change.patch)) status = 'added';
   else if (change.newContent === '' || (change.newContent === undefined && !change.patch)) status = 'deleted';
   if (change.patch && change.oldContent === undefined && change.newContent === undefined) {
-    status = /^--- \/dev\/null/m.test(change.patch)
-      ? 'added'
-      : /^\+\+\+ \/dev\/null/m.test(change.patch)
-        ? 'deleted'
-        : renamed || /^rename from /m.test(change.patch)
-          ? 'renamed'
-          : 'modified';
+    status =
+      patched?.isCreate || /^--- \/dev\/null/m.test(change.patch)
+        ? 'added'
+        : patched?.isDelete || /^\+\+\+ \/dev\/null/m.test(change.patch)
+          ? 'deleted'
+          : renamed || patched?.isRename || /^rename from /m.test(change.patch)
+            ? 'renamed'
+            : 'modified';
   }
 
   return {
@@ -368,7 +397,13 @@ export function parseWithin(
     oldContent,
     newContent,
     ...(fallback ? { fallback } : {}),
+    ...(binary ? { binary: true as const } : {}),
   };
+}
+
+/** Git's test: a NUL character in the first 8,000 characters. */
+function isBinaryText(text: string | undefined) {
+  return !!text && text.slice(0, 8_000).includes('\0');
 }
 
 function splitLines(text: string): Lines {
@@ -411,43 +446,3 @@ export function applyHunks(
 }
 
 export type HunkDecision = 'pending' | 'accepted' | 'rejected';
-
-export interface DiffReviewFileResult {
-  path: string;
-  /** File contents with only accepted hunks applied. `undefined` for patch-only input. */
-  content: string | undefined;
-  accepted: string[];
-  rejected: string[];
-  pending: string[];
-}
-
-export interface DiffReviewResult {
-  files: DiffReviewFileResult[];
-  accepted: number;
-  rejected: number;
-  pending: number;
-}
-
-/** Compute the review result for a set of parsed files and decisions. */
-export function computeReviewResult(
-  files: readonly ParsedFileDiff[],
-  decisions: Readonly<Record<string, HunkDecision>>,
-): DiffReviewResult {
-  const out: DiffReviewFileResult[] = files.map((file) => {
-    const pick = (d: HunkDecision) => file.hunks.filter((h) => (decisions[h.id] ?? 'pending') === d).map((h) => h.id);
-    const accepted = pick('accepted');
-    return {
-      path: file.path,
-      content: file.oldContent !== undefined && file.newContent !== undefined ? applyHunks(file, accepted) : undefined,
-      accepted,
-      rejected: pick('rejected'),
-      pending: pick('pending'),
-    };
-  });
-  return {
-    files: out,
-    accepted: out.reduce((n, f) => n + f.accepted.length, 0),
-    rejected: out.reduce((n, f) => n + f.rejected.length, 0),
-    pending: out.reduce((n, f) => n + f.pending.length, 0),
-  };
-}
