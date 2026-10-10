@@ -91,4 +91,20 @@ describe('calls that never settle because the run ended', () => {
     render(<AgentMessage message={assistant([toolPart('input-available')])} active={false} />);
     expect(screen.getByText('Stopped')).toBeInTheDocument();
   });
+
+  it('ends text and reasoning that a stopped run left streaming', () => {
+    const message = assistant([
+      { type: 'reasoning', text: 'The route needs', state: 'streaming' },
+      { type: 'text', text: 'I will add the', state: 'streaming' },
+    ]);
+    const { container, rerender } = render(<AgentMessage message={message} />);
+    expect(container.querySelector('[class*="animate-aui-blink"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="reasoning"]')).toHaveAttribute('data-streaming', 'true');
+
+    // stop(): the parts never get their end event, and the run is no longer active.
+    rerender(<AgentMessage message={message} active={false} />);
+    expect(container.querySelector('[class*="animate-aui-blink"]')).toBeNull();
+    expect(container.querySelector('[data-slot="reasoning"]')).not.toHaveAttribute('data-streaming');
+    expect(screen.getByText('I will add the')).toBeInTheDocument();
+  });
 });

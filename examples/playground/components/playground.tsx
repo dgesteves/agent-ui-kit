@@ -382,7 +382,7 @@ export function Playground({ liveAvailable }: { liveAvailable: boolean }) {
             <AgentMessage
               message={lastAssistant}
               streaming={running}
-              active={derived.state !== 'done' && derived.state !== 'error'}
+              active={derived.state !== 'done' && derived.state !== 'stopped' && derived.state !== 'error'}
               tools={toolMeta}
               onToolApproval={addToolApprovalResponse}
               approvalProps={{ autoFocus: !autopilot }}

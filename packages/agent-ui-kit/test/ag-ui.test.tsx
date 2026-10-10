@@ -92,6 +92,42 @@ describe('reduceAgUiRun', () => {
     });
   });
 
+  it('leaves what a cancelled run was streaming cut off, so it reads as stopped', () => {
+    const streaming: AgUiCoreEvent[] = [
+      started,
+      { type: EventType.TEXT_MESSAGE_START, messageId: 'm1', role: 'assistant' },
+      { type: EventType.TOOL_CALL_START, toolCallId: 'tc1', toolCallName: 'search', parentMessageId: 'm1' },
+    ];
+    const messages: Message[] = [
+      { id: 'u1', role: 'user', content: 'Find the limiter docs' },
+      {
+        id: 'm1',
+        role: 'assistant',
+        content: 'Searching for the',
+        toolCalls: [{ id: 'tc1', type: 'function', function: { name: 'search', arguments: '{"query": "rate' } }],
+      },
+    ];
+    const finished = (type: 'success' | 'cancelled') =>
+      fold([...streaming, { type: EventType.RUN_FINISHED, threadId: 't', runId: 'r1', outcome: { type } }]);
+
+    const cancelled = finished('cancelled');
+    expect(cancelled).toMatchObject({ status: 'ready', streaming: { messages: ['m1'], toolCalls: ['tc1'] } });
+    const reply = fromAgUiMessages(messages, cancelled)[1];
+    expect(reply?.parts).toMatchObject([
+      { type: 'text', text: 'Searching for the', state: 'streaming' },
+      { type: 'dynamic-tool', state: 'input-streaming', input: { query: 'rate' } },
+    ]);
+    expect(deriveAgentState({ status: cancelled.status, message: reply })).toEqual({ state: 'stopped' });
+
+    // HttpAgent's abortRun() arrives as RUN_ERROR with code `abort`: stopped too, not failed.
+    const aborted = fold([...streaming, { type: EventType.RUN_ERROR, message: 'Request aborted', code: 'abort' }]);
+    expect(aborted).toMatchObject({ status: 'ready', error: undefined, streaming: cancelled.streaming });
+
+    // A run that finished ends what it streamed; the next run starts clean.
+    expect(finished('success').streaming).toEqual({ messages: [], toolCalls: [] });
+    expect(fold([{ ...started, runId: 'r2' }], cancelled).streaming).toEqual({ messages: [], toolCalls: [] });
+  });
+
   it('turns RUN_ERROR into an error status, and clears it on the next run', () => {
     let run = fold([started, { type: EventType.RUN_ERROR, message: 'Rate limited', code: '429' }]);
     expect(run).toMatchObject({ status: 'error', error: { message: 'Rate limited', code: '429' } });
@@ -390,6 +426,44 @@ describe('useAgUiAgent', () => {
       expect(screen.getByText('Installed.')).toBeInTheDocument();
     });
     expect(agent.inputs).toHaveLength(2);
+  });
+
+  it('reads a run aborted mid-stream as stopped, not failed', async () => {
+    // A real HttpAgent: the server streams half a reply, then keeps the connection open.
+    const encoder = new TextEncoder();
+    const agent = new HttpAgent({
+      url: 'https://agent.test/run',
+      fetch: async (_url, init) => {
+        const { threadId, runId } = JSON.parse(String(init.body)) as RunAgentInput;
+        const events = [
+          { type: EventType.RUN_STARTED, threadId, runId },
+          { type: EventType.TEXT_MESSAGE_START, messageId: 'm1', role: 'assistant' },
+          { type: EventType.TEXT_MESSAGE_CONTENT, messageId: 'm1', delta: 'Adding zod to' },
+        ];
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            for (const event of events) controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+            init.signal?.addEventListener('abort', () => controller.error(new DOMException('Aborted', 'AbortError')));
+          },
+        });
+        return new Response(body, { headers: { 'content-type': 'text/event-stream' } });
+      },
+    });
+    agent.addMessage({ id: 'u1', role: 'user', content: 'Add zod' });
+    const { result } = renderHook(() => useAgUiAgent(agent));
+    let running: Promise<unknown> = Promise.resolve();
+    act(() => {
+      running = agent.runAgent().catch(() => undefined);
+    });
+    await waitFor(() => expect(result.current.status).toBe('streaming'));
+    await act(async () => {
+      result.current.stop();
+      await running;
+    });
+    const last = result.current.messages.findLast((m) => m.role === 'assistant');
+    expect(result.current).toMatchObject({ status: 'ready', error: undefined });
+    expect(last?.parts).toMatchObject([{ type: 'text', text: 'Adding zod to', state: 'streaming' }]);
+    expect(deriveAgentState({ status: result.current.status, message: last })).toEqual({ state: 'stopped' });
   });
 
   it('reports a failed run', async () => {

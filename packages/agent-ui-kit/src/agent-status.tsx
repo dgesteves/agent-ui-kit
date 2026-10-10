@@ -42,6 +42,12 @@ function Indicator({ state }: { state: AgentState }) {
       );
     case 'done':
       return <CheckIcon size={14} className="text-aui-accent-fg" />;
+    case 'stopped':
+      return (
+        <span className="flex size-3.5 items-center justify-center">
+          <span className="bg-aui-fg-muted size-2 rounded-[2px]" />
+        </span>
+      );
     case 'error':
       return <AlertIcon size={14} className="text-aui-hot-fg" />;
     default:

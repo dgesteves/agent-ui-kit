@@ -9,6 +9,7 @@ export function AgentStatusDemo() {
       <AgentStatus state="working" detail="read_file" elapsedMs={3_420} announce={false} />
       <AgentStatus state="awaiting-approval" detail="run_command" announce={false} />
       <AgentStatus state="done" elapsedMs={21_800} announce={false} />
+      <AgentStatus state="stopped" elapsedMs={6_240} announce={false} />
       <AgentStatus state="error" label="Rate limited by provider" announce={false} />
     </div>
   );

@@ -96,7 +96,7 @@ export function AgentRun() {
           message={last}
           streaming={status === 'streaming'}
           // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
-          active={state !== 'done' && state !== 'error'}
+          active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={addToolApprovalResponse}
         />
       )}
@@ -348,10 +348,10 @@ Tokens in and out, estimated cost, time to first token, active run time and prom
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/media/components/agent-status-light.png">
-  <img src="docs/media/components/agent-status.png" width="100%" alt="Status pills: Thinking, Working read_file 3.42s, Waiting for approval run_command, Done 21.8s, and an error pill reading Rate limited by provider.">
+  <img src="docs/media/components/agent-status.png" width="100%" alt="Status pills: Thinking, Working read_file 3.42s, Waiting for approval run_command, Done 21.8s, Stopped 6.24s, and an error pill reading Rate limited by provider.">
 </picture>
 
-Thinking, working, waiting for approval, done or error, with an elapsed timer. Changes are announced through a live region: debounced so quick flips are not read out one by one, and assertive only for approvals and errors. `deriveAgentState` maps `useChat` status and the latest message to a state, with human-in-the-loop waits taking precedence.
+Thinking, working, waiting for approval, done, stopped or error, with an elapsed timer. Changes are announced through a live region: debounced so quick flips are not read out one by one, and assertive only for approvals and errors. `deriveAgentState` maps `useChat` status and the latest message to a state, with human-in-the-loop waits taking precedence. A run that ended with work unfinished, which is what `stop()` leaves behind (text or reasoning still streaming, a tool call still preparing or running), is `stopped` rather than `done`; name client-side tools the app is still answering in `pendingClientTools`, so they read as a wait instead.
 
 ```tsx
 <AgentStatus {...deriveAgentState({ status, message: last, pendingClientTools: ['review_changes'] })} />
@@ -464,7 +464,7 @@ export function AgentRun() {
         <AgentMessage
           message={last}
           streaming={status === 'streaming'}
-          active={state !== 'done' && state !== 'error'}
+          active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={respond}
         />
       ) : null}
@@ -492,6 +492,7 @@ The hook takes any `@ag-ui/client` agent (`HttpAgent`, or a framework integratio
 | `RUN_FINISHED` with an `interrupt` outcome bound to a tool call     | `approval-requested`, the interrupt's `message` as `approval.requestReason`                     |
 | `respond({ id, approved, reason })`                                 | `approval-responded` or `output-denied`; the agent resumes with `payload: { approved, reason }` |
 | `RUN_STARTED`, content, `RUN_FINISHED`, `RUN_ERROR`                 | `status`: `submitted`, `streaming`, then `ready` or `error`                                     |
+| `RUN_FINISHED` with a `cancelled` outcome, or `stop()`              | `status: 'ready'`, with what was streaming left cut off: `deriveAgentState` reads `stopped`     |
 | `usage` on `RUN_FINISHED` and `RUN_ERROR`                           | `usage`, summed over runs, with cache and reasoning tokens, for `RunMeter`                      |
 | `STEP_STARTED`                                                      | `step`, such as the LangGraph node running                                                      |
 | activity message                                                    | a `data-${activityType}` part, rendered by `renderData`                                         |
@@ -654,7 +655,7 @@ They compose: render the thread with either library and use these components for
 - **Citation numbering.** `[n]` markers are numbered over the message's sources after de-duplication by URL (by source id for documents). If your prompt numbers a list of sources that contains duplicates, markers after the first duplicate point one source early. Number unique sources in the prompt.
 - **Markdown cost while streaming.** The whole text is parsed again on every delta: about 8 ms at 5k characters, 24 ms at 20k and 67 ms at 50k (jsdom), so very long streamed answers can drop frames. Block-level memoization is on the roadmap.
 - **Large rewrites.** `DiffReview` diffs whole files on the main thread. Local edits are fast, but a fully rewritten file costs about 0.4 s at 2,000 lines and 2.5 s at 5,000. Long changed lines skip word-level highlights rather than stall.
-- **Run state comes from you.** Parts carry no signal that a run has ended, so tool calls left behind by `stop()` or an interrupted history read "Stopped" only when you pass `active={false}`.
+- **Run state comes from you.** Parts carry no signal that a run has ended, so tool calls left behind by `stop()` or an interrupted history read "Stopped" only when you pass `active={false}`. `deriveAgentState` reports such a run as `stopped`, which the quickstart's `active` condition covers.
 
 ## Roadmap
 
