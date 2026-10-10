@@ -11,6 +11,7 @@ export default defineConfig(
     '**/dist/**',
     '**/.next/**',
     '**/node_modules/**',
+    '**/coverage/**',
     '**/next-env.d.ts',
     'examples/playground/public/r/**',
     '.media-tmp/**',

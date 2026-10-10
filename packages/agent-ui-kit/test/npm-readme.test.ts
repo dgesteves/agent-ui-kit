@@ -16,7 +16,8 @@ const pkg = fileURLToPath(new URL('../', import.meta.url));
 const rootReadme = readFileSync(join(pkg, '../../README.md'), 'utf8');
 
 describe('the README on npm', () => {
-  it('is the repository README, with absolute links and no video', () => {
+  // `npm pack` takes about 4 s here, more under coverage or on a busy runner: past Vitest's 5 s default.
+  it('is the repository README, with absolute links and no video', { timeout: 60_000 }, () => {
     expect(rootReadme).toMatch(/^https:\/\/github\.com\/user-attachments\/assets\/[\da-f-]{36}$/m);
 
     const dir = mkdtempSync(join(tmpdir(), 'npm-readme-'));

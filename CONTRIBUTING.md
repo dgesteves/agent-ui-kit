@@ -28,16 +28,19 @@ CI runs all of these; run the ones your change touches before you push.
 ```bash
 pnpm format:check && pnpm lint && pnpm lint:registry
 pnpm build:lib        # also checks 'use client' directives and the shipped CSS
+pnpm size             # each import's gzipped size, against its budget in scripts/size.mjs
 pnpm typecheck
 pnpm test             # Vitest, Testing Library and axe in jsdom
+pnpm test:coverage    # the same, with coverage and its thresholds (vitest.config.ts)
 pnpm --filter @dgesteves/agent-ui-kit lint:package   # publint and attw
 pnpm registry:check   # registry.json matches src/
 pnpm smoke:styles     # styles.css in Chrome, next to a global reset and in a Tailwind v3 build
 pnpm build:playground && pnpm smoke:playground
+pnpm a11y             # axe in Chrome, across the built playground, gallery and docs
 pnpm --filter nextjs-minimal build && pnpm smoke:nextjs
 ```
 
-The smoke tests and `pnpm a11y` drive Google Chrome through Playwright, so they need Chrome installed.
+The smoke tests and `pnpm a11y` drive Google Chrome through Playwright, so they need Chrome installed. Each starts the built app on a port of its own; set `BASE_URL` to test one that is already running, such as `pnpm dev`'s playground on http://localhost:3100.
 
 The suite also runs against AI SDK 6 and React 18. To do the same, in `packages/agent-ui-kit` (then restore `package.json` and `pnpm-lock.yaml`):
 

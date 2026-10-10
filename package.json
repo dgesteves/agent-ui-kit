@@ -18,6 +18,8 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter @dgesteves/agent-ui-kit test",
+    "test:coverage": "pnpm --filter @dgesteves/agent-ui-kit test:coverage",
+    "coverage:summary": "node scripts/coverage-summary.mjs",
     "media": "node scripts/capture-media.mjs",
     "changeset": "changeset",
     "version-packages": "changeset version",
