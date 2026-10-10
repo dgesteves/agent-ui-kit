@@ -84,6 +84,7 @@ for (const path of [
   '/docs/comparison',
   '/docs/migrating-from-agent-ui-kit',
   '/docs/components/approval-card',
+  '/docs/components/use-approval-policy',
   '/docs/components/diff-review',
   '/docs/components/use-diff-review',
   '/docs/components/run-meter',
@@ -103,6 +104,23 @@ await page.keyboard.type('Keep the existing error format.');
 await page.locator('[data-slot="signoff-diff-file"] input[type="checkbox"]').last().check();
 await settle(page);
 await audit(page, 'docs /docs/components/diff-review · lines selected, a comment being written');
+// Approval rules at work: a rule made, a call it answers, two at once, and arguments being edited.
+await page.goto(`${BASE}/docs/components/use-approval-policy`, { waitUntil: 'networkidle' });
+await page.getByRole('button', { name: 'two at once' }).click();
+await page.locator('[data-slot="signoff-approval-batch"]').first().waitFor();
+await settle(page);
+await audit(page, 'docs /docs/components/use-approval-policy · two approvals waiting, with Approve all');
+await page.getByRole('button', { name: 'Approve all' }).click();
+await page.getByRole('button', { name: 'npm test', exact: true }).click();
+await page.getByRole('button', { name: 'For this session', exact: true }).click();
+await page.getByRole('button', { name: 'npm test -- --watch', exact: true }).click();
+await page.locator('main [data-slot="signoff-approval-card"]', { hasText: 'Allowed by your rule' }).waitFor();
+await settle(page);
+await audit(page, 'docs /docs/components/use-approval-policy · a session rule, and a call it answered');
+await page.goto(`${BASE}/docs/components/approval-card`, { waitUntil: 'networkidle' });
+await page.getByRole('button', { name: 'Edit arguments' }).first().click();
+await settle(page);
+await audit(page, 'docs /docs/components/approval-card · editing arguments');
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(`${BASE}/?speed=4`, { waitUntil: 'networkidle' });
 await page.waitForSelector(pending, { timeout: 60_000 });

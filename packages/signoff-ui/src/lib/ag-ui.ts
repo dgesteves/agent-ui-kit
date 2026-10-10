@@ -211,11 +211,14 @@ export interface AgUiApprovalResponse {
   id: string;
   approved: boolean;
   reason?: string | undefined;
+  /** Arguments the person edited, sent with an approval as the payload's `input`. */
+  input?: unknown;
 }
 
 /**
  * Record an answer to an open interrupt. A tool approval becomes the conventional
- * `{ approved, reason? }` payload; pass a resume entry for other interrupts.
+ * `{ approved, reason? }` payload, with `input` when the person edited the arguments; pass a
+ * resume entry for other interrupts.
  */
 export function answerAgUiInterrupt(run: AgUiRunState, answer: AgUiApprovalResponse | AgUiResumeEntry): AgUiRunState {
   const entry: AgUiResumeEntry =
@@ -224,7 +227,11 @@ export function answerAgUiInterrupt(run: AgUiRunState, answer: AgUiApprovalRespo
       : {
           interruptId: answer.id,
           status: 'resolved',
-          payload: { approved: answer.approved, ...(answer.reason ? { reason: answer.reason } : {}) },
+          payload: {
+            approved: answer.approved,
+            ...(answer.reason ? { reason: answer.reason } : {}),
+            ...(answer.approved && answer.input !== undefined ? { input: answer.input } : {}),
+          },
         };
   const interrupt = run.interrupts.find((i) => i.id === entry.interruptId);
   if (!interrupt) return run;

@@ -1,7 +1,12 @@
 'use client';
 
 import { useMemo, type ComponentPropsWithoutRef, type ReactNode } from 'react';
-import { ToolApprovalCard, type ApprovalCardProps, type ToolApprovalResponse } from './approval-card';
+import {
+  ToolApprovalBatch,
+  ToolApprovalCard,
+  type ApprovalCardProps,
+  type ToolApprovalResponse,
+} from './approval-card';
 import { getSourceParts, getToolPartName, isToolPart, type AnyUIPart, type ToolPart, type UIMessage } from './lib/ai';
 import { useToolTimings, type ToolTimings } from './lib/hooks';
 import { FileIcon, ImageIcon } from './lib/icons';
@@ -9,6 +14,7 @@ import { getImagePolicy, isAllowedImage, type ImagePolicy } from './lib/images';
 import { Img } from './lib/primitives';
 import { cn } from './lib/utils';
 import { Markdown } from './markdown';
+import type { ApprovalPolicy } from './use-approval-policy';
 import { Reasoning } from './reasoning';
 import { Sources } from './sources';
 import { ToolCallTimeline, type ToolMeta } from './tool-call-timeline';
@@ -39,6 +45,16 @@ export interface AgentMessageProps extends Omit<ComponentPropsWithoutRef<'articl
   onToolApproval?: ((response: ToolApprovalResponse) => void | PromiseLike<void>) | undefined;
   /** Props forwarded to every approval card, e.g. `{ autoFocus: true }`. */
   approvalProps?: Partial<Omit<ApprovalCardProps, 'toolName' | 'status' | 'onApprove' | 'onDeny'>> | undefined;
+  /**
+   * Approval rules from `useApprovalPolicy`: cards offer once, this session and always, a rule's
+   * decisions are made without asking, and two or more waiting approvals get "Approve all".
+   */
+  approvalPolicy?: ApprovalPolicy | undefined;
+  /**
+   * Lets a person edit a call's arguments before approving it, and applies the edit. With AI SDK 7:
+   * `(id, input) => setMessages((m) => setToolInput(m, id, input))`; with `useAgUiAgent`, its `editInput`.
+   */
+  onToolInputEdit?: ((toolCallId: string, input: unknown) => void) | undefined;
   /** Render `data-*` parts. They are skipped when omitted. Your content, like `renderTool`'s. */
   renderData?: ((part: DataPart) => ReactNode) | undefined;
   showSources?: boolean;
@@ -74,6 +90,8 @@ export function AgentMessage({
   renderTool,
   onToolApproval,
   approvalProps,
+  approvalPolicy,
+  onToolInputEdit,
   renderData,
   showSources = true,
   sourcesVariant = 'chips',
@@ -137,6 +155,14 @@ export function AgentMessage({
       className={cn('font-signoff-sans text-signoff-fg flex min-w-0 flex-col gap-3', className)}
       {...props}
     >
+      {onToolApproval && (
+        <ToolApprovalBatch
+          parts={parts.filter(isToolPart)}
+          onRespond={onToolApproval}
+          policy={approvalPolicy}
+          tools={tools}
+        />
+      )}
       {segments.map((segment) => {
         switch (segment.kind) {
           case 'text':
@@ -176,6 +202,8 @@ export function AgentMessage({
                             part={part}
                             onRespond={onToolApproval}
                             meta={tools?.[getToolPartName(part)]}
+                            policy={approvalPolicy}
+                            onEditInput={onToolInputEdit}
                             {...approvalProps}
                           />
                         ) : null

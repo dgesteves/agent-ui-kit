@@ -10,12 +10,14 @@ import { RunMeterDemo } from './run-meter';
 import { SourcesDemo } from './sources';
 import { ToolCallTimelineDemo } from './tool-call-timeline';
 import { UseDiffReviewDemo } from './use-diff-review';
+import { UseApprovalPolicyDemo } from './use-approval-policy';
 
 /** Each component's live example, by docs slug. A page loads only the one it renders. */
 export const DEMOS: Record<string, ComponentType> = {
   'agent-message': AgentMessageDemo,
   'tool-call-timeline': ToolCallTimelineDemo,
   'approval-card': ApprovalCardDemo,
+  'use-approval-policy': UseApprovalPolicyDemo,
   'diff-review': DiffReviewDemo,
   'use-diff-review': UseDiffReviewDemo,
   'run-meter': RunMeterDemo,
