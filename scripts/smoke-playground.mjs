@@ -69,23 +69,35 @@ try {
     'sitemap.xml lists the docs and components, and robots.txt points to it',
   );
 
-  // Docs for LLMs, built from the README and the registry.
+  // Docs for LLMs, built from the README and the registry: no HTML, and every component described
+  // in words (its screenshot's indented <source srcset> lines once stood in for the description).
   for (const [path, heading] of [
     ['/llms.txt', '## Components'],
     ['/llms-full.txt', '## shadcn registry items'],
   ]) {
     const response = await fetch(BASE + path);
     const text = await response.text();
+    // Code blocks show JSX, which is fine; the prose around them has no HTML.
+    const html = /<\/?(?:img|picture|source|p|div|br)\b[^>]*>/.exec(text.replace(/```[\s\S]*?```/g, ''))?.[0];
     check(
       response.ok &&
         response.headers.get('content-type')?.startsWith('text/plain') &&
         text.startsWith('# agent-ui-kit\n') &&
         text.includes(heading) &&
-        !/<img|\]\((?!https?:)/.test(text),
+        !html &&
+        !/\]\((?!https?:)/.test(text),
       `${path}: plain markdown with absolute links`,
-      `${response.status} ${response.headers.get('content-type')}`,
+      `${response.status} ${response.headers.get('content-type')}${html ? `, HTML: ${html}` : ''}`,
     );
   }
+  const llms = await (await fetch(`${BASE}/llms.txt`)).text();
+  const components = llms.slice(llms.indexOf('## Components'), llms.indexOf('## Optional')).match(/^- .+$/gm) ?? [];
+  const undescribed = components.filter((line) => !/^- `\w+`: [^\s<][^<]*\.$/.test(line));
+  check(
+    components.length >= 7 && undescribed.length === 0,
+    '/llms.txt: each component has a sentence of its own',
+    undescribed.join(' | ') || `${components.length} components`,
+  );
 
   // Each docs page is also Markdown at its URL plus .md, for "Copy page" and coding agents.
   for (const [path, heading] of [
@@ -104,11 +116,18 @@ try {
   }
 
   // Component pages document props from the package's own types: ApprovalCard's toolName is a
-  // required string and risk defaults to 'medium' (the page and its Markdown share the source).
+  // required string, risk has no default, and approveLabel defaults to 'Approve' (the page and its
+  // Markdown share the source).
   const card = await (await fetch(`${BASE}/docs/components/approval-card.md`)).text();
   check(
-    card.includes('| `toolName` (required) | `string` |') && /\| `risk` \| `RiskLevel`.*\| `'medium'` \|/.test(card),
+    card.includes('| `toolName` (required) | `string` |') &&
+      /\| `risk` \| `RiskLevel` \| {2}\|/.test(card) &&
+      /\| `approveLabel` \| `string` \| `'Approve'` \|/.test(card),
     'docs: props tables come from the types, with defaults from the source',
+    card
+      .split('\n')
+      .filter((line) => /`(risk|approveLabel)`/.test(line))
+      .join('\n'),
   );
 
   // The docs search finds sections, not only pages.

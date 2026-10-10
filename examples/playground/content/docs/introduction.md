@@ -17,7 +17,7 @@ Most AI UI libraries are built around the chat bubble. Agents changed what the i
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `AgentMessage`                     | A whole assistant message: reasoning, streaming markdown, consecutive tool calls as one timeline, approvals inline, files and sources |
 | `ToolCallTimeline`                 | Every tool call with its state, a measured duration and a waterfall; errors inline, input and output on demand                        |
-| `ApprovalCard`, `ToolApprovalCard` | Human-in-the-loop approval with a risk level, a preview of what will run, and deny with a reason                                      |
+| `ApprovalCard`, `ToolApprovalCard` | Human-in-the-loop approval with a preview of what will run, a risk level when given, and deny with a reason                           |
 | `DiffReview`                       | Per-hunk review of edits across files; returns each file with only the accepted hunks applied                                         |
 | `RunMeter`                         | Tokens, estimated cost, time to first token, active time and prompt-cache hit rate                                                    |
 | `AgentStatus`                      | The run's state in one pill, announced to screen readers                                                                              |

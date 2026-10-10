@@ -82,7 +82,12 @@ export function llmsTxt() {
     .slice(1)
     .map((block) => {
       const [heading = '', ...body] = block.split('\n');
-      const text = body.find((line) => line.trim() && !line.startsWith('<') && !line.startsWith('```')) ?? '';
+      // The first line of prose: past the screenshot's <picture> block, whose <source> lines are indented.
+      const text =
+        body.find((line) => {
+          const trimmed = line.trim();
+          return trimmed && !trimmed.startsWith('<') && !trimmed.startsWith('```');
+        }) ?? '';
       return `- ${heading.trim()}: ${firstSentence(text)}`;
     });
   return [

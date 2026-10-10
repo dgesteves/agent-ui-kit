@@ -3,6 +3,7 @@
 import * as Collapsible from '@radix-ui/react-collapsible';
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -62,7 +63,10 @@ export interface ToolCallTimelineProps extends Omit<ComponentPropsWithoutRef<'di
   expandErrors?: boolean;
   /** Show a per-call waterfall bar relative to the whole timeline. Default `true`. */
   waterfall?: boolean;
-  /** Announce completions and failures to screen readers. Default `true`. */
+  /**
+   * Announce completions and failures to screen readers. Default `true`. Calls that settle within
+   * moments of each other, such as parallel calls, are announced together.
+   */
   announce?: boolean;
   /** Extra content under a call, e.g. an approval card. */
   renderExtra?: ((part: ToolPart) => ReactNode) | undefined;
@@ -153,6 +157,16 @@ function getDuration(t: ToolTiming | undefined, now: number): number | undefined
   return Math.max(0, (t.endedAt ?? now) - from);
 }
 
+/** Calls that settle within this window are announced together, once it has passed. */
+const ANNOUNCE_DELAY_MS = 300;
+
+/** When the last of these calls settled, or -Infinity. */
+function lastEnd(parts: readonly ToolPart[], timings: ToolTimings): number {
+  let last = -Infinity;
+  for (const part of parts) last = Math.max(last, timings[part.toolCallId]?.endedAt ?? -Infinity);
+  return last;
+}
+
 /**
  * A vertical timeline of tool calls with live states, durations, a waterfall,
  * and expandable input/output. Follows the WAI-ARIA disclosure pattern; Arrow
@@ -217,22 +231,36 @@ export function ToolCallTimeline({
     return Number.isFinite(min) && max > min ? { min, span: max - min } : undefined;
   }, [toolParts, timings, clock]);
 
-  // The most recently settled call drives the live announcement.
-  const announcement = useMemo(() => {
-    let latest: { part: ToolPart; at: number } | undefined;
+  // Calls that settled since the last announcement, in the order they settled. Calls settled before
+  // the timeline mounted (restored history) are never announced.
+  const [announced, setAnnounced] = useState(() => ({ text: '', through: lastEnd(toolParts, timings) }));
+  const announcedThrough = announced.through;
+  const pending = useMemo(() => {
+    const settled: Array<{ part: ToolPart; at: number }> = [];
     for (const part of toolParts) {
       const at = timings[part.toolCallId]?.endedAt;
-      if (at !== undefined && (!latest || at >= latest.at)) latest = { part, at };
+      if (at !== undefined && at > announcedThrough) settled.push({ part, at });
     }
-    if (!latest) return '';
-    const { part } = latest;
-    const name = tools?.[getToolPartName(part)]?.label ?? humanizeToolName(getToolPartName(part));
-    const phase = getToolPhase(part);
-    if (phase === 'error') return `${name} failed: ${part.errorText ?? 'unknown error'}`;
-    if (phase === 'denied')
-      return isAutomaticApproval(part.approval) ? `${name} was blocked by policy` : `${name} was denied`;
-    return `${name} finished in ${formatDurationLong(getDuration(timings[part.toolCallId], latest.at))}`;
-  }, [toolParts, timings, tools]);
+    settled.sort((a, b) => a.at - b.at);
+    const sentences = settled.map(({ part, at }) => {
+      const name = tools?.[getToolPartName(part)]?.label ?? humanizeToolName(getToolPartName(part));
+      const phase = getToolPhase(part);
+      if (phase === 'error') return `${name} failed: ${part.errorText ?? 'unknown error'}`;
+      if (phase === 'denied')
+        return isAutomaticApproval(part.approval) ? `${name} was blocked by policy` : `${name} was denied`;
+      return `${name} finished in ${formatDurationLong(getDuration(timings[part.toolCallId], at))}`;
+    });
+    const text =
+      sentences.length > 1 ? sentences.map((s) => (/[.!?]$/.test(s) ? s : `${s}.`)).join(' ') : (sentences[0] ?? '');
+    return { text, through: settled.at(-1)?.at ?? announcedThrough };
+  }, [toolParts, timings, tools, announcedThrough]);
+  // Wait a moment, so that calls finishing together (parallel calls) are read out as one.
+  const { text: pendingText, through: pendingThrough } = pending;
+  useEffect(() => {
+    if (!pendingText) return;
+    const id = setTimeout(() => setAnnounced({ text: pendingText, through: pendingThrough }), ANNOUNCE_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [pendingText, pendingThrough]);
 
   const listRef = useRef<HTMLOListElement>(null);
   const onKeyDown = (event: KeyboardEvent<HTMLOListElement>) => {
@@ -280,7 +308,7 @@ export function ToolCallTimeline({
           />
         ))}
       </ol>
-      {announce && <LiveRegion>{announcement}</LiveRegion>}
+      {announce && <LiveRegion>{announced.text}</LiveRegion>}
     </div>
   );
 }
@@ -348,7 +376,8 @@ function TimelineItem({
           )}
         />
       )}
-      <div className="pt-1.5">
+      {/* Decorative: the trigger spells out the state ("Needs approval"), so the node's "!" is not read. */}
+      <div aria-hidden="true" className="pt-1.5">
         <StatusNode phase={phase} interrupted={interrupted} />
       </div>
       <Collapsible.Root open={open} onOpenChange={onOpenChange} className={cn('min-w-0', isLast ? 'pb-0' : 'pb-2')}>

@@ -36,7 +36,8 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   description?: ReactNode;
   /** Arguments the action will run with. */
   input?: unknown;
-  risk?: RiskLevel;
+  /** How risky the action is, shown as a badge. Without it the card shows no risk level. */
+  risk?: RiskLevel | undefined;
   /** Custom arguments preview. Defaults to a command line for `{ command }` inputs, else JSON. */
   preview?: ReactNode;
   /**
@@ -63,11 +64,16 @@ export interface ApprovalCardProps extends Omit<ComponentPropsWithoutRef<'sectio
   autoFocus?: boolean;
   /** Offer an optional free-text reason when denying. Default `true`. */
   allowReason?: boolean;
+  /** Placeholder of the reason field. Default "What should the agent do instead?". */
+  reasonPlaceholder?: string;
   approveLabel?: string;
   denyLabel?: string;
   /** Heading level for the title, to fit your document outline. Default 3. */
   headingLevel?: HeadingLevel;
 }
+
+/** No risk given: no badge, and the card's neutral colors. */
+const UNRATED = { card: 'border-aui-border', icon: 'bg-aui-surface-2 text-aui-fg-muted' };
 
 const RISK: Record<RiskLevel, { label: string; badge: string; card: string; icon: string }> = {
   low: {
@@ -124,17 +130,23 @@ function DefaultPreview({ input }: { input: unknown }) {
   return <JsonView value={input} label="Arguments" collapseAfter={14} />;
 }
 
+/** How long a decision stays in the live region: long enough to be read, then gone from the card. */
+const ANNOUNCEMENT_MS = 3000;
+
 /**
  * Human-in-the-loop approval for a pending agent action. Shows what will run,
  * how risky it is, and lets the user approve or deny by mouse or keyboard.
  * Critical actions require a second confirming press.
+ *
+ * The card is a group named by its title, not a landmark, so a run with many approvals doesn't
+ * fill landmark navigation; pass `role="region"` to make it one.
  */
 export function ApprovalCard({
   toolName,
   title,
   description,
   input,
-  risk = 'medium',
+  risk,
   preview,
   status = 'pending',
   reason,
@@ -145,6 +157,7 @@ export function ApprovalCard({
   globalShortcut = false,
   autoFocus = false,
   allowReason = true,
+  reasonPlaceholder = 'What should the agent do instead?',
   approveLabel = 'Approve',
   denyLabel = 'Deny',
   headingLevel = 3,
@@ -165,7 +178,7 @@ export function ApprovalCard({
   const [announcement, setAnnouncement] = useState('');
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = status === 'pending';
-  const r = RISK[risk];
+  const r = risk ? RISK[risk] : UNRATED;
   const heading = title ?? humanizeToolName(toolName);
   const mac = useIsMac();
   const mod = mac ? '⌘' : 'Ctrl';
@@ -223,6 +236,13 @@ export function ApprovalCard({
 
   useEffect(() => () => clearTimeout(confirmTimer.current), []);
 
+  // Once read, clear the announcement: left in place, a decided card reads "Approved, Approved".
+  useEffect(() => {
+    if (!announcement) return;
+    const id = setTimeout(() => setAnnouncement(''), ANNOUNCEMENT_MS);
+    return () => clearTimeout(id);
+  }, [announcement]);
+
   useEffect(() => {
     if (autoFocus && pending) cardRef.current?.focus();
     // Only on mount: re-focusing on every render would steal focus.
@@ -272,6 +292,7 @@ export function ApprovalCard({
       data-slot="approval-card"
       data-status={status}
       data-risk={risk}
+      role="group"
       tabIndex={-1}
       aria-labelledby={titleId}
       aria-describedby={
@@ -314,14 +335,16 @@ export function ApprovalCard({
                   <p className="font-aui-mono text-aui-hot-fg pt-0.5 text-[10.5px] font-medium tracking-[0.08em] uppercase">
                     Approval required
                   </p>
-                  <span
-                    className={cn(
-                      'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
-                      r.badge,
-                    )}
-                  >
-                    {r.label}
-                  </span>
+                  {risk && (
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
+                        RISK[risk].badge,
+                      )}
+                    >
+                      {RISK[risk].label}
+                    </span>
+                  )}
                 </div>
                 <Heading id={titleId} className="text-aui-fg -mt-0.5 text-[15px] leading-snug font-semibold">
                   {heading}
@@ -359,7 +382,7 @@ export function ApprovalCard({
                       cardRef.current?.focus();
                     }
                   }}
-                  placeholder="e.g. Use the existing Redis client instead"
+                  placeholder={reasonPlaceholder}
                   className="border-aui-border-strong bg-aui-bg text-aui-fg placeholder:text-aui-fg-subtle focus-visible:outline-aui-ring w-full resize-none rounded-lg border px-3 py-2 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-0"
                 />
               </div>

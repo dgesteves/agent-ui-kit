@@ -79,7 +79,7 @@ describe.skipIf(AI_SDK_MAJOR < 7)('approvals decided automatically by a policy',
   it('labels the outcome as a policy decision, not a human one', async () => {
     const snapshots = await policyRun();
     render(<AgentMessage message={snapshots.at(-1)!} onToolApproval={() => {}} />);
-    const [ls, rm] = screen.getAllByRole('region');
+    const [ls, rm] = screen.getAllByRole('group');
     expect(ls).toHaveTextContent('Auto-approved');
     expect(rm).toHaveTextContent('Blocked by policy');
     expect(rm).toHaveTextContent('Destructive command');
