@@ -44,5 +44,32 @@ export {
   type ParsedFileDiff,
 } from './lib/diff';
 export { formatCost, formatDuration, formatTokens, humanizeToolName } from './lib/format';
+export {
+  APPROVAL_DECISIONS,
+  decisionEffect,
+  decisionsFromAcpOptions,
+  describeRule,
+  evaluateRules,
+  fromAcpPermissionRequest,
+  fromAcpPermissionResponse,
+  globToRegExp,
+  matchesGlob,
+  ruleFromDecision,
+  ruleMatches,
+  setToolInput,
+  suggestArgs,
+  toAcpPermissionResponse,
+  toToolApproval,
+  toToolApprovalResponse,
+  type AcpPermissionOption,
+  type AcpPermissionOptionKind,
+  type AcpRequestPermissionRequest,
+  type AcpRequestPermissionResponse,
+  type ApprovalDecision,
+  type ApprovalRequest,
+  type ApprovalRule,
+  type RuleMatch,
+  type ToolApprovalStatusLike,
+} from './lib/policy';
 export { addUsage, estimateCost, type CostBreakdown, type ModelPricing } from './lib/usage';
 export { cn, type HeadingLevel } from './lib/utils';
