@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -21,7 +21,7 @@ function setup(props: Partial<Parameters<typeof ApprovalCard>[0]> = {}) {
       {...props}
     />,
   );
-  return { ...utils, user, onApprove, onDeny, card: screen.getByRole('region', { name: /run command/i }) };
+  return { ...utils, user, onApprove, onDeny, card: screen.getByRole('group', { name: /run command/i }) };
 }
 
 describe('ApprovalCard', () => {
@@ -31,7 +31,57 @@ describe('ApprovalCard', () => {
     expect(screen.getByText('High risk')).toBeInTheDocument();
     expect(screen.getByText('pnpm add @upstash/ratelimit')).toBeInTheDocument();
     expect(screen.getByText('~/app')).toBeInTheDocument();
-    expect(screen.getByRole('region')).toHaveAccessibleDescription(/Adds a dependency/);
+    expect(screen.getByRole('group')).toHaveAccessibleDescription(/Adds a dependency/);
+  });
+
+  it('shows no risk level when none is given', () => {
+    const { card, unmount } = setup({ risk: undefined });
+    expect(screen.queryByText(/risk$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Critical')).not.toBeInTheDocument();
+    expect(card).not.toHaveAttribute('data-risk');
+    unmount();
+    // A tool part whose tool has no `risk` in its meta, as from the shadcn registry, either.
+    render(<ToolApprovalCard part={toolPart('approval-requested', { toolName: 'run_command' })} onRespond={vi.fn()} />);
+    expect(screen.queryByText(/risk$/i)).not.toBeInTheDocument();
+  });
+
+  it('is a named group, not a landmark, unless you make it one', () => {
+    const { unmount } = setup();
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Run command' })).toBeInTheDocument();
+    unmount();
+    render(<ApprovalCard toolName="run_command" role="region" />);
+    expect(screen.getByRole('region', { name: 'Run command' })).toBeInTheDocument();
+  });
+
+  it('offers a neutral placeholder for the denial reason, or yours', async () => {
+    const neutral = setup();
+    await neutral.user.click(screen.getByRole('button', { name: 'Deny with feedback' }));
+    expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'What should the agent do instead?');
+    neutral.unmount();
+    const custom = setup({ reasonPlaceholder: 'e.g. Use the staging database' });
+    await custom.user.click(screen.getByRole('button', { name: 'Deny with feedback' }));
+    expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'e.g. Use the staging database');
+  });
+
+  it('reads its decision once: announced, then not repeated by the decided card', () => {
+    vi.useFakeTimers();
+    try {
+      function Decided() {
+        const [status, setStatus] = useState<ApprovalStatus>('pending');
+        return <ApprovalCard toolName="run_command" status={status} onApprove={() => setStatus('approved')} />;
+      }
+      render(<Decided />);
+      fireEvent.click(screen.getByRole('button', { name: /^approve/i }));
+      expect(screen.getByRole('status')).toHaveTextContent('Approved');
+      act(() => vi.advanceTimersByTime(3_000));
+      const card = screen.getByRole('group', { name: 'Run command' });
+      // Was "Approved, Approved": the announcement stayed in the card next to the outcome.
+      expect(within(card).getAllByText('Approved')).toHaveLength(1);
+      expect(screen.getByRole('status')).toHaveTextContent('');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('approves and denies with the mouse', async () => {

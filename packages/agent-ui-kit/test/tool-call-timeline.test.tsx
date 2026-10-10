@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
-import { TOOL_STATES } from '../src/lib/ai';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TOOL_STATES, type ToolPart } from '../src/lib/ai';
 import { ToolCallTimeline } from '../src/tool-call-timeline';
 import { axe, dynamicToolPart, toolPart } from './utils';
 
@@ -149,40 +149,91 @@ describe('ToolCallTimeline', () => {
     expect(screen.getByRole('button', { name: /Read file/ })).toHaveTextContent('lib/re');
   });
 
-  it('announces completions and failures politely', async () => {
-    const { rerender } = render(<ToolCallTimeline parts={[toolPart('input-available', { toolCallId: 'c1' })]} />);
-    const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('');
-    await act(async () => {
-      rerender(<ToolCallTimeline parts={[toolPart('output-available', { toolCallId: 'c1' })]} />);
+  describe('announcements', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(1_700_000_000_000);
     });
-    expect(status).toHaveTextContent(/^Search docs finished in \d+ milliseconds$/);
-    await act(async () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const call = (state: ToolPart['state'], toolCallId: string, toolName = 'search_docs') =>
+      toolPart(state, { toolCallId, toolName });
+
+    it('announces completions and failures politely, each once', () => {
+      const { rerender } = render(<ToolCallTimeline parts={[call('input-available', 'c1')]} />);
+      const status = screen.getByRole('status');
+      expect(status).toHaveTextContent('');
+      act(() => vi.advanceTimersByTime(120));
+      rerender(<ToolCallTimeline parts={[call('output-available', 'c1')]} />);
+      act(() => vi.advanceTimersByTime(300));
+      expect(status).toHaveTextContent(/^Search docs finished in 120 milliseconds$/);
+
+      rerender(
+        <ToolCallTimeline parts={[call('output-available', 'c1'), call('input-available', 'c2', 'read_file')]} />,
+      );
+      act(() => vi.advanceTimersByTime(2_000));
+      rerender(<ToolCallTimeline parts={[call('output-available', 'c1'), call('output-error', 'c2', 'read_file')]} />);
+      act(() => vi.advanceTimersByTime(300));
+      expect(status).toHaveTextContent(/^Read file failed: ENOENT: no such file or directory$/);
+    });
+
+    it('announces parallel calls that settle together, not only the last one', () => {
+      const running = [call('input-available', 'a', 'read_file'), call('input-available', 'b', 'web_search')];
+      const { rerender } = render(<ToolCallTimeline parts={running} />);
+      act(() => vi.advanceTimersByTime(90));
+      // Both results arrive in one update.
       rerender(
         <ToolCallTimeline
-          parts={[
-            toolPart('output-available', { toolCallId: 'c1' }),
-            toolPart('input-available', { toolCallId: 'c2', toolName: 'read_file' }),
-          ]}
+          parts={[call('output-available', 'a', 'read_file'), call('output-error', 'b', 'web_search')]}
         />,
       );
-    });
-    await act(async () => {
-      rerender(
-        <ToolCallTimeline
-          parts={[
-            toolPart('output-available', { toolCallId: 'c1' }),
-            toolPart('output-error', { toolCallId: 'c2', toolName: 'read_file' }),
-          ]}
-        />,
+      act(() => vi.advanceTimersByTime(300));
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Read file finished in 90 milliseconds. Web search failed: ENOENT: no such file or directory',
       );
     });
-    expect(status).toHaveTextContent('Read file failed: ENOENT: no such file or directory');
+
+    it('announces calls that settle moments apart together', () => {
+      const three = (states: Array<ToolPart['state']>) =>
+        states.map((state, i) => call(state, `p${i}`, ['read_file', 'web_search', 'run_command'][i]));
+      const { rerender } = render(
+        <ToolCallTimeline parts={three(['input-available', 'input-available', 'input-available'])} />,
+      );
+      act(() => vi.advanceTimersByTime(500));
+      rerender(<ToolCallTimeline parts={three(['output-available', 'input-available', 'input-available'])} />);
+      act(() => vi.advanceTimersByTime(100));
+      rerender(<ToolCallTimeline parts={three(['output-available', 'output-available', 'input-available'])} />);
+      act(() => vi.advanceTimersByTime(300));
+      const status = screen.getByRole('status');
+      expect(status).toHaveTextContent(
+        'Read file finished in 500 milliseconds. Web search finished in 600 milliseconds.',
+      );
+      // A call that settles later is announced on its own.
+      act(() => vi.advanceTimersByTime(1_000));
+      rerender(<ToolCallTimeline parts={three(['output-available', 'output-available', 'output-denied'])} />);
+      act(() => vi.advanceTimersByTime(300));
+      expect(status).toHaveTextContent(/^Run command was denied$/);
+    });
+
+    it('does not announce calls that had settled before it mounted', () => {
+      const timings = { r: { startedAt: 1, runningAt: 1, endedAt: 900 } };
+      render(<ToolCallTimeline parts={[call('output-available', 'r')]} timings={timings} />);
+      act(() => vi.advanceTimersByTime(1_000));
+      expect(screen.getByRole('status')).toHaveTextContent('');
+    });
   });
 
   it('does not invent durations for calls restored already settled', () => {
     render(<ToolCallTimeline parts={[toolPart('output-available')]} />);
     expect(screen.queryByText(/\d+ms|\d\.\d+s/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the awaiting-approval mark out of the accessibility tree; the button says it', () => {
+    render(<ToolCallTimeline parts={[toolPart('approval-requested')]} />);
+    expect(screen.getByText('!').closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(screen.getByRole('button', { name: /Needs approval/ })).toBeInTheDocument();
   });
 
   it('renders extra content under a call', () => {

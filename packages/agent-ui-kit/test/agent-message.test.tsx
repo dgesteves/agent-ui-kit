@@ -47,7 +47,7 @@ describe('AgentMessage', () => {
     render(
       <AgentMessage message={message} onToolApproval={onToolApproval} tools={{ run_command: { risk: 'high' } }} />,
     );
-    const card = screen.getByRole('region', { name: 'Run command' });
+    const card = screen.getByRole('group', { name: 'Run command' });
     expect(within(card).getByText('High risk')).toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: /^approve/i }));
     expect(onToolApproval).toHaveBeenCalledWith({ id: 'approval_t3', approved: true });
