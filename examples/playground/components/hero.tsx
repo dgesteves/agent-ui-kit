@@ -33,7 +33,7 @@ export function CallsToAction() {
   );
 }
 
-/** What the kit is and who it's for, in one line, then how to get it. */
+/** What the kit is for, in one line, then how to get it. */
 export function Hero() {
   return (
     <div>
@@ -45,12 +45,12 @@ export function Hero() {
         <span>React 18 &amp; 19</span>
       </p>
       <h1 className="text-fg-strong mt-3 text-[28px] leading-[1.12] font-semibold tracking-[-0.025em] text-balance sm:mt-4 sm:text-[38px] xl:text-[42px]">
-        Accessible React components for agent runs
+        Review what your agent changed. Control what it may do.
       </h1>
       <p className="text-fg-muted mt-4 max-w-[42rem] text-[15px] leading-relaxed text-pretty sm:text-[17px]">
-        Tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry, for{' '}
-        <span className="text-fg">AI SDK 6 &amp; 7</span> and <span className="text-fg">AG-UI</span> agents (LangGraph,
-        CrewAI, Mastra).
+        React components for multi-file diff review and tool approvals that return a result your agent acts on. For{' '}
+        <span className="text-fg">AI SDK 6 &amp; 7</span> and <span className="text-fg">AG-UI</span> agents, inside
+        assistant-ui, AI Elements or your own chat.
       </p>
       <div className="mt-6 sm:mt-7">
         <CallsToAction />

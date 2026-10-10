@@ -17,11 +17,25 @@ const TARGET_DIR = 'components/signoff-ui';
 
 const ITEMS = [
   {
-    name: 'agent-status',
-    entry: 'agent-status.tsx',
-    title: 'Agent Status',
+    name: 'diff-review',
+    entry: 'diff-review.tsx',
+    title: 'Diff Review',
     description:
-      'Run state pill (thinking, working, waiting for approval, done, error) announced through an aria-live region.',
+      'Unified/split review of agent edits across files with per-hunk accept/reject and keyboard navigation; returns each file with the accepted hunks applied.',
+  },
+  {
+    name: 'approval-card',
+    entry: 'approval-card.tsx',
+    title: 'Approval Card',
+    description:
+      'Approve or deny a tool call: an args preview, risk levels, a denial reason, keyboard shortcuts, and automatic decisions shown as such.',
+  },
+  {
+    name: 'agent-message',
+    entry: 'agent-message.tsx',
+    title: 'Agent Message',
+    description:
+      'Renders an assistant UIMessage: markdown, reasoning, grouped tool calls, inline approvals and sources.',
   },
   {
     name: 'tool-call-timeline',
@@ -31,23 +45,17 @@ const ITEMS = [
       'Vertical timeline of AI SDK tool calls with live states, durations, a waterfall and expandable input/output.',
   },
   {
-    name: 'approval-card',
-    entry: 'approval-card.tsx',
-    title: 'Approval Card',
-    description:
-      'Human-in-the-loop approve/deny for tool calls with risk levels, an args preview and keyboard shortcuts.',
-  },
-  {
-    name: 'diff-review',
-    entry: 'diff-review.tsx',
-    title: 'Diff Review',
-    description: 'Unified/split review of agent file edits with per-hunk accept/reject and keyboard navigation.',
-  },
-  {
     name: 'run-meter',
     entry: 'run-meter.tsx',
     title: 'Run Meter',
     description: 'Tokens, estimated cost and latency (TTFT, total) for an agent run, compact or expanded.',
+  },
+  {
+    name: 'agent-status',
+    entry: 'agent-status.tsx',
+    title: 'Agent Status',
+    description:
+      'Run state pill (thinking, working, waiting for approval, done, stopped, error) announced through an aria-live region.',
   },
   {
     name: 'sources',
@@ -66,13 +74,6 @@ const ITEMS = [
     entry: 'reasoning.tsx',
     title: 'Reasoning',
     description: 'Collapsible model reasoning that opens while streaming and summarizes its duration.',
-  },
-  {
-    name: 'agent-message',
-    entry: 'agent-message.tsx',
-    title: 'Agent Message',
-    description:
-      'Renders an assistant UIMessage: markdown, reasoning, grouped tool calls, inline approvals and sources.',
   },
   {
     name: 'ag-ui',

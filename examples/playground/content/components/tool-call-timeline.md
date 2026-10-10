@@ -1,0 +1,5 @@
+Every AI SDK tool state (`input-streaming`, `input-available`, `approval-requested`, `approval-responded`, `output-available` including `preliminary`, `output-error`, `output-denied`) with live durations, a waterfall that makes parallel calls visible, and expandable input and output. Failures show their error inline. Calls are disclosure buttons: ↑, ↓, Home and End move between them, and settled calls are announced.
+
+Pass `active={false}` once the run has ended (stopped, failed, or restored from history), so calls that never settled read "Stopped" instead of counting up forever.
+
+Durations are measured, not invented: message parts carry no timestamps, so the timeline records state changes on the client. Execution time starts when a call is approved, not when it was proposed, so waiting on a person never reads as a slow tool, and calls already settled when first seen get no duration rather than a fake zero. Pass server-measured `timings` if you have them. `renderOutput` replaces a call's JSON output with your own content, and `renderExtra` adds content under a call.

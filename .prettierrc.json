@@ -3,5 +3,11 @@
   "printWidth": 120,
   "trailingComma": "all",
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindFunctions": ["cn"]
+  "tailwindFunctions": ["cn"],
+  "overrides": [
+    {
+      "files": "README.md",
+      "options": { "embeddedLanguageFormatting": "off" }
+    }
+  ]
 }

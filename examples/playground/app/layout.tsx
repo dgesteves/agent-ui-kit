@@ -5,9 +5,9 @@ import { THEME_SCRIPT } from '@/lib/theme';
 import { GeistMono } from './fonts';
 import './globals.css';
 
-const title = 'signoff-ui: accessible React components for agent runs';
+const title = 'signoff-ui: review what your agent changed and control what it may do';
 const description =
-  'Tool call timelines, human-in-the-loop approvals, per-hunk diff review and run telemetry, for AI SDK 6 & 7 and AG-UI agents (LangGraph, CrewAI, Mastra). Watch a scripted agent run, no API key needed.';
+  'React components for multi-file diff review and tool approvals that return a result your agent acts on. For AI SDK 6 & 7 and AG-UI agents, inside assistant-ui, AI Elements or your own chat. Watch a scripted coding agent run, no API key needed.';
 
 // app/opengraph-image.png is the top of docs/media/hero.png (`pnpm media og`); the docs and the
 // components page draw their own (lib/og.tsx).

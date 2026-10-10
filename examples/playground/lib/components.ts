@@ -1,9 +1,12 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getAlias } from './api';
 
 /*
  * One docs page per component: what this file can't read from the library. Props, types,
  * defaults, descriptions and styling hooks come from the package itself (lib/api.ts); the usage,
- * the keyboard and the accessibility notes are written here, from each component's implementation.
+ * the keyboard and the accessibility notes are written here, from each component's implementation,
+ * and how it behaves in content/components/<slug>.md. The review and approval components come first.
  */
 
 export interface ApiEntry {
@@ -48,6 +51,95 @@ const npm = (names: string, from = 'signoff-ui') => `import { ${names} } from '$
 const shadcn = (names: string, file: string) => `import { ${names} } from '@/components/signoff-ui/${file}';`;
 
 export const COMPONENTS: ComponentDoc[] = [
+  {
+    slug: 'diff-review',
+    name: 'DiffReview',
+    summary: 'Accept or reject an agent’s edits hunk by hunk, across files, and get the patched files back.',
+    galleryId: 'diff-review',
+    item: 'diff-review',
+    file: 'diff-review.tsx',
+    api: [
+      {
+        name: 'DiffReview',
+        props: 'DiffReviewProps',
+        defaults: { file: 'diff-review.tsx', functions: ['DiffReview'] },
+      },
+    ],
+    types: ['FileChange', 'DiffReviewResult', 'DiffReviewFileResult', 'HunkDecision', 'DiffViewMode'],
+    imports: { npm: npm('DiffReview'), shadcn: shadcn('DiffReview', 'diff-review') },
+    usage: `<DiffReview
+  files={[{ path: 'app/api/chat/route.ts', oldContent, newContent }]}
+  // Each file comes back with only the accepted hunks applied.
+  onSubmit={(result) => addToolOutput({ tool: 'review_changes', toolCallId, output: result })}
+/>`,
+    keyboard: [
+      { keys: ['J', 'K'], action: 'Next or previous hunk (↓ and ↑ too, from a hunk)' },
+      { keys: ['A'], action: 'Accept the hunk, and move to the next undecided one' },
+      { keys: ['R'], action: 'Reject the hunk, and move on (X works too)' },
+      { keys: ['U'], action: 'Reset the hunk' },
+      { keys: ['⇧A', '⇧R'], action: 'Accept or reject every hunk' },
+      { keys: ['⌘/Ctrl', '↵'], action: 'Apply the review' },
+    ],
+    accessibility: [
+      'A `<section>` named by its title. Hunks use a roving tabindex, so the whole review is one tab stop that J, K and the arrows move through.',
+      'Each hunk is a group named like "Hunk 2 of 4, app/api/chat/route.ts, lines 12 to 20, accepted".',
+      'Every shortcut is also a button: "Accept hunk 2", "Reject hunk 2" and "Reset hunk 2" with `aria-pressed`, the layout toggle and Apply. Shortcuts only work while focus is inside the review.',
+      'Progress is announced: "Hunk 2 of 4 accepted. 2 remaining."',
+      'Changed lines keep their + and − glyphs and are read as "Added:" or "Removed:", so cyan and magenta never carry the meaning alone.',
+    ],
+    stateTypes: { 'data-decision': 'HunkDecision' },
+  },
+  {
+    slug: 'approval-card',
+    name: 'ApprovalCard',
+    summary: 'Human-in-the-loop approval: what will run, how risky it is, and deny with a reason.',
+    galleryId: 'approval-card',
+    item: 'approval-card',
+    file: 'approval-card.tsx',
+    api: [
+      {
+        name: 'ApprovalCard',
+        props: 'ApprovalCardProps',
+        defaults: { file: 'approval-card.tsx', functions: ['ApprovalCard'] },
+      },
+      {
+        name: 'ToolApprovalCard',
+        props: 'ToolApprovalCardProps',
+        defaults: { file: 'approval-card.tsx', functions: ['ToolApprovalCard', 'ApprovalCard'] },
+      },
+    ],
+    types: ['ToolApprovalResponse', 'RiskLevel', 'ApprovalStatus'],
+    imports: {
+      npm: npm('ApprovalCard, ToolApprovalCard'),
+      shadcn: shadcn('ApprovalCard, ToolApprovalCard', 'approval-card'),
+    },
+    usage: `// Bound to an AI SDK tool part in the approval flow:
+<ToolApprovalCard part={part} onRespond={addToolApprovalResponse} risk="high" autoFocus />
+
+// Or on its own:
+<ApprovalCard
+  toolName="run_command"
+  input={{ command: 'pnpm add @upstash/ratelimit' }}
+  risk="high"
+  onApprove={() => approve()}
+  onDeny={(reason) => deny(reason)}
+/>`,
+    keyboard: [
+      { keys: ['Y'], action: 'Approve' },
+      { keys: ['N'], action: 'Deny' },
+      { keys: ['⌘/Ctrl', '↵'], action: 'Approve (page-wide with `globalShortcut`)' },
+      { keys: ['Esc'], action: 'Close the reason field and return to the card' },
+    ],
+    accessibility: [
+      'A group named by its title and described by its description and a visually hidden line that spells out the shortcuts. It is not a landmark, so a run with many approvals doesn’t fill landmark navigation; pass `role="region"` to make it one.',
+      'Y and N only work while focus is inside the card, with no modifier and not while typing, which keeps them within WCAG 2.1.4. The buttons carry `aria-keyshortcuts`.',
+      '`critical` actions need a second press within four seconds, and say so: "Critical action. Press approve again to confirm."',
+      'Deciding announces "Approved" or "Denied" and moves focus to the card, so it isn’t lost when the buttons go away; the announcement then clears, so the decided card reads its outcome once. `autoFocus` puts focus on a card that arrives pending.',
+      'Each pending approval sends one decision: a double click, or Y then N, is ignored until `status` changes or the handler’s promise settles.',
+      'The risk level is spelled out, not shown by color alone, and only when you give one: without `risk` the card shows none rather than guessing. `headingLevel` fits the title into your outline.',
+    ],
+    stateTypes: { 'data-status': 'ApprovalStatus', 'data-risk': 'RiskLevel' },
+  },
   {
     slug: 'agent-message',
     name: 'AgentMessage',
@@ -130,95 +222,6 @@ const last = messages.findLast((m) => m.role === 'assistant');
       'data-state': 'ToolState',
       'data-interrupted': 'set once the run ended before the call settled',
     },
-  },
-  {
-    slug: 'approval-card',
-    name: 'ApprovalCard',
-    summary: 'Human-in-the-loop approval: what will run, how risky it is, and deny with a reason.',
-    galleryId: 'approval-card',
-    item: 'approval-card',
-    file: 'approval-card.tsx',
-    api: [
-      {
-        name: 'ApprovalCard',
-        props: 'ApprovalCardProps',
-        defaults: { file: 'approval-card.tsx', functions: ['ApprovalCard'] },
-      },
-      {
-        name: 'ToolApprovalCard',
-        props: 'ToolApprovalCardProps',
-        defaults: { file: 'approval-card.tsx', functions: ['ToolApprovalCard', 'ApprovalCard'] },
-      },
-    ],
-    types: ['ToolApprovalResponse', 'RiskLevel', 'ApprovalStatus'],
-    imports: {
-      npm: npm('ApprovalCard, ToolApprovalCard'),
-      shadcn: shadcn('ApprovalCard, ToolApprovalCard', 'approval-card'),
-    },
-    usage: `// Bound to an AI SDK tool part in the approval flow:
-<ToolApprovalCard part={part} onRespond={addToolApprovalResponse} risk="high" autoFocus />
-
-// Or on its own:
-<ApprovalCard
-  toolName="run_command"
-  input={{ command: 'pnpm add @upstash/ratelimit' }}
-  risk="high"
-  onApprove={() => approve()}
-  onDeny={(reason) => deny(reason)}
-/>`,
-    keyboard: [
-      { keys: ['Y'], action: 'Approve' },
-      { keys: ['N'], action: 'Deny' },
-      { keys: ['⌘/Ctrl', '↵'], action: 'Approve (page-wide with `globalShortcut`)' },
-      { keys: ['Esc'], action: 'Close the reason field and return to the card' },
-    ],
-    accessibility: [
-      'A group named by its title and described by its description and a visually hidden line that spells out the shortcuts. It is not a landmark, so a run with many approvals doesn’t fill landmark navigation; pass `role="region"` to make it one.',
-      'Y and N only work while focus is inside the card, with no modifier and not while typing, which keeps them within WCAG 2.1.4. The buttons carry `aria-keyshortcuts`.',
-      '`critical` actions need a second press within four seconds, and say so: "Critical action. Press approve again to confirm."',
-      'Deciding announces "Approved" or "Denied" and moves focus to the card, so it isn’t lost when the buttons go away; the announcement then clears, so the decided card reads its outcome once. `autoFocus` puts focus on a card that arrives pending.',
-      'Each pending approval sends one decision: a double click, or Y then N, is ignored until `status` changes or the handler’s promise settles.',
-      'The risk level is spelled out, not shown by color alone, and only when you give one: without `risk` the card shows none rather than guessing. `headingLevel` fits the title into your outline.',
-    ],
-    stateTypes: { 'data-status': 'ApprovalStatus', 'data-risk': 'RiskLevel' },
-  },
-  {
-    slug: 'diff-review',
-    name: 'DiffReview',
-    summary: 'Accept or reject an agent’s edits hunk by hunk, across files, and get the patched files back.',
-    galleryId: 'diff-review',
-    item: 'diff-review',
-    file: 'diff-review.tsx',
-    api: [
-      {
-        name: 'DiffReview',
-        props: 'DiffReviewProps',
-        defaults: { file: 'diff-review.tsx', functions: ['DiffReview'] },
-      },
-    ],
-    types: ['FileChange', 'DiffReviewResult', 'DiffReviewFileResult', 'HunkDecision', 'DiffViewMode'],
-    imports: { npm: npm('DiffReview'), shadcn: shadcn('DiffReview', 'diff-review') },
-    usage: `<DiffReview
-  files={[{ path: 'app/api/chat/route.ts', oldContent, newContent }]}
-  // Each file comes back with only the accepted hunks applied.
-  onSubmit={(result) => addToolOutput({ tool: 'review_changes', toolCallId, output: result })}
-/>`,
-    keyboard: [
-      { keys: ['J', 'K'], action: 'Next or previous hunk (↓ and ↑ too, from a hunk)' },
-      { keys: ['A'], action: 'Accept the hunk, and move to the next undecided one' },
-      { keys: ['R'], action: 'Reject the hunk, and move on (X works too)' },
-      { keys: ['U'], action: 'Reset the hunk' },
-      { keys: ['⇧A', '⇧R'], action: 'Accept or reject every hunk' },
-      { keys: ['⌘/Ctrl', '↵'], action: 'Apply the review' },
-    ],
-    accessibility: [
-      'A `<section>` named by its title. Hunks use a roving tabindex, so the whole review is one tab stop that J, K and the arrows move through.',
-      'Each hunk is a group named like "Hunk 2 of 4, app/api/chat/route.ts, lines 12 to 20, accepted".',
-      'Every shortcut is also a button: "Accept hunk 2", "Reject hunk 2" and "Reset hunk 2" with `aria-pressed`, the layout toggle and Apply. Shortcuts only work while focus is inside the review.',
-      'Progress is announced: "Hunk 2 of 4 accepted. 2 remaining."',
-      'Changed lines keep their + and − glyphs and are read as "Added:" or "Removed:", so cyan and magenta never carry the meaning alone.',
-    ],
-    stateTypes: { 'data-decision': 'HunkDecision' },
   },
   {
     slug: 'run-meter',
@@ -395,6 +398,12 @@ export function getComponent(slug: string) {
 }
 
 export const componentHref = (slug: string) => `/docs/components/${slug}`;
+
+/** How the component behaves, in Markdown: content/components/<slug>.md. `next build` runs in examples/playground. */
+export function componentAbout(slug: string) {
+  const file = join(process.cwd(), 'content/components', `${slug}.md`);
+  return existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+}
 
 /** A state attribute's values: an exported type spelled out, or the note written for it. */
 export function stateValues(component: ComponentDoc, attribute: string) {

@@ -1,6 +1,6 @@
 import { llmsTxt } from '@/lib/llms';
 
-// Built once, from the README, when the playground builds.
+// Built once, from the README and the docs pages, when the playground builds.
 export const dynamic = 'force-static';
 
 export function GET() {

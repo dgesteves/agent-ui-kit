@@ -1,14 +1,28 @@
+import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { GITHUB_URL } from '@/lib/site';
 import { CallsToAction } from './hero';
-import { ArrowRightIcon, ArrowUpRightIcon } from './icons';
+import { ArrowRightIcon } from './icons';
 
 /*
- * The sections after the live run: what's in the kit, what it works with, how it compares, and
- * how to start. Server-rendered; the only client code is the copy button.
+ * The sections after the live run: what's in the kit (review and approval first), what it works
+ * with, how it compares, and how to start. Server-rendered; the only client code is the copy button.
  */
 
 const KIT: Array<{ name: string; id: string; description: ReactNode; meta: string }> = [
+  {
+    name: 'DiffReview',
+    id: 'diff-review',
+    description:
+      'Accept or reject an agent’s edits hunk by hunk, across files. Returns each file with only the accepted hunks applied.',
+    meta: 'J K move · A R decide',
+  },
+  {
+    name: 'ApprovalCard',
+    id: 'approval-card',
+    description:
+      'Approve or deny a tool call: exactly what will run, how risky it is, and a reason the agent reads. Automatic decisions are shown as such.',
+    meta: 'Y approve · N deny',
+  },
   {
     name: 'AgentMessage',
     id: 'agent-message',
@@ -22,19 +36,6 @@ const KIT: Array<{ name: string; id: string; description: ReactNode; meta: strin
     description:
       'Every tool call with its state, duration and a waterfall. Errors show inline; input and output on demand.',
     meta: '↑ ↓ between calls',
-  },
-  {
-    name: 'ApprovalCard',
-    id: 'approval-card',
-    description: 'Human-in-the-loop approval: exactly what will run, how risky it is, and deny with a reason.',
-    meta: 'Y approve · N deny',
-  },
-  {
-    name: 'DiffReview',
-    id: 'diff-review',
-    description:
-      'Accept or reject an agent’s edits hunk by hunk, across files. Returns each file with only the accepted hunks applied.',
-    meta: 'J K move · A R decide',
   },
   {
     name: 'RunMeter',
@@ -68,11 +69,11 @@ const WORKS_WITH: Array<{ title: string; body: ReactNode; code: string }> = [
     title: 'AI SDK 6 & 7',
     body: (
       <>
-        Hand it the last assistant message from <Code>useChat</Code>. Tool parts, approvals, sources and usage metadata
-        map over without glue code.
+        Hand it the last assistant message from <Code>useChat</Code>. Approvals from <Code>toolApproval</Code> show
+        inline, and a review answers a tool with no <Code>execute</Code> through <Code>addToolOutput</Code>.
       </>
     ),
-    code: '<AgentMessage message={last} onToolApproval={addToolApprovalResponse} />',
+    code: '<AgentMessage message={last} onToolApproval={addToolApprovalResponse} renderTool={review} />',
   },
   {
     title: 'AG-UI',
@@ -90,10 +91,11 @@ const WORKS_WITH: Array<{ title: string; body: ReactNode; code: string }> = [
     code: 'npx shadcn@latest add @signoff-ui/diff-review',
   },
   {
-    title: 'Tailwind v4 or plain CSS',
+    title: 'Your chat UI',
     body: (
       <>
-        A Tailwind v4 entry, or a precompiled stylesheet scoped to the components for Tailwind v3 or no Tailwind at all.
+        Inside assistant-ui, AI Elements or your own components. A Tailwind v4 entry, or a stylesheet for Tailwind v3 or
+        none that styles only the components’ own elements.
       </>
     ),
     code: "import 'signoff-ui/styles.css';",
@@ -101,6 +103,26 @@ const WORKS_WITH: Array<{ title: string; body: ReactNode; code: string }> = [
 ];
 
 const COMPARISON: Array<{ topic: string; kit: ReactNode; elements: ReactNode }> = [
+  {
+    topic: 'Diff review',
+    kit: (
+      <>
+        Takes the old and new text of several files and computes the hunks, with word-level highlights. Returns each
+        file with only the accepted hunks applied.
+      </>
+    ),
+    elements: <>Takes one file’s hunks, already split, and reports keep or discard per hunk; apply returns nothing.</>,
+  },
+  {
+    topic: 'Approvals',
+    kit: (
+      <>
+        What will run, a risk level when you give one, deny with a reason, and <Code>toolApproval</Code>’s automatic
+        decisions shown as such. Y and N, scoped to focus.
+      </>
+    ),
+    elements: <>Allow once, allow always or deny.</>,
+  },
   {
     topic: 'Data in',
     kit: (
@@ -117,16 +139,6 @@ const COMPARISON: Array<{ topic: string; kit: ReactNode; elements: ReactNode }> 
     ),
   },
   {
-    topic: 'Diff review',
-    kit: (
-      <>
-        Takes the old and new text of several files and computes the hunks, with word-level highlights. Returns each
-        file with only the accepted hunks applied.
-      </>
-    ),
-    elements: <>Takes one file’s hunks, already split, and reports keep or discard per hunk.</>,
-  },
-  {
     topic: 'Tool timeline',
     kit: <>Every state, with durations measured on the client that leave out time spent waiting for an approval.</>,
     elements: <>A summary of what was done, without durations or states.</>,
@@ -138,7 +150,7 @@ const COMPARISON: Array<{ topic: string; kit: ReactNode; elements: ReactNode }> 
   },
   {
     topic: 'Styling',
-    kit: <>Tailwind v4, v3 or none: the npm package ships a precompiled stylesheet scoped to its components.</>,
+    kit: <>Tailwind v4, v3 or none: the npm package ships a precompiled stylesheet scoped to its own elements.</>,
     elements: <>Tailwind v4.</>,
   },
   {
@@ -189,9 +201,10 @@ export function Landing() {
   return (
     <>
       <Section id="kit-heading" className="mt-14 sm:mt-20">
-        <SectionHeading id="kit-heading" eyebrow="Components" title="What’s in the kit">
-          Use them one at a time, or hand <Code>AgentMessage</Code> a whole assistant message and get all of them, in
-          order. Keyboard-first, announced to screen readers, and in both the npm package and the shadcn registry.
+        <SectionHeading id="kit-heading" eyebrow="Components" title="Review and approval, and the run around them">
+          <Code>DiffReview</Code> and <Code>ApprovalCard</Code> are the sign-off. The others render the rest of the run,
+          or hand <Code>AgentMessage</Code> a whole assistant message and get them all, in order. Keyboard-first,
+          announced to screen readers, and in both the npm package and the shadcn registry.
         </SectionHeading>
         <ul className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 lg:grid-cols-4">
           {KIT.map((item) => (
@@ -213,10 +226,11 @@ export function Landing() {
       </Section>
 
       <Section id="works-heading">
-        <SectionHeading id="works-heading" eyebrow="Works with" title="Fits the stack you already have">
-          It renders what your agent already streams, so there’s no state model to adopt, and it calls no model itself:
-          bring OpenAI, Anthropic, Google, xAI, Mistral or a local model, with your own keys. Typed against AI SDK 6 and
-          7, tested on React 18 and 19 in CI, and prerenders under Next.js 16 with <Code>cacheComponents</Code>.
+        <SectionHeading id="works-heading" eyebrow="Works with" title="Fits the stack and the chat you already have">
+          It renders what your agent already streams, so there’s no runtime or state model to adopt, and it calls no
+          model itself: bring OpenAI, Anthropic, Google, xAI, Mistral or a local model, with your own keys. Typed
+          against AI SDK 6 and 7, tested on React 18 and 19 in CI, and prerenders under Next.js 16 with{' '}
+          <Code>cacheComponents</Code>.
         </SectionHeading>
         <ul className="border-line mt-8 grid overflow-hidden rounded-xl border sm:mt-10 md:grid-cols-2">
           {WORKS_WITH.map((item) => (
@@ -236,9 +250,10 @@ export function Landing() {
 
       <Section id="compare-heading">
         <SectionHeading id="compare-heading" eyebrow="Comparison" title="How it compares">
-          assistant-ui and AI Elements are both good, and you may well want one of them for the chat shell.
-          assistant-ui’s Elements collection (August 2026) is the closest to this kit: an approval card, a reviewable
-          diff, a trace waterfall, a tool timeline, a cost meter and agent status. Here’s where they differ.
+          assistant-ui and AI Elements cover the whole chat, and you may well want one of them for it. assistant-ui’s
+          Elements collection (since August 2026) is the closest to this kit, and far wider: an approval card, a
+          reviewable diff, a trace waterfall, a tool timeline, a cost meter, agent status and more. Here’s where
+          signoff-ui differs on the parts they share.
         </SectionHeading>
         <div className="border-line mt-8 overflow-hidden rounded-xl border sm:mt-10">
           <div
@@ -276,15 +291,14 @@ export function Landing() {
           </p>
           <p>
             <span className="text-fg font-medium">They compose.</span> Render the thread with either library and use
-            these components for tool parts and side panels. The README has{' '}
-            <a
-              href={`${GITHUB_URL}#how-it-compares`}
+            these components for the review and the approvals.{' '}
+            <Link
+              href="/docs/comparison"
               className="text-cyan-soft focus-visible:outline-cyan-soft decoration-cyan/40 hover:decoration-cyan rounded-sm underline underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-              the full comparison
-              <ArrowUpRightIcon className="ml-0.5 inline size-3.5 align-[-2px]" />
-            </a>
-            .
+              The full comparison
+            </Link>{' '}
+            includes what they do better, such as assistant-ui’s “allow always” and nested sub-agents.
           </p>
         </div>
       </Section>
@@ -296,9 +310,10 @@ export function Landing() {
             aria-hidden="true"
           />
           <div className="relative">
-            <SectionHeading id="start-heading" eyebrow="Get started" title="Start with one component">
-              Most apps start with <Code>AgentMessage</Code> and add the review and telemetry panels later. Install from
-              npm, or copy the source in with the shadcn CLI. MIT licensed.
+            <SectionHeading id="start-heading" eyebrow="Get started" title="Start with the sign-off">
+              Put a <Code>DiffReview</Code> on the tool that proposes edits and a <Code>ToolApprovalCard</Code> on the
+              ones that need a person, and add the rest when you want them. Install from npm, or copy the source in with
+              the shadcn CLI. MIT licensed.
             </SectionHeading>
             <div className="mt-8">
               <CallsToAction />

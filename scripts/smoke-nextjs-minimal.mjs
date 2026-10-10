@@ -1,6 +1,7 @@
 // Runs the README quickstart (examples/nextjs-minimal) end to end in Chrome: a tool call, a failed
-// tool, an approval, the resumed run with sources, the run meter, and a second turn timed on its
-// own. Fails on any page error, including hydration mismatches.
+// tool, a diff review whose result goes back to the agent, an approval, the resumed run with
+// sources, the run meter, and a second turn timed on its own. Fails on any page error, including
+// hydration mismatches.
 //
 //   pnpm build:lib && pnpm --filter nextjs-minimal build
 //   pnpm smoke:nextjs   # starts the built example on :3210, or tests BASE_URL if set
@@ -56,10 +57,21 @@ try {
   await page.getByRole('textbox', { name: 'Message the agent' }).fill('Add rate limiting to the chat route');
   await page.getByRole('button', { name: 'Send' }).click();
 
-  const pending = page.locator('[data-slot="signoff-approval-card"][data-status="pending"]');
-  await pending.waitFor({ timeout: 30_000 });
+  // The proposed edit: two files, reviewed in the page, and the run waits for it.
+  const review = page.locator('[data-slot="signoff-diff-review"]');
+  await review.waitFor({ timeout: 30_000 });
   // The failed read shows its real error, not the AI SDK's default "An error occurred.".
   await page.getByText("ENOENT: no such file or directory, open 'middleware.ts'", { exact: true }).waitFor();
+  await page.locator('[data-slot="signoff-agent-status"][data-state="awaiting-approval"]').waitFor();
+  const files = await review.locator('[data-slot="signoff-diff-file"]').count();
+  if (files !== 2) throw new Error(`The review shows ${files} files, not 2`);
+  await review.getByRole('button', { name: 'Accept all' }).click();
+  await review.locator('[data-slot="signoff-diff-submit"]').click();
+
+  // The agent read the review's result, and asks before installing.
+  const pending = page.locator('[data-slot="signoff-approval-card"][data-status="pending"]');
+  await pending.waitFor({ timeout: 30_000 });
+  await page.getByText(/hunks you accepted are applied/).waitFor();
   await page.locator('[data-slot="signoff-agent-status"][data-state="awaiting-approval"]').waitFor();
 
   await pending.getByRole('button', { name: /^Approve/ }).click();
@@ -67,8 +79,9 @@ try {
   await page.locator('[data-slot="signoff-agent-status"][data-state="done"]').waitFor();
   await page.getByRole('list', { name: 'Sources' }).waitFor();
   const meter = await page.locator('[data-slot="signoff-run-meter"]').innerText();
-  if (!/15\.7k/.test(meter)) throw new Error(`The run meter does not show the run's 15.7k input tokens:\n${meter}`);
-  console.log('pass  quickstart: tool calls, a failed tool, approval, resumed run, sources, run meter');
+  // 4.2k + 5.1k + 5.9k + 6.4k: one run across the review and the approval, summed with addUsage.
+  if (!/21\.6k/.test(meter)) throw new Error(`The run meter does not show the run's 21.6k input tokens:\n${meter}`);
+  console.log('pass  quickstart: tool calls, a failed tool, review, approval, resumed run, sources, run meter');
 
   // A second turn is timed on its own: its active time is not added to the first turn's.
   const first = await runTotal(page);

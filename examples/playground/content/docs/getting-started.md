@@ -38,6 +38,10 @@ Each item brings the component, the helpers it imports, its npm dependencies and
 
 The items are `agent-message`, `tool-call-timeline`, `approval-card`, `diff-review`, `run-meter`, `agent-status`, `sources`, `markdown`, `reasoning` and `ag-ui`. Installing a second item skips the shared files it already added. They also install by URL, with no setup (`https://agent-ui-kit-demo.vercel.app/r/agent-message.json`), or straight from the repository (`dgesteves/signoff-ui/agent-message`).
 
+Component and hook files start with `'use client'` (`sources.tsx` needs none), so they work when rendered from Server Components; the helpers in `lib/` (`diff.ts`, `usage.ts`, `ai.ts`, `format.ts`) do not, so the server can call them. The files pass a new Next.js app's ESLint config with no warnings, which CI checks.
+
+**From a coding agent.** The [shadcn MCP server](https://ui.shadcn.com/docs/mcp) lets Claude Code, Cursor, VS Code or Codex browse and install registry items. Set it up with `npx shadcn@latest mcp init --client claude` (or `cursor`, `vscode`), make sure `components.json` lists the registry as above, and ask for it by name, for example "add the signoff-ui diff review to the chat page". Agents can also read these docs from [`/llms.txt`](https://agent-ui-kit-demo.vercel.app/llms.txt).
+
 ### Which one
 
 | Difference           | npm                                     | shadcn                                      |
@@ -72,36 +76,53 @@ import 'signoff-ui/styles.css';
 
 ## Render a run
 
-A Next.js App Router app with AI SDK 7: a client component, a page and a route. [The quickstart, running](https://github.com/dgesteves/signoff-ui/tree/main/examples/nextjs-minimal) is this section as an app against a scripted model, so it needs no API key.
+A Next.js App Router app with AI SDK 7: a client component, a page and a route. The agent reads a file, proposes an edit across two files for you to review, and asks before it runs a command. [The quickstart, running](https://github.com/dgesteves/signoff-ui/tree/main/examples/nextjs-minimal) is this section as an app against a scripted model, so it needs no API key, and CI runs it in Chrome.
 
 ```package-install
 npm i signoff-ui ai @ai-sdk/react @ai-sdk/openai zod
 ```
 
-The client renders the last assistant message, its status and its cost, with a minimal composer. The wrapper paints the kit's own background and text colors (`bg-signoff-bg text-signoff-fg`), so the run reads well whatever your page's colors are. Without Tailwind, give it `background: var(--signoff-bg); color: var(--signoff-fg)` instead.
+The client renders the last assistant message, its status and its cost, with a minimal composer. `renderTool` puts a `DiffReview` where the agent proposes its edit, and the review's result goes back as the tool's output. The wrapper paints the kit's own background and text colors (`bg-signoff-bg text-signoff-fg`), so the run reads well whatever your page's colors are. Without Tailwind, give it `background: var(--signoff-bg); color: var(--signoff-fg)` instead.
 
 ```tsx title="app/agent-run.tsx"
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { lastAssistantMessageIsCompleteWithApprovalResponses, type LanguageModelUsage, type UIMessage } from 'ai';
+import {
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+  lastAssistantMessageIsCompleteWithToolCalls,
+  type LanguageModelUsage,
+  type UIMessage,
+} from 'ai';
 import { useState } from 'react';
-import { AgentMessage, AgentStatus, RunMeter, deriveAgentState, useRunTiming } from 'signoff-ui';
+import {
+  AgentMessage,
+  AgentStatus,
+  DiffReview,
+  RunMeter,
+  deriveAgentState,
+  getToolPartName,
+  useRunTiming,
+  type FileChange,
+} from 'signoff-ui';
 
 type Message = UIMessage<{ usage?: LanguageModelUsage }>;
 
 export function AgentRun() {
-  const { messages, status, sendMessage, addToolApprovalResponse } = useChat<Message>({
-    // Continue the run as soon as every pending approval has an answer.
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+  const { messages, status, sendMessage, addToolOutput, addToolApprovalResponse } = useChat<Message>({
+    // Continue the run once the review is in and every approval has an answer.
+    sendAutomaticallyWhen: (chat) =>
+      lastAssistantMessageIsCompleteWithToolCalls(chat) || lastAssistantMessageIsCompleteWithApprovalResponses(chat),
   });
   const [input, setInput] = useState('');
   const last = messages.findLast((m) => m.role === 'assistant');
-  const { state, detail } = deriveAgentState({ status, message: last });
-  // A run starts with each message you send and spans its approval round trips.
+  // review_changes waits on a person, like an approval.
+  const { state, detail } = deriveAgentState({ status, message: last, pendingClientTools: ['review_changes'] });
+  // A run starts with each message you send and spans its review and approval round trips.
   const timing = useRunTiming(status, messages);
 
   return (
+    // The kit's own background and text colors, so it reads well on any page. Add `dark` for the dark theme.
     <div className="bg-signoff-bg text-signoff-fg mx-auto flex max-w-2xl flex-col gap-4 p-6">
       <AgentStatus state={state} detail={detail} elapsedMs={timing.activeMs} />
       {last && (
@@ -111,6 +132,17 @@ export function AgentRun() {
           // Once the run has finished, been stopped or failed, calls that never settled read "Stopped".
           active={state !== 'done' && state !== 'stopped' && state !== 'error'}
           onToolApproval={addToolApprovalResponse}
+          // The proposed edit, reviewed hunk by hunk. The agent gets each file as you applied it.
+          renderTool={(part) =>
+            getToolPartName(part) === 'review_changes' && part.state === 'input-available' ? (
+              <DiffReview
+                files={(part.input as { files: FileChange[] }).files}
+                onSubmit={(review) =>
+                  addToolOutput({ tool: 'review_changes', toolCallId: part.toolCallId, output: review })
+                }
+              />
+            ) : undefined
+          }
         />
       )}
       <RunMeter
@@ -155,6 +187,8 @@ import { Suspense } from 'react';
 import { AgentRun } from './agent-run';
 
 export default function Page() {
+  // With cacheComponents (on in new Next.js 16 apps), useChat needs a Suspense boundary:
+  // it creates ids with Math.random(), which Next.js does not allow in prerendered output.
   return (
     <Suspense>
       <AgentRun />
@@ -163,7 +197,7 @@ export default function Page() {
 }
 ```
 
-On the server, give the model tools, ask for approval before the risky one, and send usage as message metadata:
+On the server, give the model its tools: `review_changes` has no `execute`, so the page answers it; `run_command` needs approval first. Send usage as message metadata:
 
 ```ts title="app/api/chat/route.ts"
 import { openai } from '@ai-sdk/openai';
@@ -188,6 +222,13 @@ const tools = {
       return { path, content };
     },
   }),
+  // No execute: the page answers it with a DiffReview, and the result holds each file as applied.
+  review_changes: tool({
+    description: 'Propose edits to files. The user reviews them hunk by hunk before anything is written.',
+    inputSchema: z.object({
+      files: z.array(z.object({ path: z.string(), oldContent: z.string().optional(), newContent: z.string() })),
+    }),
+  }),
   run_command: tool({
     description: 'Run a shell command in the repository.',
     inputSchema: z.object({ command: z.string() }),
@@ -207,9 +248,9 @@ export async function POST(req: Request) {
     stopWhen: stepCountIs(10),
   });
 
-  // Once approved, the run continues the same message in a new request whose totalUsage starts
-  // from zero. Add the usage the message already has (it comes back from the client, so it's fine
-  // for display but not for billing).
+  // After the review and the approval, the run continues the same message in a new request whose
+  // totalUsage starts from zero, and useChat replaces metadata.usage. Add the usage the message already has
+  // (it comes back from the client, so it is fine for display but not for billing).
   const last = messages.at(-1);
   const previous = last?.role === 'assistant' ? last.metadata?.usage : undefined;
 
@@ -226,9 +267,12 @@ export async function POST(req: Request) {
 
 What each part is for:
 
-- **`stopWhen`.** The AI SDK stops after one step by default, so without it the run ends at the first tool call and never reaches the approval.
+- **`review_changes` without `execute`.** The AI SDK ends the step at the call and leaves it to the client. `DiffReview`'s `onSubmit` gets each file with only the accepted hunks applied (`content`), and the hunk ids that were accepted, rejected or left pending; `addToolOutput` sends that to the model as the tool's result.
+- **`sendAutomaticallyWhen`.** Continues the run once the review is in (`lastAssistantMessageIsCompleteWithToolCalls`) and once every approval has an answer (`lastAssistantMessageIsCompleteWithApprovalResponses`).
+- **`pendingClientTools`.** `useChat` is `ready` while the review waits on you; naming the tool makes `deriveAgentState` read it as waiting, not done.
+- **`stopWhen`.** The AI SDK stops after one step by default, so without it the run ends at the first tool call and never reaches the review.
 - **`toolApproval`.** The `reason` shows on the approval card, as `approval.requestReason`.
-- **`addUsage`.** Without it, the meter would show only the last request of a run that paused for approval.
+- **`addUsage`.** Without it, the meter would show only the last request of a run that paused for the review and the approval.
 - **`onError`.** A tool that throws becomes an `output-error` part, and its `errorText` goes through `onError`. By default that hides every message behind "An error occurred.", so the timeline would show that instead of `ENOENT`. In production, pass through the errors you're happy for users to read and keep the rest generic.
 
 ## Choosing a model

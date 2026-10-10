@@ -77,7 +77,11 @@ await audit(page, 'gallery (dark, light and custom themes)');
 for (const path of [
   '/docs',
   '/docs/getting-started',
+  '/docs/chat-ui',
   '/docs/ag-ui',
+  '/docs/accessibility',
+  '/docs/limits',
+  '/docs/comparison',
   '/docs/migrating-from-agent-ui-kit',
   '/docs/components/approval-card',
   '/docs/components/diff-review',

@@ -40,6 +40,8 @@ pnpm a11y             # axe in Chrome, across the built playground, gallery and 
 pnpm --filter nextjs-minimal build && pnpm smoke:nextjs
 ```
 
+`pnpm media` regenerates `docs/media` from a running playground (Chrome and ffmpeg required).
+
 The smoke tests and `pnpm a11y` drive Google Chrome through Playwright, so they need Chrome installed. Each starts the built app on a port of its own; set `BASE_URL` to test one that is already running, such as `pnpm dev`'s playground on http://localhost:3100.
 
 The suite also runs against AI SDK 6 and React 18. To do the same, in `packages/signoff-ui` (then restore `package.json` and `pnpm-lock.yaml`):
@@ -55,7 +57,7 @@ pnpm add --save-dev react@^18.2.0 react-dom@^18.2.0 @types/react@^18 @types/reac
 2. Export it from `src/index.ts`, and helpers with no React from `src/core.ts` too.
 3. Add tests in `packages/signoff-ui/test/`, including an axe check. Every render must be safe on the server: no clock or random reads while rendering (`test/server-render.test.tsx`).
 4. Add it to `ITEMS` in `scripts/registry.mjs` and run `pnpm registry:generate`, which works out the files and dependencies from its imports.
-5. Show it in the gallery (`examples/playground/components/gallery.tsx`) and document it in the README.
+5. Show it in the gallery (`examples/playground/app/gallery/page.tsx`, with a demo in `examples/playground/components/demos/`), and document it on the docs site: an entry in `examples/playground/lib/components.ts` and how it behaves in `examples/playground/content/components/<slug>.md`. The README lists components in one table; add it there if it is one people should know about.
 
 ## Changesets
 

@@ -12,17 +12,24 @@ import { pageMetadata } from '@/lib/metadata';
 export const metadata = pageMetadata({
   title: 'Components · signoff-ui',
   description:
-    'Every signoff-ui component in isolation: status, tool call timeline, approval card, diff review, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
+    'Every signoff-ui component in isolation: diff review and approval card first, then tool call timeline, status, run meter, sources, markdown, reasoning, a whole message and an AG-UI agent, with npm and shadcn install snippets.',
   path: '/gallery',
 });
 
 // Page order; each id is the section's anchor, which launch posts and the README link to.
 const SECTIONS: Array<{ id: string; slug?: string; heading: string; description: string }> = [
   {
-    id: 'agent-status',
-    slug: 'agent-status',
-    heading: '<AgentStatus />',
-    description: 'Run state in one pill, announced through a live region.',
+    id: 'diff-review',
+    slug: 'diff-review',
+    heading: '<DiffReview />',
+    description:
+      'Accept or reject agent edits hunk by hunk, across files, unified or split. Returns each file with the accepted hunks applied.',
+  },
+  {
+    id: 'approval-card',
+    slug: 'approval-card',
+    heading: '<ApprovalCard />',
+    description: 'Approve or deny a tool call, with what will run, its risk, a reason and Y / N shortcuts.',
   },
   {
     id: 'tool-call-timeline',
@@ -31,16 +38,10 @@ const SECTIONS: Array<{ id: string; slug?: string; heading: string; description:
     description: 'Every tool state with durations, a waterfall, and expandable input and output.',
   },
   {
-    id: 'approval-card',
-    slug: 'approval-card',
-    heading: '<ApprovalCard />',
-    description: 'Human-in-the-loop approval with risk, preview and Y / N shortcuts.',
-  },
-  {
-    id: 'diff-review',
-    slug: 'diff-review',
-    heading: '<DiffReview />',
-    description: 'Accept or reject agent edits hunk by hunk, unified or split.',
+    id: 'agent-status',
+    slug: 'agent-status',
+    heading: '<AgentStatus />',
+    description: 'Run state in one pill, announced through a live region.',
   },
   {
     id: 'run-meter',
