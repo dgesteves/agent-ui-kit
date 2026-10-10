@@ -14,7 +14,8 @@ export const MORE_BY_AUTHOR = [
   {
     name: 'ondocs',
     url: 'https://ask-my-site-demo.vercel.app',
-    description: 'Docs answerable by people and agents from one static index: a cited Ask box, an MCP server and llms.txt.',
+    description:
+      'Docs answerable by people and agents from one static index: a cited Ask box, an MCP server and llms.txt.',
   },
   {
     name: 'onsystem',
